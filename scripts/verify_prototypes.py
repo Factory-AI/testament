@@ -894,9 +894,15 @@ def validate_manifest_agreement(
         if isinstance(row, dict) and isinstance(row.get("id"), str)
     }
     for case in sorted(PROTOTYPES):
+        active_result_path = (
+            V2_KEY_ROTATION_PATH
+            if case == "key-rotation"
+            else RESULT_PATH_BY_CASE[case]
+        )
+        active_version = "2.0.0" if case == "key-rotation" else "1.0.0"
         for kind, deliverable_id, artifact_path in (
             ("prototype", PROTOTYPE_DELIVERABLES[case], PROTOTYPE_PATHS[case]),
-            ("benchmark", BENCHMARK_DELIVERABLES[case], RESULT_PATH_BY_CASE[case]),
+            ("benchmark", BENCHMARK_DELIVERABLES[case], active_result_path),
         ):
             row = by_id.get(deliverable_id, {})
             locators = {
@@ -908,13 +914,24 @@ def validate_manifest_agreement(
             if (
                 row.get("type") != kind
                 or row.get("state") != "in-review"
-                or row.get("version") != "1.0.0"
+                or row.get("version") != active_version
                 or not git_object_exists(root, f"{row.get('commit')}^{{commit}}")
                 or not isinstance(artifact, dict)
                 or artifact.get("path") != artifact_path
                 or artifact_path not in locators
                 or CLAIMS_PATH not in locators
-                or REPRODUCTION_PATH not in locators
+                or (
+                    case != "key-rotation"
+                    and REPRODUCTION_PATH not in locators
+                )
+                or (
+                    case == "key-rotation"
+                    and (
+                        V2_KEY_ROTATION_PATH not in locators
+                        or RESULT_PATH_BY_CASE[case] not in locators
+                        or SUCCESSOR_PLAN_PATH not in locators
+                    )
+                )
                 or row.get("review", {}).get("status") != "pending"
                 or row.get("decision", {}).get("status") != "pending"
             ):
