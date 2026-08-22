@@ -12,7 +12,7 @@ dev-stop:
 	@TESTAMENT_POSTGRES_PORT=5440 docker compose stop postgres
 
 _python-check:
-	@$(PYTHON) -m py_compile scripts/evaluate_analyzer_metrics.py scripts/generate_analyzer_evaluation.py scripts/generate_analyzer_metrics.py scripts/generate_corpus.py scripts/run_prototypes.py scripts/verify_analyzer_candidate.py scripts/verify_analyzer_evaluation.py scripts/verify_analyzer_metrics.py scripts/verify_claims.py scripts/verify_corpus.py scripts/verify_foundation.py scripts/verify_governance.py scripts/verify_prototypes.py scripts/verify_readiness.py scripts/verify_research.py scripts/workflow.py tests/test_analyzer_candidate.py tests/test_analyzer_evaluation.py tests/test_analyzer_metrics.py tests/test_claims_and_boundaries.py tests/test_corpus.py tests/test_foundation.py tests/test_governance.py tests/test_prototypes.py tests/test_readiness.py tests/test_research_registry.py
+	@$(PYTHON) -m py_compile scripts/evaluate_analyzer_metrics.py scripts/generate_analyzer_evaluation.py scripts/generate_analyzer_metrics.py scripts/generate_corpus.py scripts/prototype_resources.py scripts/run_prototypes.py scripts/verify_analyzer_candidate.py scripts/verify_analyzer_evaluation.py scripts/verify_analyzer_metrics.py scripts/verify_claims.py scripts/verify_corpus.py scripts/verify_foundation.py scripts/verify_governance.py scripts/verify_prototypes.py scripts/verify_readiness.py scripts/verify_research.py scripts/workflow.py tests/test_analyzer_candidate.py tests/test_analyzer_evaluation.py tests/test_analyzer_metrics.py tests/test_claims_and_boundaries.py tests/test_corpus.py tests/test_foundation.py tests/test_governance.py tests/test_prototype_resources.py tests/test_prototypes.py tests/test_readiness.py tests/test_research_registry.py
 
 lint: _python-check
 	@$(PYTHON) -m json.tool policy/artifact-licensing.json >/dev/null
@@ -38,6 +38,7 @@ lint: _python-check
 	@$(PYTHON) -m json.tool docs/research/analysis/metric-golden-vectors.json >/dev/null
 	@$(PYTHON) -m json.tool docs/research/analysis/split-manifest.json >/dev/null
 	@$(PYTHON) -m json.tool docs/research/benchmarks/reproduction.json >/dev/null
+	@$(PYTHON) -m json.tool docs/research/benchmarks/precommit-v2.json >/dev/null
 	@$(PYTHON) -m json.tool generated/contract-index.json >/dev/null
 	@$(PYTHON) -m json.tool schemas/actionable-error.schema.json >/dev/null
 	@$(PYTHON) -m json.tool schemas/abuse-misuse-research.schema.json >/dev/null

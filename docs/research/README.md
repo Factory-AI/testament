@@ -86,6 +86,22 @@ contained the non-resolving transcription
 records that identifier and a digest of the preserved raw samples; no sample
 was rewritten.
 
+The [version 2 successor plan](benchmarks/precommit-v2.json), committed at
+`0f3dce5b9418a50eb031ec3fd561282462533bd3`, explicitly supersedes the
+canonical version 1 plan for future measurements. It precommits the F-001
+workload accounting, F-002 independent key-rotation capture, and F-003
+backend-disconnect fault methods. It does not replace or rewrite the version 1
+plan, results, or reproduction report. All sample counts, elapsed budgets,
+tolerances, and the 536,870,912-byte RSS budgets remain unchanged.
+
+Version 2 local samples run in fresh worker process groups. An observer outside
+the worker recursively sums resident bytes for the worker and descendants, so
+Go and analyzer subprocesses are included and the long-lived coordinator is
+not. PostgreSQL samples start, healthcheck, and stop the `postgres` service for
+each sample through the supplied mission `services.yaml`; Docker container
+statistics measure that container's cgroup during the worker run. Missing,
+parent-only, non-isolated, or internally inconsistent accounting fails closed.
+
 ## Claims and standards authority
 
 The [claims-evidence ledger](../../policy/claims-ledger.json) gives each
@@ -124,6 +140,23 @@ bytes, or process RSS to be byte-identical across runs. Any plan widening
 invalidates all bound results. A future tolerance change must include an
 attributable approval plus digest-bound prior-baseline and new-rerun artifacts
 in `tolerance_history`; otherwise verification fails.
+
+The version 2 runner requires an explicit output directory and refuses every
+version 1 result path. For PostgreSQL cases it also requires the governing
+mission lifecycle manifest:
+
+```sh
+python3 scripts/run_prototypes.py \
+  --root . \
+  --plan-commit 0f3dce5b9418a50eb031ec3fd561282462533bd3 \
+  --postgres \
+  --services-manifest <mission-services.yaml> \
+  --output-dir /tmp/testament-prototype-v2-results
+```
+
+The runner performs the PostgreSQL start, healthcheck, cgroup observation, and
+stop sequence once per sample. Do not start PostgreSQL separately for a
+version 2 run.
 
 ## Verification
 

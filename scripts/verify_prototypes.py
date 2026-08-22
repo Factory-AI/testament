@@ -14,8 +14,23 @@ from pathlib import Path
 from typing import Any
 from urllib.parse import urlparse
 
+try:
+    from prototype_resources import (
+        LOCAL_SCOPE,
+        POSTGRES_SCOPE,
+        valid_resource_sample,
+    )
+except ModuleNotFoundError:
+    from scripts.prototype_resources import (
+        LOCAL_SCOPE,
+        POSTGRES_SCOPE,
+        valid_resource_sample,
+    )
+
 
 CANONICAL_PLAN_COMMIT = "cfdf43bb49f3802137dc0ae887314ab7a8a01f58"
+SUCCESSOR_PLAN_COMMIT = "0f3dce5b9418a50eb031ec3fd561282462533bd3"
+SUCCESSOR_PLAN_PATH = "docs/research/benchmarks/precommit-v2.json"
 HISTORICAL_INVALID_PLAN_COMMIT = "cfdf43b1d85024ad5475f5c2afe41978f9fc2a01"
 RECONCILED_CASES = {
     "giant-stream",
@@ -135,6 +150,7 @@ CORE_ANALYZER_METRICS = {
 RESULT_FILES = [RESULT_PATH_BY_CASE[case] for case in sorted(PROTOTYPES)]
 EVIDENCE_FILES = [
     "docs/research/benchmarks/precommit.json",
+    SUCCESSOR_PLAN_PATH,
     REPRODUCTION_PATH,
     "docs/research/analysis/evaluation-plan.md",
     "docs/research/corpus/manifest.json",
@@ -149,6 +165,220 @@ ANALYZER_CONCLUSION = (
     "prove network denial; plain subprocess isolation is rejected "
     "as a hostile multi-tenant isolation boundary."
 )
+
+
+def validate_successor_plan(
+    root: Path,
+    v1_plan: dict[str, Any],
+    problems: list[dict[str, str]],
+) -> None:
+    plan = load(root, SUCCESSOR_PLAN_PATH, problems, "VAL-READY-014")
+    v1_cases = {
+        row.get("id"): row
+        for row in v1_plan.get("cases", [])
+        if isinstance(row, dict) and isinstance(row.get("id"), str)
+    }
+    v2_cases = {
+        row.get("id"): row
+        for row in plan.get("cases", [])
+        if isinstance(row, dict) and isinstance(row.get("id"), str)
+    }
+    supersedes = plan.get("supersedes")
+    preservation = plan.get("preservation")
+    measurement_gate = plan.get("measurement_gate")
+    remediations = plan.get("remediations")
+    remediation_rows = remediations if isinstance(remediations, list) else []
+    remediation_by_id = {
+        row.get("finding_id"): row
+        for row in remediation_rows
+        if isinstance(row, dict) and isinstance(row.get("finding_id"), str)
+    }
+    identity_valid = (
+        plan.get("schema_version") == "1.0.0"
+        and plan.get("feature_id")
+        == "prototype-v2-precommit-and-workload-resource-accounting"
+        and plan.get("validation_ids") == ["VAL-READY-014"]
+        and plan.get("version") == "2.0.0"
+        and plan.get("status") == "committed-premeasurement"
+        and isinstance(supersedes, dict)
+        and supersedes.get("path")
+        == "docs/research/benchmarks/precommit.json"
+        and supersedes.get("version") == "1.0.0"
+        and supersedes.get("commit") == CANONICAL_PLAN_COMMIT
+        and supersedes.get("canonical_sha256") == digest(v1_plan)
+        and isinstance(preservation, dict)
+        and preservation.get("version_1_plan_immutable") is True
+        and preservation.get("version_1_raw_results_immutable") is True
+        and preservation.get("version_1_reproduction_immutable") is True
+        and isinstance(measurement_gate, dict)
+        and measurement_gate.get("plan_must_be_committed_before_measurement")
+        is True
+        and measurement_gate.get("plan_commit_must_resolve") is True
+        and measurement_gate.get(
+            "tested_implementation_must_descend_from_plan_commit"
+        )
+        is True
+        and measurement_gate.get("v2_result_capture_before_plan_commit")
+        == "forbidden"
+        and set(remediation_by_id) == {"F-001", "F-002", "F-003"}
+        and len(remediation_rows) == 3
+        and "results" not in plan
+    )
+    if not identity_valid:
+        problems.append(
+            issue(
+                "VAL-READY-014",
+                "invalid_successor_precommit",
+                SUCCESSOR_PLAN_PATH,
+                "Version 2 must explicitly supersede canonical version 1, precommit F-001/F-002/F-003, and forbid precommit result capture",
+            )
+        )
+    if (
+        set(v2_cases) != PROTOTYPES
+        or len(v2_cases) != len(PROTOTYPES)
+        or any(
+            (
+                row.get("sample_count"),
+                row.get("budgets"),
+                row.get("tolerances"),
+            )
+            != (
+                v1_cases.get(case, {}).get("sample_count"),
+                v1_cases.get(case, {}).get("budgets"),
+                v1_cases.get(case, {}).get("tolerances"),
+            )
+            for case, row in v2_cases.items()
+        )
+        or any(
+            row.get("budgets", {}).get("max_process_rss_bytes") != 536870912
+            for row in v2_cases.values()
+        )
+        or plan.get("tolerance_history") != []
+    ):
+        problems.append(
+            issue(
+                "VAL-READY-014",
+                "successor_budget_or_tolerance_drift",
+                SUCCESSOR_PLAN_PATH,
+                "Version 2 must preserve all nine sample counts, numeric budgets, tolerances, and the 536870912-byte RSS bound",
+            )
+        )
+    f002 = remediation_by_id.get("F-002", {})
+    f002_precommit = f002.get("precommit") if isinstance(f002, dict) else {}
+    f003 = remediation_by_id.get("F-003", {})
+    f003_precommit = f003.get("precommit") if isinstance(f003, dict) else {}
+    if (
+        not isinstance(f002_precommit, dict)
+        or "independently" not in str(f002.get("method", "")).lower()
+        or "pre-rewrap" not in f002_precommit.get("before_capture", "")
+        or "new wrapped DEK and checkpoint" not in f002_precommit.get(
+            "after_capture", ""
+        )
+        or not {
+            "independent capture method and identity",
+            "pre/post payload byte counts and SHA-256 digests",
+            "old/new wrapped-DEK SHA-256 digests",
+            "generations [1,2]",
+            "expected resume checkpoint",
+        }
+        <= set(f002_precommit.get("required_evidence", []))
+        or not isinstance(f003_precommit, dict)
+        or "backend disconnect" not in str(f003.get("method", "")).lower()
+        or "without issuing ROLLBACK" not in f003_precommit.get("fault", "")
+        or "terminates that exact backend" not in f003_precommit.get(
+            "injection", ""
+        )
+        or not {
+            "backend-termination fault type",
+            "active transaction before injection",
+            "readiness marker",
+            "acknowledged termination",
+            "lost client connection and nonzero client exit",
+            "backend disappearance",
+            "zero faulted or orphan rows",
+        }
+        <= set(f003_precommit.get("required_evidence", []))
+    ):
+        problems.append(
+            issue(
+                "VAL-READY-014",
+                "incomplete_successor_finding_methods",
+                SUCCESSOR_PLAN_PATH,
+                "F-002 and F-003 must precommit independent rewrap captures and exact backend-disconnect evidence",
+            )
+        )
+    f001 = remediation_by_id.get("F-001", {})
+    local = f001.get("local_samples") if isinstance(f001, dict) else {}
+    postgres = f001.get("postgres_samples") if isinstance(f001, dict) else {}
+    required_fields = f001.get("required_sample_fields") if isinstance(f001, dict) else []
+    if (
+        not isinstance(local, dict)
+        or local.get("source") != "external ps process-table snapshots"
+        or "recursively discovered descendant closure" not in local.get("scope", "")
+        or "coordinator" not in local.get("coordinator", "")
+        or not isinstance(postgres, dict)
+        or "services.yaml" not in postgres.get("isolation", "")
+        or "container cgroup" not in postgres.get("source", "")
+        or set(required_fields if isinstance(required_fields, list) else [])
+        != {
+            "accounting_version",
+            "scope",
+            "metric",
+            "source",
+            "target",
+            "isolation",
+            "descendants_included",
+            "peak_rss_bytes",
+            "budget_bytes",
+            "hard_limit_bytes",
+            "within_budget",
+        }
+    ):
+        problems.append(
+            issue(
+                "VAL-READY-014",
+                "incomplete_successor_resource_accounting",
+                SUCCESSOR_PLAN_PATH,
+                "F-001 must precommit isolated descendant-tree and PostgreSQL cgroup accounting with every required sample field",
+            )
+        )
+    committed_plan = git_file(root, SUCCESSOR_PLAN_COMMIT, SUCCESSOR_PLAN_PATH)
+    if not git_object_exists(root, f"{SUCCESSOR_PLAN_COMMIT}^{{commit}}"):
+        problems.append(
+            issue(
+                "VAL-READY-014",
+                "unresolvable_successor_plan_commit",
+                SUCCESSOR_PLAN_PATH,
+                "The version 2 plan commit must resolve before implementation or measurement",
+            )
+        )
+    elif committed_plan is not None:
+        try:
+            committed_digest = digest(json.loads(committed_plan))
+        except json.JSONDecodeError:
+            committed_digest = ""
+        if committed_digest != digest(plan):
+            problems.append(
+                issue(
+                    "VAL-READY-014",
+                    "successor_plan_commit_mismatch",
+                    SUCCESSOR_PLAN_PATH,
+                    "The active version 2 plan differs from its premeasurement commit",
+                )
+            )
+
+
+def valid_v2_resource_sample(
+    sample: Any,
+    budgets: dict[str, Any],
+    case: str,
+) -> bool:
+    expected_scope = (
+        POSTGRES_SCOPE
+        if case in POSTGRES_CASES
+        else LOCAL_SCOPE
+    )
+    return valid_resource_sample(sample, budgets, expected_scope)
 
 
 def issue(criterion: str, code: str, path: str, message: str) -> dict[str, str]:
@@ -743,6 +973,7 @@ def validate_prototype_evidence(root: Path) -> list[dict[str, str]]:
     problems: list[dict[str, str]] = []
     plan_path = "docs/research/benchmarks/precommit.json"
     plan = load(root, plan_path, problems, "VAL-READY-014")
+    validate_successor_plan(root, plan, problems)
     cases = plan.get("cases", [])
     if not isinstance(cases, list):
         cases = []

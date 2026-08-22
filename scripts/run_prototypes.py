@@ -10,13 +10,31 @@ import json
 import os
 import platform
 import resource
-import shutil
 import subprocess
 import sys
 import tempfile
 import time
 from pathlib import Path
 from typing import Any, Callable
+
+try:
+    from prototype_resources import (
+        AccountingError,
+        ServicesManifest,
+        observe_local_process,
+        observe_postgres_process,
+        validate_accounting,
+        valid_resource_sample,
+    )
+except ModuleNotFoundError:
+    from scripts.prototype_resources import (
+        AccountingError,
+        ServicesManifest,
+        observe_local_process,
+        observe_postgres_process,
+        validate_accounting,
+        valid_resource_sample,
+    )
 
 
 RESULT_PATHS = {
@@ -30,17 +48,9 @@ RESULT_PATHS = {
     "analyzer-isolation": "docs/research/benchmarks/analyzer-isolation.json",
     "offline-replay": "docs/research/benchmarks/offline-replay.json",
 }
+SUCCESSOR_PLAN_COMMIT = "0f3dce5b9418a50eb031ec3fd561282462533bd3"
+SUCCESSOR_PLAN_PATH = "docs/research/benchmarks/precommit-v2.json"
 POSTGRES_CASES = {"postgres-storage", "decision-durability", "offline-replay"}
-PLAN_FIELDS = (
-    "inputs",
-    "sample_count",
-    "budgets",
-    "tolerances",
-    "comparison_method",
-    "acceptance_rule",
-    "limitations",
-    "tolerance_history",
-)
 
 
 def clean_clone_evidence(root: Path) -> dict[str, Any]:
@@ -103,6 +113,33 @@ def machine_environment(root: Path) -> dict[str, Any]:
         ).stdout.strip(),
         "machine_class": "developer-workstation-12cpu-18gib",
     }
+
+
+def require_committed_successor(root: Path) -> None:
+    ancestor = subprocess.run(
+        [
+            "git",
+            "merge-base",
+            "--is-ancestor",
+            SUCCESSOR_PLAN_COMMIT,
+            "HEAD",
+        ],
+        cwd=root,
+        capture_output=True,
+        check=False,
+    )
+    status = subprocess.run(
+        ["git", "status", "--porcelain"],
+        cwd=root,
+        capture_output=True,
+        text=True,
+        check=True,
+    ).stdout
+    if ancestor.returncode != 0 or status:
+        raise RuntimeError(
+            "version 2 measurement requires a clean tested implementation "
+            "commit descending from the successor plan commit"
+        )
 
 
 def fixture(root: Path, name: str) -> Path:
@@ -498,24 +535,92 @@ def analyzer_isolation_accepted(observation: dict[str, Any]) -> bool:
     )
 
 
-def sample(root: Path, case: str) -> dict[str, Any]:
+def worker_observation(root: Path, case: str) -> dict[str, Any]:
+    return postgres(root, case) if case in POSTGRES_CASES else LOCAL_RUNNERS[case](root)
+
+
+def decode_worker_observation(result_stdout: str, result_stderr: str) -> dict[str, Any]:
+    lines = [line for line in result_stdout.splitlines() if line.strip()]
+    if len(lines) != 1:
+        return {
+            "worker_completed": False,
+            "worker_error": result_stderr.strip() or "worker emitted invalid output",
+        }
+    try:
+        value = json.loads(lines[0])
+    except json.JSONDecodeError:
+        return {
+            "worker_completed": False,
+            "worker_error": "worker emitted non-JSON output",
+        }
+    if not isinstance(value, dict):
+        return {
+            "worker_completed": False,
+            "worker_error": "worker observation was not an object",
+        }
+    return value
+
+
+def sample(
+    root: Path,
+    case: str,
+    budgets: dict[str, Any],
+    services_manifest: ServicesManifest | None,
+) -> dict[str, Any]:
     started = time.perf_counter_ns()
-    before = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
-    observation = postgres(root, case) if case in POSTGRES_CASES else LOCAL_RUNNERS[case](root)
-    after = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
+    command = [
+        sys.executable,
+        str(root / "scripts" / "run_prototypes.py"),
+        "--root",
+        str(root),
+        "--worker-case",
+        case,
+    ]
+    budget_bytes = budgets["max_process_rss_bytes"]
+    if case in POSTGRES_CASES:
+        if services_manifest is None:
+            raise AccountingError(
+                "PostgreSQL samples require --services-manifest services.yaml"
+            )
+        result = observe_postgres_process(
+            command,
+            cwd=root,
+            manifest=services_manifest,
+            budget_bytes=budget_bytes,
+            hard_limit_bytes=budget_bytes,
+            timeout_ms=budgets["max_elapsed_ms"],
+        )
+    else:
+        result = observe_local_process(
+            command,
+            cwd=root,
+            budget_bytes=budget_bytes,
+            hard_limit_bytes=budget_bytes,
+            timeout_ms=budgets["max_elapsed_ms"],
+        )
     elapsed_ms = (time.perf_counter_ns() - started) / 1_000_000
-    rss_scale = 1 if sys.platform == "darwin" else 1024
+    validate_accounting(result.accounting)
+    observation = decode_worker_observation(result.stdout, result.stderr)
+    observation["worker_completed"] = (
+        result.returncode == 0 and not result.limit_exceeded
+    )
+    if result.stderr.strip():
+        observation["worker_diagnostic"] = result.stderr.strip()
     return {
         "elapsed_ms": round(elapsed_ms, 3),
-        "process_max_rss_bytes": int(max(before, after) * rss_scale),
+        "resource_accounting": result.accounting,
         "observation": observation,
     }
 
 
 def accepted(case: str, samples: list[dict[str, Any]], budgets: dict[str, Any]) -> bool:
+    expected_scope = (
+        "postgres_container_cgroup"
+        if case in POSTGRES_CASES
+        else "worker_descendant_tree"
+    )
     within = all(
-        item["elapsed_ms"] <= budgets["max_elapsed_ms"]
-        and item["process_max_rss_bytes"] <= budgets["max_process_rss_bytes"]
+        valid_resource_sample(item, budgets, expected_scope)
         for item in samples
     )
     checks = {
@@ -557,13 +662,23 @@ def accepted(case: str, samples: list[dict[str, Any]], budgets: dict[str, Any]) 
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--root", type=Path, default=Path.cwd())
-    parser.add_argument("--plan-commit", required=True)
+    parser.add_argument("--plan-commit")
     parser.add_argument("--postgres", action="store_true")
     parser.add_argument("--case", action="append", choices=sorted(RESULT_PATHS))
     parser.add_argument(
+        "--services-manifest",
+        type=Path,
+        help="Mission services.yaml; required when PostgreSQL cases are selected.",
+    )
+    parser.add_argument(
+        "--worker-case",
+        choices=sorted(RESULT_PATHS),
+        help=argparse.SUPPRESS,
+    )
+    parser.add_argument(
         "--output-dir",
         type=Path,
-        help="Write result JSON under this directory instead of the repository.",
+        help="Required version 2 result directory outside version 1 paths.",
     )
     parser.add_argument(
         "--report",
@@ -577,17 +692,35 @@ def main() -> int:
     )
     args = parser.parse_args()
     root = args.root.resolve()
-    if args.report and not args.output_dir:
-        parser.error("--report requires --output-dir so reruns cannot overwrite baselines")
+    if args.worker_case:
+        print(json.dumps(worker_observation(root, args.worker_case)))
+        return 0
+    if args.plan_commit != SUCCESSOR_PLAN_COMMIT:
+        parser.error(
+            f"--plan-commit must be committed successor {SUCCESSOR_PLAN_COMMIT}"
+        )
+    if not args.output_dir:
+        parser.error(
+            "--output-dir is required; version 2 runs may not overwrite "
+            "version 1 raw results"
+        )
+    require_committed_successor(root)
     if args.report and not args.clean_clone:
         parser.error("--report requires --clean-clone")
     clone_evidence = clean_clone_evidence(root) if args.clean_clone else None
     plan = json.loads(
-        (root / "docs/research/benchmarks/precommit.json").read_text(encoding="utf-8")
+        (root / SUCCESSOR_PLAN_PATH).read_text(encoding="utf-8")
     )
     selected = set(args.case or RESULT_PATHS)
     if not args.postgres:
         selected -= POSTGRES_CASES
+    if selected & POSTGRES_CASES and args.services_manifest is None:
+        parser.error("PostgreSQL samples require --services-manifest services.yaml")
+    services_manifest = (
+        ServicesManifest.from_path(args.services_manifest)
+        if args.services_manifest
+        else None
+    )
     environment = machine_environment(root)
     plan_digest = canonical_digest(plan)
     generated: dict[str, dict[str, Any]] = {}
@@ -596,19 +729,21 @@ def main() -> int:
         if case not in selected:
             continue
         samples = [
-            sample(root, case) for _ in range(case_plan["sample_count"])
+            sample(root, case, case_plan["budgets"], services_manifest)
+            for _ in range(case_plan["sample_count"])
         ]
         conclusion = "pass" if accepted(case, samples, case_plan["budgets"]) else "fail"
+        result_environment = dict(environment)
         result = {
             "schema_version": "1.0.0",
-            "feature_id": "storage-analysis-prototypes-and-evaluation-plan",
+            "feature_id": "prototype-v2-precommit-and-workload-resource-accounting",
             "validation_id": "VAL-READY-014",
             "prototype_id": case,
             "benchmark_id": f"{case}-benchmark",
-            "version": "1.0.0",
+            "version": "2.0.0",
             "plan_commit": args.plan_commit,
             "plan_sha256": plan_digest,
-            "environment": environment,
+            "environment": result_environment,
             "inputs": case_plan["inputs"],
             "sample_count": case_plan["sample_count"],
             "budgets": case_plan["budgets"],
@@ -621,18 +756,17 @@ def main() -> int:
             "tolerance_history": plan["tolerance_history"],
         }
         if case in POSTGRES_CASES:
-            result["environment"]["postgres"] = {
+            result_environment["postgres"] = {
                 "major": 17,
                 "port": 5440,
                 "service": "postgres",
                 "lifecycle_manifest": "services.yaml",
                 "healthcheck": "pg_isready -p 5440",
+                "resource_source": "Docker container statistics backed by the postgres container cgroup",
             }
-        path = (
-            args.output_dir / f"{case}.json"
-            if args.output_dir
-            else root / RESULT_PATHS[case]
-        )
+        path = args.output_dir / f"{case}.json"
+        if path.resolve() == (root / RESULT_PATHS[case]).resolve():
+            raise RuntimeError("version 2 result path collides with version 1")
         path.parent.mkdir(parents=True, exist_ok=True)
         temporary = path.with_suffix(".tmp")
         temporary.write_text(
@@ -647,40 +781,28 @@ def main() -> int:
         for case in sorted(RESULT_PATHS):
             if case not in generated:
                 raise RuntimeError("A reproduction report requires all nine cases")
-            baseline = json.loads(
-                (root / RESULT_PATHS[case]).read_text(encoding="utf-8")
-            )
             rerun = generated[case]
-            plan_fields_match = all(
-                baseline.get(field) == rerun.get(field) for field in PLAN_FIELDS
-            )
             sample_count_matches = (
-                baseline.get("sample_count") == rerun.get("sample_count")
-                == len(rerun.get("samples", []))
+                rerun.get("sample_count") == len(rerun.get("samples", []))
             )
             comparisons.append(
                 {
                     "prototype_id": case,
-                    "baseline_result_path": RESULT_PATHS[case],
                     "raw_result": rerun,
                     "comparison": {
-                        "method": "Compare plan-bound fields, declared sample count, and acceptance-rule conclusion; timing and randomized cryptographic observations are not required to be byte-identical.",
-                        "baseline_conclusion": baseline.get("conclusion"),
+                        "method": "Recompute version 2 plan fields, declared sample count, workload acceptance, and resource accounting; timing and randomized cryptographic observations are not required to be byte-identical.",
                         "rerun_conclusion": rerun.get("conclusion"),
                         "sample_count_matches": sample_count_matches,
-                        "plan_fields_match": plan_fields_match,
                         "matches": (
-                            baseline.get("conclusion") == "pass"
-                            and rerun.get("conclusion") == "pass"
+                            rerun.get("conclusion") == "pass"
                             and sample_count_matches
-                            and plan_fields_match
                         ),
                     },
                 }
             )
         report = {
             "schema_version": "1.0.0",
-            "feature_id": "reproducible-prototype-completion",
+            "feature_id": "prototype-v2-clean-clone-reconciliation",
             "validation_id": "VAL-READY-014",
             "status": (
                 "pass"

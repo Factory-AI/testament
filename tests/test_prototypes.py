@@ -79,6 +79,50 @@ class PrototypeEvidenceTest(unittest.TestCase):
         path.write_text(json.dumps(plan), encoding="utf-8")
         self.assertIn("result_plan_digest_mismatch", self.codes(root))
 
+    def test_successor_plan_precommits_all_review_remediations(self) -> None:
+        plan = json.loads(
+            (ROOT / VERIFY.SUCCESSOR_PLAN_PATH).read_text(encoding="utf-8")
+        )
+        self.assertEqual("2.0.0", plan["version"])
+        self.assertEqual(
+            VERIFY.CANONICAL_PLAN_COMMIT,
+            plan["supersedes"]["commit"],
+        )
+        self.assertEqual(
+            {"F-001", "F-002", "F-003"},
+            {row["finding_id"] for row in plan["remediations"]},
+        )
+
+    def test_successor_budget_widening_fails(self) -> None:
+        root = self.copy_evidence()
+        path = root / VERIFY.SUCCESSOR_PLAN_PATH
+        plan = json.loads(path.read_text(encoding="utf-8"))
+        plan["cases"][0]["budgets"]["max_process_rss_bytes"] += 1
+        path.write_text(json.dumps(plan), encoding="utf-8")
+        self.assertIn("successor_budget_or_tolerance_drift", self.codes(root))
+
+    def test_successor_missing_resource_source_fails(self) -> None:
+        root = self.copy_evidence()
+        path = root / VERIFY.SUCCESSOR_PLAN_PATH
+        plan = json.loads(path.read_text(encoding="utf-8"))
+        plan["remediations"][0]["local_samples"]["source"] = ""
+        path.write_text(json.dumps(plan), encoding="utf-8")
+        self.assertIn(
+            "incomplete_successor_resource_accounting",
+            self.codes(root),
+        )
+
+    def test_successor_missing_disconnect_evidence_fails(self) -> None:
+        root = self.copy_evidence()
+        path = root / VERIFY.SUCCESSOR_PLAN_PATH
+        plan = json.loads(path.read_text(encoding="utf-8"))
+        plan["remediations"][2]["precommit"]["required_evidence"].pop()
+        path.write_text(json.dumps(plan), encoding="utf-8")
+        self.assertIn(
+            "incomplete_successor_finding_methods",
+            self.codes(root),
+        )
+
     def test_missing_raw_sample_fails(self) -> None:
         root = self.copy_evidence()
         path = root / VERIFY.RESULT_FILES[0]
