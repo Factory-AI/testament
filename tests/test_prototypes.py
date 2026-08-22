@@ -15,6 +15,12 @@ SPEC = importlib.util.spec_from_file_location(
 assert SPEC and SPEC.loader
 VERIFY = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(VERIFY)
+RUN_SPEC = importlib.util.spec_from_file_location(
+    "run_prototypes", ROOT / "scripts" / "run_prototypes.py"
+)
+assert RUN_SPEC and RUN_SPEC.loader
+RUN = importlib.util.module_from_spec(RUN_SPEC)
+RUN_SPEC.loader.exec_module(RUN)
 
 
 class PrototypeEvidenceTest(unittest.TestCase):
@@ -89,6 +95,13 @@ class PrototypeEvidenceTest(unittest.TestCase):
         result["environment"]["postgres"]["port"] = 5432
         path.write_text(json.dumps(result), encoding="utf-8")
         self.assertIn("invalid_postgres_environment", self.codes(root))
+
+    def test_analyzer_isolation_enforces_finite_resource_bounds(self) -> None:
+        result = RUN.analyzer_isolation(ROOT)
+        self.assertTrue(result["address_space_limit_enforced"])
+        self.assertLess(result["address_space_limit_bytes"], 1 << 63)
+        self.assertTrue(result["output_limit_enforced"])
+        self.assertEqual(4096, result["output_limit_bytes"])
 
 
 if __name__ == "__main__":

@@ -165,6 +165,8 @@ def key_rotation(root: Path) -> dict[str, Any]:
 
 
 def analyzer_isolation(_: Path) -> dict[str, Any]:
+    address_space_limit = 512 << 30 if sys.platform == "darwin" else 512 << 20
+    output_limit = 4096
     script = (
         "import json,os,resource;"
         "print(json.dumps({'env':sorted(os.environ),'cwd':os.getcwd(),"
@@ -172,32 +174,38 @@ def analyzer_isolation(_: Path) -> dict[str, Any]:
     )
 
     def limits() -> None:
-        _, cpu_hard = resource.getrlimit(resource.RLIMIT_CPU)
-        _, nofile_hard = resource.getrlimit(resource.RLIMIT_NOFILE)
-        resource.setrlimit(resource.RLIMIT_CPU, (1, cpu_hard))
-        resource.setrlimit(resource.RLIMIT_NOFILE, (16, nofile_hard))
+        resource.setrlimit(resource.RLIMIT_CPU, (1, 1))
+        resource.setrlimit(resource.RLIMIT_NOFILE, (16, 16))
+        resource.setrlimit(resource.RLIMIT_FSIZE, (output_limit, output_limit))
         if hasattr(resource, "RLIMIT_AS"):
-            _, address_hard = resource.getrlimit(resource.RLIMIT_AS)
-            resource.setrlimit(resource.RLIMIT_AS, (64 << 20, address_hard))
+            resource.setrlimit(
+                resource.RLIMIT_AS, (address_space_limit, address_space_limit)
+            )
 
-    with tempfile.TemporaryDirectory() as directory:
+    with tempfile.TemporaryDirectory() as directory, tempfile.TemporaryFile() as output:
         result = subprocess.run(
             [sys.executable, "-c", script],
             cwd=directory,
             env={"PATH": "/usr/bin:/bin"},
-            capture_output=True,
-            text=True,
+            stdout=output,
+            stderr=output,
             timeout=2,
             check=True,
             preexec_fn=limits,
         )
-    child = json.loads(result.stdout)
+        output.seek(0)
+        encoded_output = output.read(output_limit + 1)
+    child = json.loads(encoded_output)
     return {
         "sanitized_environment": child["env"] == ["LC_CTYPE", "PATH"],
         "isolated_working_directory": child["cwd"] == directory,
         "file_descriptor_limit": child["nofile"],
+        "address_space_limit_bytes": address_space_limit,
+        "address_space_limit_enforced": hasattr(resource, "RLIMIT_AS"),
         "deadline_seconds": 2,
-        "output_bytes": len(result.stdout.encode()),
+        "output_bytes": len(encoded_output),
+        "output_limit_bytes": output_limit,
+        "output_limit_enforced": len(encoded_output) <= output_limit,
         "network_denial_proven": False,
         "conclusion": (
             "POSIX subprocess limits bound CPU, address space, descriptors, "
