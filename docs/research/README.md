@@ -33,10 +33,11 @@ The manifest currently registers 50 stable deliverables:
 - 3 independent reviews; and
 - 4 decisions.
 
-The naming study and naming decision are accepted. The trace-format and
-abuse/misuse studies are in review. The other deliverables are drafts. Each
-deliverable gets its own artifact rather than sharing one file with an
-incompatible deliverable.
+The naming study and naming decision are accepted. The trace-format,
+abuse/misuse, STRIDE, LINDDUN, attack-tree, data-inventory, sovereignty,
+no-content-egress, retention/deletion, and key-custody studies are in review.
+The other deliverables are drafts. Each deliverable gets its own artifact
+rather than sharing one file with an incompatible deliverable.
 
 Current studies:
 

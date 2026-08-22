@@ -200,6 +200,24 @@ class ResearchRegistryTest(unittest.TestCase):
         )
         self.assertIn("unbound_artifact_content", self.codes(root))
 
+    def test_threat_privacy_bundle_requires_one_bound_candidate(self) -> None:
+        root = self.copy_repository()
+        shutil.copytree(ROOT / ".git", root / ".git")
+
+        def break_bundle(value) -> None:
+            record = next(
+                item
+                for item in value["deliverables"]
+                if item["id"] == "RES-STUDY-STRIDE-001"
+            )
+            record["state"] = "draft"
+            record["commit"] = "0" * 40
+
+        self.mutate_manifest(root, break_bundle)
+        codes = self.codes(root)
+        self.assertIn("unbound_threat_privacy_manifest_entry", codes)
+        self.assertIn("inconsistent_threat_privacy_candidate", codes)
+
     def test_naming_record_requires_every_search_class(self) -> None:
         root = self.copy_repository()
         path = root / "policy/naming-clearance.json"
@@ -388,6 +406,22 @@ class ResearchRegistryTest(unittest.TestCase):
         self.assertIn("incomplete_control_validation_binding", codes)
         self.assertIn("incomplete_analyzer_trust_tiers", codes)
         self.assertIn("incomplete_executable_egress_schema", codes)
+
+    def test_provider_kms_wire_contracts_are_exact(self) -> None:
+        root = self.copy_repository()
+        path = root / "policy/threat-privacy-sovereignty.json"
+        research = json.loads(path.read_text(encoding="utf-8"))
+        aws = next(
+            item
+            for item in research["no_content_egress_contract"][
+                "permitted_egress_schemas"
+            ]
+            if item["id"] == "EGRESS-AWS-KMS-01"
+        )
+        aws["path"] = "/alternate"
+        aws["wire_fields"].pop()
+        path.write_text(json.dumps(research), encoding="utf-8")
+        self.assertIn("invalid_provider_kms_wire_contract", self.codes(root))
 
 
 if __name__ == "__main__":

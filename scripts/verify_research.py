@@ -133,7 +133,75 @@ ANALYZER_TRUST_TIERS = {
     "ANALYZER-ISOLATED-EXTENSION",
     "ANALYZER-EXTERNAL",
 }
-EGRESS_SCHEMAS = {"EGRESS-KMS-01", "EGRESS-IDP-01", "EGRESS-OBS-01"}
+EGRESS_SCHEMAS = {
+    "EGRESS-AWS-KMS-01",
+    "EGRESS-GCP-KMS-01",
+    "EGRESS-AZURE-KMS-01",
+    "EGRESS-IDP-01",
+    "EGRESS-OBS-01",
+}
+KMS_WIRE_FIELDS = {
+    "EGRESS-AWS-KMS-01": {
+        "request": {
+            "KeyId",
+            "Plaintext",
+            "CiphertextBlob",
+            "EncryptionContext",
+            "EncryptionAlgorithm",
+        },
+        "response": {
+            "CiphertextBlob",
+            "Plaintext",
+            "KeyId",
+            "EncryptionAlgorithm",
+        },
+        "method": "POST",
+        "path": "/",
+    },
+    "EGRESS-GCP-KMS-01": {
+        "request": {
+            "name",
+            "plaintext",
+            "ciphertext",
+            "additionalAuthenticatedData",
+            "plaintextCrc32c",
+            "ciphertextCrc32c",
+            "additionalAuthenticatedDataCrc32c",
+            "initializationVector",
+            "initializationVectorCrc32c",
+            "tagLength",
+        },
+        "response": {
+            "name",
+            "ciphertext",
+            "ciphertextCrc32c",
+            "initializationVector",
+            "initializationVectorCrc32c",
+            "tagLength",
+            "verifiedPlaintextCrc32c",
+            "verifiedAdditionalAuthenticatedDataCrc32c",
+            "plaintext",
+            "plaintextCrc32c",
+            "verifiedCiphertextCrc32c",
+            "verifiedInitializationVectorCrc32c",
+            "protectionLevel",
+        },
+        "method": "POST",
+        "path": "/v1/{exact CryptoKeyVersion resource}:rawEncrypt or :rawDecrypt",
+    },
+    "EGRESS-AZURE-KMS-01": {
+        "request": {
+            "alg",
+            "value",
+            "key_name",
+            "key_version",
+            "api-version",
+        },
+        "response": {"kid", "value"},
+        "method": "POST",
+        "path": "/keys/{percent-encoded key-name}/{exact version}/wrapkey or /unwrapkey",
+    },
+}
 LIFECYCLE_CLASSES = {
     "source artifacts and chunks",
     "derived projections and provenance",
@@ -1233,6 +1301,49 @@ def validate_threat_privacy_research(root: Path, problems: list[dict[str, str]])
                     "define unique typed wire fields, authentication headers, and provider limits",
                 )
             )
+        response_fields = egress.get("response_fields")
+        response_items = (
+            response_fields if isinstance(response_fields, list) else []
+        )
+        response_names = [
+            field.get("name")
+            for field in response_items
+            if isinstance(field, dict)
+        ]
+        if (
+            not response_items
+            or len(response_names) != len(set(response_names))
+            or not egress.get("allowed_headers")
+            or not egress.get("conditional_rules")
+            or not isinstance(egress.get("max_response_bytes"), int)
+        ):
+            problems.append(
+                issue(
+                    THREAT_PRIVACY_CRITERION,
+                    "incomplete_executable_egress_response",
+                    relative,
+                    str(egress.get("id")),
+                    "define unique typed response fields, exact headers, conditions, and response bound",
+                )
+            )
+        expected_wire = KMS_WIRE_FIELDS.get(egress.get("id"))
+        if expected_wire and (
+            set(names) != expected_wire["request"]
+            or set(response_names) != expected_wire["response"]
+            or egress.get("method") != expected_wire["method"]
+            or egress.get("path") != expected_wire["path"]
+            or not egress.get("authentication_headers")
+            or not egress.get("provider_limits")
+        ):
+            problems.append(
+                issue(
+                    THREAT_PRIVACY_CRITERION,
+                    "invalid_provider_kms_wire_contract",
+                    relative,
+                    str(egress.get("id")),
+                    "restore exact provider method, path, request, response, authentication, and limit fields",
+                )
+            )
     lifecycle = research.get("lifecycle_model")
     lifecycle_records = lifecycle.get("classes") if isinstance(lifecycle, dict) else []
     lifecycle_names = {
@@ -1550,6 +1661,66 @@ def validate_manifest(root: Path, problems: list[dict[str, str]]) -> dict[str, A
                     "assign one artifact path per stable deliverable",
                 )
             )
+    threat_bundle_records = [
+        by_id[record_id]
+        for record_id in sorted(THREAT_PRIVACY_DELIVERABLES)
+        if record_id in by_id
+    ]
+    bundle_commits = {record.get("commit") for record in threat_bundle_records}
+    for record in threat_bundle_records:
+        locators = {
+            evidence.get("locator")
+            for evidence in record.get("evidence", [])
+            if isinstance(evidence, dict)
+        }
+        if (
+            record.get("state") != "in-review"
+            or record.get("version") != "0.2.0"
+            or record.get("artifact", {}).get("path") not in locators
+            or "policy/threat-privacy-sovereignty.json" not in locators
+        ):
+            problems.append(
+                issue(
+                    THREAT_PRIVACY_CRITERION,
+                    "unbound_threat_privacy_manifest_entry",
+                    relative,
+                    str(record.get("id")),
+                    "bind version 0.2.0 document and matrix evidence at in-review state",
+                )
+            )
+    if len(threat_bundle_records) == len(THREAT_PRIVACY_DELIVERABLES):
+        if len(bundle_commits) != 1 or None in bundle_commits:
+            problems.append(
+                issue(
+                    THREAT_PRIVACY_CRITERION,
+                    "inconsistent_threat_privacy_candidate",
+                    relative,
+                    "All eight threat/privacy studies must bind one candidate commit",
+                    "bind every VAL-READY-010 study to the same candidate",
+                )
+            )
+        elif (root / ".git").exists():
+            candidate = next(iter(bundle_commits))
+            matrix_path = "policy/threat-privacy-sovereignty.json"
+            matrix_at_candidate = subprocess.run(
+                ["git", "show", f"{candidate}:{matrix_path}"],
+                cwd=root,
+                capture_output=True,
+                check=False,
+            )
+            if (
+                matrix_at_candidate.returncode != 0
+                or (root / matrix_path).read_bytes() != matrix_at_candidate.stdout
+            ):
+                problems.append(
+                    issue(
+                        THREAT_PRIVACY_CRITERION,
+                        "unbound_threat_privacy_matrix",
+                        matrix_path,
+                        f"Matrix bytes are not bound to candidate {candidate}",
+                        "bind the exact matrix bytes to the shared candidate commit",
+                    )
+                )
     indexed = set(artifact_owners)
     research_root = root / "docs/research"
     if research_root.is_dir():
