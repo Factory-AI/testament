@@ -1,5 +1,10 @@
 {
   "clean_clone": true,
+  "clean_clone_evidence": {
+    "complete_history": true,
+    "independent_object_store": true,
+    "worktree_clean_before_measurement": true
+  },
   "clone_method": "git clone --no-local from the candidate object database into an empty temporary directory",
   "feature_id": "reproducible-prototype-completion",
   "plan_commit": "cfdf43bb49f3802137dc0ae887314ab7a8a01f58",
@@ -41,7 +46,7 @@
             "service": "postgres"
           },
           "python": "3.14.7",
-          "tested_commit": "f0ddd9bc0f6698496540eed134c60d093f2f4b8a"
+          "tested_commit": "69109a20ad1045cd2432a71a9fa216ffdc676458"
         },
         "feature_id": "storage-analysis-prototypes-and-evaluation-plan",
         "inputs": [
@@ -59,7 +64,7 @@
         "sample_count": 3,
         "samples": [
           {
-            "elapsed_ms": 2171.121,
+            "elapsed_ms": 2175.525,
             "observation": {
               "address_space_limit_bytes": 549755813888,
               "address_space_limit_enforced": true,
@@ -88,10 +93,10 @@
                 "__CF_USER_TEXT_ENCODING"
               ]
             },
-            "process_max_rss_bytes": 29868032
+            "process_max_rss_bytes": 29360128
           },
           {
-            "elapsed_ms": 2164.232,
+            "elapsed_ms": 2142.898,
             "observation": {
               "address_space_limit_bytes": 549755813888,
               "address_space_limit_enforced": true,
@@ -120,10 +125,10 @@
                 "__CF_USER_TEXT_ENCODING"
               ]
             },
-            "process_max_rss_bytes": 29868032
+            "process_max_rss_bytes": 29360128
           },
           {
-            "elapsed_ms": 2160.23,
+            "elapsed_ms": 2186.899,
             "observation": {
               "address_space_limit_bytes": 549755813888,
               "address_space_limit_enforced": true,
@@ -152,7 +157,7 @@
                 "__CF_USER_TEXT_ENCODING"
               ]
             },
-            "process_max_rss_bytes": 29868032
+            "process_max_rss_bytes": 29360128
           }
         ],
         "schema_version": "1.0.0",
@@ -201,7 +206,7 @@
             "service": "postgres"
           },
           "python": "3.14.7",
-          "tested_commit": "f0ddd9bc0f6698496540eed134c60d093f2f4b8a"
+          "tested_commit": "69109a20ad1045cd2432a71a9fa216ffdc676458"
         },
         "feature_id": "storage-analysis-prototypes-and-evaluation-plan",
         "inputs": [
@@ -219,7 +224,7 @@
         "sample_count": 3,
         "samples": [
           {
-            "elapsed_ms": 0.091,
+            "elapsed_ms": 0.076,
             "observation": {
               "cross_field_separation": true,
               "cross_org_separation": true,
@@ -228,7 +233,7 @@
               "same_scope_equality": true,
               "token_bytes": 32
             },
-            "process_max_rss_bytes": 29868032
+            "process_max_rss_bytes": 29327360
           },
           {
             "elapsed_ms": 0.016,
@@ -240,7 +245,7 @@
               "same_scope_equality": true,
               "token_bytes": 32
             },
-            "process_max_rss_bytes": 29868032
+            "process_max_rss_bytes": 29327360
           },
           {
             "elapsed_ms": 0.015,
@@ -252,7 +257,7 @@
               "same_scope_equality": true,
               "token_bytes": 32
             },
-            "process_max_rss_bytes": 29868032
+            "process_max_rss_bytes": 29327360
           }
         ],
         "schema_version": "1.0.0",
@@ -300,7 +305,7 @@
             "service": "postgres"
           },
           "python": "3.14.7",
-          "tested_commit": "f0ddd9bc0f6698496540eed134c60d093f2f4b8a"
+          "tested_commit": "69109a20ad1045cd2432a71a9fa216ffdc676458"
         },
         "feature_id": "storage-analysis-prototypes-and-evaluation-plan",
         "inputs": [
@@ -317,7 +322,7 @@
         "sample_count": 3,
         "samples": [
           {
-            "elapsed_ms": 1227.393,
+            "elapsed_ms": 1034.477,
             "observation": {
               "ciphertext_bytes": 578230,
               "ciphertext_sha256": "c27e80085c0a863a7435bbbdf2cffffd63066397f66b79a5024d4bbd669a6d74",
@@ -332,10 +337,10 @@
               "round_trip_exact": true,
               "tamper_rejected": true
             },
-            "process_max_rss_bytes": 29868032
+            "process_max_rss_bytes": 29229056
           },
           {
-            "elapsed_ms": 505.237,
+            "elapsed_ms": 272.617,
             "observation": {
               "ciphertext_bytes": 578230,
               "ciphertext_sha256": "c27e80085c0a863a7435bbbdf2cffffd63066397f66b79a5024d4bbd669a6d74",
@@ -350,10 +355,10 @@
               "round_trip_exact": true,
               "tamper_rejected": true
             },
-            "process_max_rss_bytes": 29868032
+            "process_max_rss_bytes": 29245440
           },
           {
-            "elapsed_ms": 136.172,
+            "elapsed_ms": 118.677,
             "observation": {
               "ciphertext_bytes": 578230,
               "ciphertext_sha256": "c27e80085c0a863a7435bbbdf2cffffd63066397f66b79a5024d4bbd669a6d74",
@@ -368,7 +373,7 @@
               "round_trip_exact": true,
               "tamper_rejected": true
             },
-            "process_max_rss_bytes": 29868032
+            "process_max_rss_bytes": 29245440
           }
         ],
         "schema_version": "1.0.0",
@@ -417,7 +422,7 @@
             "service": "postgres"
           },
           "python": "3.14.7",
-          "tested_commit": "f0ddd9bc0f6698496540eed134c60d093f2f4b8a"
+          "tested_commit": "69109a20ad1045cd2432a71a9fa216ffdc676458"
         },
         "feature_id": "storage-analysis-prototypes-and-evaluation-plan",
         "inputs": [
@@ -433,7 +438,7 @@
         "sample_count": 3,
         "samples": [
           {
-            "elapsed_ms": 637.993,
+            "elapsed_ms": 272.003,
             "observation": {
               "audits": 1,
               "decisions": 1,
@@ -447,10 +452,10 @@
               "postgres_version": "17.11 (Debian 17.11-1.pgdg12+2)",
               "receipts": 1
             },
-            "process_max_rss_bytes": 29868032
+            "process_max_rss_bytes": 29360128
           },
           {
-            "elapsed_ms": 303.518,
+            "elapsed_ms": 276.681,
             "observation": {
               "audits": 1,
               "decisions": 1,
@@ -464,10 +469,10 @@
               "postgres_version": "17.11 (Debian 17.11-1.pgdg12+2)",
               "receipts": 1
             },
-            "process_max_rss_bytes": 29868032
+            "process_max_rss_bytes": 29360128
           },
           {
-            "elapsed_ms": 284.326,
+            "elapsed_ms": 254.384,
             "observation": {
               "audits": 1,
               "decisions": 1,
@@ -481,7 +486,7 @@
               "postgres_version": "17.11 (Debian 17.11-1.pgdg12+2)",
               "receipts": 1
             },
-            "process_max_rss_bytes": 29868032
+            "process_max_rss_bytes": 29360128
           }
         ],
         "schema_version": "1.0.0",
@@ -530,7 +535,7 @@
             "service": "postgres"
           },
           "python": "3.14.7",
-          "tested_commit": "f0ddd9bc0f6698496540eed134c60d093f2f4b8a"
+          "tested_commit": "69109a20ad1045cd2432a71a9fa216ffdc676458"
         },
         "feature_id": "storage-analysis-prototypes-and-evaluation-plan",
         "inputs": [
@@ -550,31 +555,31 @@
         "sample_count": 3,
         "samples": [
           {
-            "elapsed_ms": 6.537,
+            "elapsed_ms": 3.923,
             "observation": {
               "aggregate_sha256": "bb25c711d6ba39ad50b1dc084ebb37427dbc97dbbe9d16beb1b4cf04ca142de9",
               "all_exact": true,
               "classes": 6
             },
-            "process_max_rss_bytes": 29818880
+            "process_max_rss_bytes": 29229056
           },
           {
-            "elapsed_ms": 1.769,
+            "elapsed_ms": 1.541,
             "observation": {
               "aggregate_sha256": "bb25c711d6ba39ad50b1dc084ebb37427dbc97dbbe9d16beb1b4cf04ca142de9",
               "all_exact": true,
               "classes": 6
             },
-            "process_max_rss_bytes": 29818880
+            "process_max_rss_bytes": 29229056
           },
           {
-            "elapsed_ms": 2.093,
+            "elapsed_ms": 1.157,
             "observation": {
               "aggregate_sha256": "bb25c711d6ba39ad50b1dc084ebb37427dbc97dbbe9d16beb1b4cf04ca142de9",
               "all_exact": true,
               "classes": 6
             },
-            "process_max_rss_bytes": 29818880
+            "process_max_rss_bytes": 29229056
           }
         ],
         "schema_version": "1.0.0",
@@ -622,7 +627,7 @@
             "service": "postgres"
           },
           "python": "3.14.7",
-          "tested_commit": "f0ddd9bc0f6698496540eed134c60d093f2f4b8a"
+          "tested_commit": "69109a20ad1045cd2432a71a9fa216ffdc676458"
         },
         "feature_id": "storage-analysis-prototypes-and-evaluation-plan",
         "inputs": [
@@ -638,7 +643,7 @@
         "sample_count": 3,
         "samples": [
           {
-            "elapsed_ms": 5.209,
+            "elapsed_ms": 1.584,
             "observation": {
               "bounded_chunk_bytes": 65536,
               "bytes": 1100055,
@@ -646,10 +651,10 @@
               "exact_digest": true,
               "sha256": "11b87e08e5f3a9c025819a0230cb8f4543187c58eea9edeae40f95a29282bee2"
             },
-            "process_max_rss_bytes": 28688384
+            "process_max_rss_bytes": 29229056
           },
           {
-            "elapsed_ms": 4.272,
+            "elapsed_ms": 3.399,
             "observation": {
               "bounded_chunk_bytes": 65536,
               "bytes": 1100055,
@@ -657,10 +662,10 @@
               "exact_digest": true,
               "sha256": "11b87e08e5f3a9c025819a0230cb8f4543187c58eea9edeae40f95a29282bee2"
             },
-            "process_max_rss_bytes": 28688384
+            "process_max_rss_bytes": 29229056
           },
           {
-            "elapsed_ms": 2.007,
+            "elapsed_ms": 1.807,
             "observation": {
               "bounded_chunk_bytes": 65536,
               "bytes": 1100055,
@@ -668,7 +673,7 @@
               "exact_digest": true,
               "sha256": "11b87e08e5f3a9c025819a0230cb8f4543187c58eea9edeae40f95a29282bee2"
             },
-            "process_max_rss_bytes": 29802496
+            "process_max_rss_bytes": 29229056
           }
         ],
         "schema_version": "1.0.0",
@@ -717,7 +722,7 @@
             "service": "postgres"
           },
           "python": "3.14.7",
-          "tested_commit": "f0ddd9bc0f6698496540eed134c60d093f2f4b8a"
+          "tested_commit": "69109a20ad1045cd2432a71a9fa216ffdc676458"
         },
         "feature_id": "storage-analysis-prototypes-and-evaluation-plan",
         "inputs": [
@@ -734,7 +739,7 @@
         "sample_count": 3,
         "samples": [
           {
-            "elapsed_ms": 122.007,
+            "elapsed_ms": 115.457,
             "observation": {
               "generations": [
                 1,
@@ -746,10 +751,10 @@
               "rewrap_changed": true,
               "source_sha256": "11b87e08e5f3a9c025819a0230cb8f4543187c58eea9edeae40f95a29282bee2"
             },
-            "process_max_rss_bytes": 29868032
+            "process_max_rss_bytes": 29360128
           },
           {
-            "elapsed_ms": 121.188,
+            "elapsed_ms": 114.812,
             "observation": {
               "generations": [
                 1,
@@ -761,10 +766,10 @@
               "rewrap_changed": true,
               "source_sha256": "11b87e08e5f3a9c025819a0230cb8f4543187c58eea9edeae40f95a29282bee2"
             },
-            "process_max_rss_bytes": 29868032
+            "process_max_rss_bytes": 29360128
           },
           {
-            "elapsed_ms": 123.765,
+            "elapsed_ms": 119.131,
             "observation": {
               "generations": [
                 1,
@@ -776,7 +781,7 @@
               "rewrap_changed": true,
               "source_sha256": "11b87e08e5f3a9c025819a0230cb8f4543187c58eea9edeae40f95a29282bee2"
             },
-            "process_max_rss_bytes": 29868032
+            "process_max_rss_bytes": 29360128
           }
         ],
         "schema_version": "1.0.0",
@@ -825,7 +830,7 @@
             "service": "postgres"
           },
           "python": "3.14.7",
-          "tested_commit": "f0ddd9bc0f6698496540eed134c60d093f2f4b8a"
+          "tested_commit": "69109a20ad1045cd2432a71a9fa216ffdc676458"
         },
         "feature_id": "storage-analysis-prototypes-and-evaluation-plan",
         "inputs": [
@@ -842,7 +847,7 @@
         "sample_count": 3,
         "samples": [
           {
-            "elapsed_ms": 417.678,
+            "elapsed_ms": 319.026,
             "observation": {
               "history_preserved": true,
               "late_revision": {
@@ -882,10 +887,10 @@
               ],
               "runs": 3
             },
-            "process_max_rss_bytes": 29868032
+            "process_max_rss_bytes": 29360128
           },
           {
-            "elapsed_ms": 279.828,
+            "elapsed_ms": 260.506,
             "observation": {
               "history_preserved": true,
               "late_revision": {
@@ -925,10 +930,10 @@
               ],
               "runs": 3
             },
-            "process_max_rss_bytes": 29868032
+            "process_max_rss_bytes": 29360128
           },
           {
-            "elapsed_ms": 252.405,
+            "elapsed_ms": 272.819,
             "observation": {
               "history_preserved": true,
               "late_revision": {
@@ -968,7 +973,7 @@
               ],
               "runs": 3
             },
-            "process_max_rss_bytes": 29868032
+            "process_max_rss_bytes": 29376512
           }
         ],
         "schema_version": "1.0.0",
@@ -1017,7 +1022,7 @@
             "service": "postgres"
           },
           "python": "3.14.7",
-          "tested_commit": "f0ddd9bc0f6698496540eed134c60d093f2f4b8a"
+          "tested_commit": "69109a20ad1045cd2432a71a9fa216ffdc676458"
         },
         "feature_id": "storage-analysis-prototypes-and-evaluation-plan",
         "inputs": [
@@ -1034,7 +1039,7 @@
         "sample_count": 3,
         "samples": [
           {
-            "elapsed_ms": 525.222,
+            "elapsed_ms": 331.805,
             "observation": {
               "ciphertext_nonempty_rows": 200,
               "ciphertext_only_columns": true,
@@ -1053,10 +1058,10 @@
               "pruned_partition": "chunks_2026_09",
               "rows": 200
             },
-            "process_max_rss_bytes": 29868032
+            "process_max_rss_bytes": 29294592
           },
           {
-            "elapsed_ms": 345.614,
+            "elapsed_ms": 268.148,
             "observation": {
               "ciphertext_nonempty_rows": 200,
               "ciphertext_only_columns": true,
@@ -1075,10 +1080,10 @@
               "pruned_partition": "chunks_2026_09",
               "rows": 200
             },
-            "process_max_rss_bytes": 29868032
+            "process_max_rss_bytes": 29327360
           },
           {
-            "elapsed_ms": 599.116,
+            "elapsed_ms": 258.512,
             "observation": {
               "ciphertext_nonempty_rows": 200,
               "ciphertext_only_columns": true,
@@ -1097,7 +1102,7 @@
               "pruned_partition": "chunks_2026_09",
               "rows": 200
             },
-            "process_max_rss_bytes": 29868032
+            "process_max_rss_bytes": 29327360
           }
         ],
         "schema_version": "1.0.0",
@@ -1113,7 +1118,7 @@
   ],
   "sample_count": 27,
   "schema_version": "1.0.0",
-  "source_commit": "f0ddd9bc0f6698496540eed134c60d093f2f4b8a",
+  "source_commit": "69109a20ad1045cd2432a71a9fa216ffdc676458",
   "status": "pass",
   "validation_id": "VAL-READY-014"
 }
