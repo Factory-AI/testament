@@ -31,6 +31,7 @@ except ModuleNotFoundError:
 CANONICAL_PLAN_COMMIT = "cfdf43bb49f3802137dc0ae887314ab7a8a01f58"
 SUCCESSOR_PLAN_COMMIT = "0f3dce5b9418a50eb031ec3fd561282462533bd3"
 SUCCESSOR_PLAN_PATH = "docs/research/benchmarks/precommit-v2.json"
+V2_KEY_ROTATION_PATH = "docs/research/benchmarks/v2/key-rotation.json"
 HISTORICAL_INVALID_PLAN_COMMIT = "cfdf43b1d85024ad5475f5c2afe41978f9fc2a01"
 V1_KEY_ROTATION_SHA256 = (
     "91a9fc76ba9852954024a925438510e7996fa471a7db94c699eedf0e88cfcc68"
@@ -154,6 +155,7 @@ RESULT_FILES = [RESULT_PATH_BY_CASE[case] for case in sorted(PROTOTYPES)]
 EVIDENCE_FILES = [
     "docs/research/benchmarks/precommit.json",
     SUCCESSOR_PLAN_PATH,
+    V2_KEY_ROTATION_PATH,
     REPRODUCTION_PATH,
     "docs/research/analysis/evaluation-plan.md",
     "docs/research/corpus/manifest.json",
@@ -690,8 +692,28 @@ def validate_claim_links(
                 "Claim ledger must contain exactly one informative in-review row for each of the nine prototype/benchmark pairs",
             )
         )
+    v2_key_rotation = load(
+        root,
+        V2_KEY_ROTATION_PATH,
+        problems,
+        "VAL-READY-014",
+    )
     for case, row in by_case.items():
-        result = results.get(case, {})
+        result = (
+            v2_key_rotation
+            if case == "key-rotation"
+            else results.get(case, {})
+        )
+        expected_result_path = (
+            V2_KEY_ROTATION_PATH
+            if case == "key-rotation"
+            else RESULT_PATH_BY_CASE[case]
+        )
+        expected_plan_commit = (
+            SUCCESSOR_PLAN_COMMIT
+            if case == "key-rotation"
+            else CANONICAL_PLAN_COMMIT
+        )
         required_text = (
             "claim",
             "observation",
@@ -706,12 +728,22 @@ def validate_claim_links(
             or row.get("prototype_deliverable_id") != PROTOTYPE_DELIVERABLES[case]
             or row.get("benchmark_deliverable_id") != BENCHMARK_DELIVERABLES[case]
             or row.get("prototype_path") != PROTOTYPE_PATHS[case]
-            or row.get("result_path") != RESULT_PATH_BY_CASE[case]
+            or row.get("result_path") != expected_result_path
             or row.get("conclusion") != result.get("conclusion")
-            or row.get("plan_commit") != CANONICAL_PLAN_COMMIT
+            or row.get("plan_commit") != expected_plan_commit
             or any(not row.get(field) for field in required_text)
             or not (root / PROTOTYPE_PATHS[case]).is_file()
-            or not (root / RESULT_PATH_BY_CASE[case]).is_file()
+            or not (root / expected_result_path).is_file()
+            or (
+                case == "key-rotation"
+                and row.get("supersedes_result")
+                != {
+                    "path": RESULT_PATH_BY_CASE[case],
+                    "version": "1.0.0",
+                    "sha256": V1_KEY_ROTATION_SHA256,
+                    "status": "superseded-evidence",
+                }
+            )
         ):
             problems.append(
                 issue(
@@ -1119,6 +1151,67 @@ def validate_prototype_evidence(root: Path) -> list[dict[str, str]]:
     plan_path = "docs/research/benchmarks/precommit.json"
     plan = load(root, plan_path, problems, "VAL-READY-014")
     validate_successor_plan(root, plan, problems)
+    v1_key_rotation_path = root / RESULT_PATH_BY_CASE["key-rotation"]
+    if (
+        not v1_key_rotation_path.is_file()
+        or hashlib.sha256(v1_key_rotation_path.read_bytes()).hexdigest()
+        != V1_KEY_ROTATION_SHA256
+    ):
+        problems.append(
+            issue(
+                "VAL-READY-014",
+                "modified_v1_key_rotation_evidence",
+                RESULT_PATH_BY_CASE["key-rotation"],
+                "Version 1 key-rotation evidence must remain byte-for-byte immutable",
+            )
+        )
+    v2_key_rotation = load(
+        root,
+        V2_KEY_ROTATION_PATH,
+        problems,
+        "VAL-READY-014",
+    )
+    v2_tested_commit = v2_key_rotation.get("environment", {}).get(
+        "tested_commit"
+    )
+    v2_commit_valid = (
+        isinstance(v2_tested_commit, str)
+        and len(v2_tested_commit) == 40
+        and git_object_exists(root, f"{v2_tested_commit}^{{commit}}")
+    )
+    if v2_commit_valid and (root / ".git").exists():
+        v2_commit_valid = (
+            subprocess.run(
+                [
+                    "git",
+                    "merge-base",
+                    "--is-ancestor",
+                    SUCCESSOR_PLAN_COMMIT,
+                    v2_tested_commit,
+                ],
+                cwd=root,
+                capture_output=True,
+                check=False,
+            ).returncode
+            == 0
+        )
+    if (
+        not valid_v2_key_rotation_result(v2_key_rotation, load(
+            root,
+            SUCCESSOR_PLAN_PATH,
+            problems,
+            "VAL-READY-014",
+        ))
+        or not v2_commit_valid
+    ):
+        problems.append(
+            issue(
+                "VAL-READY-014",
+                "invalid_v2_key_rotation_evidence",
+                V2_KEY_ROTATION_PATH,
+                "Version 2 key rotation requires three independently captured, recomputed, resource-bounded samples from a committed descendant of its precommit",
+            )
+        )
     cases = plan.get("cases", [])
     if not isinstance(cases, list):
         cases = []

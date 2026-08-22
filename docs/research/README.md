@@ -158,6 +158,16 @@ The runner performs the PostgreSQL start, healthcheck, cgroup observation, and
 stop sequence once per sample. Do not start PostgreSQL separately for a
 version 2 run.
 
+The [version 2 key-rotation result](benchmarks/v2/key-rotation.json) contains
+three resource-bounded samples from committed implementation
+`4455a87b4a0869eb6d4bd2a710e2aa9695edd1e5`. Each sample records two distinct
+reads of separately persisted payload ciphertext, before rewrap and after the
+new wrapped DEK and checkpoint, plus capture identities, methods, ordinals,
+digests, byte counts, wrapped-DEK digests, generations, and checkpoint.
+Acceptance is recomputed from those fields. The
+[version 1 result](benchmarks/key-rotation.json) remains byte-for-byte
+preserved and is retained only as superseded evidence.
+
 ## Verification
 
 ```sh

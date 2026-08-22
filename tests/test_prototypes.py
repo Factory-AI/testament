@@ -287,6 +287,57 @@ class PrototypeEvidenceTest(unittest.TestCase):
                     VERIFY.valid_v2_key_rotation_result(changed, plan)
                 )
 
+    def test_key_rotation_v2_evidence_mutations_fail(self) -> None:
+        mutations = {
+            "changed digest": lambda observation: observation[
+                "post_rewrap_payload_capture"
+            ].update(sha256="0" * 64),
+            "changed count": lambda observation: observation[
+                "post_rewrap_payload_capture"
+            ].update(
+                byte_count=observation["post_rewrap_payload_capture"][
+                    "byte_count"
+                ]
+                + 1
+            ),
+            "missing capture": lambda observation: observation.pop(
+                "post_rewrap_payload_capture"
+            ),
+            "non-independent capture": lambda observation: observation[
+                "post_rewrap_payload_capture"
+            ].update(
+                capture_id=observation["pre_rewrap_payload_capture"][
+                    "capture_id"
+                ]
+            ),
+            "equal wrapped DEKs": lambda observation: observation[
+                "new_wrapped_dek"
+            ].update(sha256=observation["old_wrapped_dek"]["sha256"]),
+            "inconsistent assertion": lambda observation: observation.update(
+                payload_ciphertext_unchanged=False
+            ),
+        }
+        for name, mutate in mutations.items():
+            with self.subTest(name=name):
+                root = self.copy_evidence()
+                path = root / VERIFY.V2_KEY_ROTATION_PATH
+                result = json.loads(path.read_text(encoding="utf-8"))
+                mutate(result["samples"][0]["observation"])
+                path.write_text(json.dumps(result), encoding="utf-8")
+                self.assertIn(
+                    "invalid_v2_key_rotation_evidence",
+                    self.codes(root),
+                )
+
+    def test_version_one_key_rotation_evidence_mutation_fails(self) -> None:
+        root = self.copy_evidence()
+        path = root / "docs/research/benchmarks/key-rotation.json"
+        path.write_bytes(path.read_bytes() + b"\n")
+        self.assertIn(
+            "modified_v1_key_rotation_evidence",
+            self.codes(root),
+        )
+
     def test_missing_raw_sample_fails(self) -> None:
         root = self.copy_evidence()
         path = root / VERIFY.RESULT_FILES[0]
