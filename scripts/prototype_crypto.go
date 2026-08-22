@@ -13,22 +13,46 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"path/filepath"
 	"slices"
 )
 
+type capture struct {
+	CaptureID   string `json:"capture_id"`
+	Method      string `json:"method"`
+	Phase       string `json:"phase"`
+	ReadOrdinal int    `json:"read_ordinal"`
+	ByteCount   int    `json:"byte_count"`
+	SHA256      string `json:"sha256"`
+}
+
+type wrappedDEK struct {
+	PersistedPath string `json:"persisted_path"`
+	Generation    int    `json:"generation"`
+	ByteCount     int    `json:"byte_count"`
+	SHA256        string `json:"sha256"`
+}
+
 type result struct {
-	PlaintextSHA256         string `json:"plaintext_sha256"`
-	CompressedSHA256        string `json:"compressed_sha256"`
-	CiphertextSHA256        string `json:"ciphertext_sha256"`
-	PayloadCiphertextSHA256 string `json:"payload_ciphertext_sha256"`
-	PlaintextBytes          int    `json:"plaintext_bytes"`
-	CompressedBytes         int    `json:"compressed_bytes"`
-	CiphertextBytes         int    `json:"ciphertext_bytes"`
-	RoundTripExact          bool   `json:"round_trip_exact"`
-	TamperRejected          bool   `json:"tamper_rejected"`
-	CompressionBeforeAEAD   bool   `json:"compression_before_aead"`
-	RewrapChanged           bool   `json:"rewrap_changed"`
-	PayloadUnchanged        bool   `json:"payload_unchanged"`
+	PlaintextSHA256          string     `json:"plaintext_sha256"`
+	CompressedSHA256         string     `json:"compressed_sha256"`
+	CiphertextSHA256         string     `json:"ciphertext_sha256"`
+	PayloadCiphertextSHA256  string     `json:"payload_ciphertext_sha256"`
+	PreRewrapPayloadCapture  capture    `json:"pre_rewrap_payload_capture"`
+	PostRewrapPayloadCapture capture    `json:"post_rewrap_payload_capture"`
+	OldWrappedDEK            wrappedDEK `json:"old_wrapped_dek"`
+	NewWrappedDEK            wrappedDEK `json:"new_wrapped_dek"`
+	OperationSequence        []string   `json:"operation_sequence"`
+	Generations              []int      `json:"generations"`
+	ResumeCheckpoint         int        `json:"resume_checkpoint"`
+	PlaintextBytes           int        `json:"plaintext_bytes"`
+	CompressedBytes          int        `json:"compressed_bytes"`
+	CiphertextBytes          int        `json:"ciphertext_bytes"`
+	RoundTripExact           bool       `json:"round_trip_exact"`
+	TamperRejected           bool       `json:"tamper_rejected"`
+	CompressionBeforeAEAD    bool       `json:"compression_before_aead"`
+	RewrapChanged            bool       `json:"rewrap_changed"`
+	PayloadUnchanged         bool       `json:"payload_unchanged"`
 }
 
 func digest(value []byte) string {
@@ -99,24 +123,103 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
+	store, err := os.MkdirTemp("", "testament-key-rotation-")
+	if err != nil {
+		panic(err)
+	}
+	defer os.RemoveAll(store)
+	payloadPath := filepath.Join(store, "payload_ciphertext.bin")
+	oldWrapPath := filepath.Join(store, "wrapped_dek.generation-1.bin")
+	newWrapPath := filepath.Join(store, "wrapped_dek.generation-2.bin")
+	checkpointPath := filepath.Join(store, "rewrap.checkpoint")
+	if err := os.WriteFile(payloadPath, payload, 0o600); err != nil {
+		panic(err)
+	}
+	if err := os.WriteFile(oldWrapPath, oldWrap, 0o600); err != nil {
+		panic(err)
+	}
+	preRewrapPayload, err := os.ReadFile(payloadPath)
+	if err != nil {
+		panic(err)
+	}
 	newWrap, _, err := seal(newRoot[:], []byte("new-wrap-v01"), dek[:], []byte("generation=2"))
 	if err != nil {
 		panic(err)
 	}
+	if err := os.WriteFile(newWrapPath, newWrap, 0o600); err != nil {
+		panic(err)
+	}
+	if err := os.WriteFile(checkpointPath, []byte("1\n"), 0o600); err != nil {
+		panic(err)
+	}
+	if os.Getenv("TESTAMENT_KEY_ROTATION_MUTATION") == "payload-byte" {
+		changedPayload := slices.Clone(payload)
+		changedPayload[len(changedPayload)-1] ^= 1
+		if err := os.WriteFile(payloadPath, changedPayload, 0o600); err != nil {
+			panic(err)
+		}
+	}
+	postRewrapPayload, err := os.ReadFile(payloadPath)
+	if err != nil {
+		panic(err)
+	}
+	preDigest := digest(preRewrapPayload)
+	postDigest := digest(postRewrapPayload)
+	oldWrapDigest := digest(oldWrap)
+	newWrapDigest := digest(newWrap)
+	payloadUnchanged := preDigest == postDigest &&
+		len(preRewrapPayload) == len(postRewrapPayload)
+	rewrapChanged := oldWrapDigest != newWrapDigest
 
 	output := result{
 		PlaintextSHA256:         digest(plaintext),
 		CompressedSHA256:        digest(compressed.Bytes()),
 		CiphertextSHA256:        digest(ciphertext),
-		PayloadCiphertextSHA256: digest(payload),
-		PlaintextBytes:          len(plaintext),
-		CompressedBytes:         compressed.Len(),
-		CiphertextBytes:         len(ciphertext),
-		RoundTripExact:          bytes.Equal(plaintext, roundTrip),
-		TamperRejected:          tamperErr != nil,
-		CompressionBeforeAEAD:   len(ciphertext) == compressed.Len()+aead.Overhead(),
-		RewrapChanged:           !bytes.Equal(oldWrap, newWrap),
-		PayloadUnchanged:        digest(payload) == digest(payload),
+		PayloadCiphertextSHA256: preDigest,
+		PreRewrapPayloadCapture: capture{
+			CaptureID:   "payload_ciphertext.bin:read-1-before-rewrap",
+			Method:      "os.ReadFile persisted payload_ciphertext.bin",
+			Phase:       "immediately-before-rewrap",
+			ReadOrdinal: 1,
+			ByteCount:   len(preRewrapPayload),
+			SHA256:      preDigest,
+		},
+		PostRewrapPayloadCapture: capture{
+			CaptureID:   "payload_ciphertext.bin:read-2-after-checkpoint",
+			Method:      "os.ReadFile persisted payload_ciphertext.bin",
+			Phase:       "after-new-wrapped-dek-and-checkpoint",
+			ReadOrdinal: 2,
+			ByteCount:   len(postRewrapPayload),
+			SHA256:      postDigest,
+		},
+		OldWrappedDEK: wrappedDEK{
+			PersistedPath: "wrapped_dek.generation-1.bin",
+			Generation:    1,
+			ByteCount:     len(oldWrap),
+			SHA256:        oldWrapDigest,
+		},
+		NewWrappedDEK: wrappedDEK{
+			PersistedPath: "wrapped_dek.generation-2.bin",
+			Generation:    2,
+			ByteCount:     len(newWrap),
+			SHA256:        newWrapDigest,
+		},
+		OperationSequence: []string{
+			"pre_payload_capture",
+			"new_wrapped_dek_persisted",
+			"checkpoint_persisted",
+			"post_payload_capture",
+		},
+		Generations:           []int{1, 2},
+		ResumeCheckpoint:      1,
+		PlaintextBytes:        len(plaintext),
+		CompressedBytes:       compressed.Len(),
+		CiphertextBytes:       len(ciphertext),
+		RoundTripExact:        bytes.Equal(plaintext, roundTrip),
+		TamperRejected:        tamperErr != nil,
+		CompressionBeforeAEAD: len(ciphertext) == compressed.Len()+aead.Overhead(),
+		RewrapChanged:         rewrapChanged,
+		PayloadUnchanged:      payloadUnchanged,
 	}
 	if err := json.NewEncoder(os.Stdout).Encode(output); err != nil {
 		fmt.Fprintln(os.Stderr, err)

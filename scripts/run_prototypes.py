@@ -192,13 +192,17 @@ def exact_byte(root: Path) -> dict[str, Any]:
     }
 
 
-def crypto(root: Path) -> dict[str, Any]:
+def crypto(root: Path, mutation: str | None = None) -> dict[str, Any]:
     source = fixture(root, "giant.json").read_bytes()
+    environment = os.environ.copy()
+    if mutation:
+        environment["TESTAMENT_KEY_ROTATION_MUTATION"] = mutation
     result = subprocess.run(
         ["go", "run", "./scripts/prototype_crypto.go"],
         cwd=root,
         input=source,
         capture_output=True,
+        env=environment,
         check=True,
     )
     return json.loads(result.stdout)
@@ -228,16 +232,92 @@ def blind_index(_: Path) -> dict[str, Any]:
     }
 
 
-def key_rotation(root: Path) -> dict[str, Any]:
-    value = crypto(root)
-    return {
+def key_rotation(
+    root: Path,
+    mutation: str | None = None,
+) -> dict[str, Any]:
+    value = crypto(root, mutation=mutation)
+    observation = {
         "rewrap_changed": value["rewrap_changed"],
         "payload_ciphertext_unchanged": value["payload_unchanged"],
         "payload_ciphertext_sha256": value["payload_ciphertext_sha256"],
+        "pre_rewrap_payload_capture": value["pre_rewrap_payload_capture"],
+        "post_rewrap_payload_capture": value["post_rewrap_payload_capture"],
+        "old_wrapped_dek": value["old_wrapped_dek"],
+        "new_wrapped_dek": value["new_wrapped_dek"],
+        "operation_sequence": value["operation_sequence"],
         "source_sha256": value["plaintext_sha256"],
-        "generations": [1, 2],
-        "resume_checkpoint": 1,
+        "generations": value["generations"],
+        "resume_checkpoint": value["resume_checkpoint"],
     }
+    observation["acceptance_recomputed"] = key_rotation_accepted(observation)
+    return observation
+
+
+def key_rotation_accepted(observation: Any) -> bool:
+    if not isinstance(observation, dict):
+        return False
+    before = observation.get("pre_rewrap_payload_capture")
+    after = observation.get("post_rewrap_payload_capture")
+    old_wrap = observation.get("old_wrapped_dek")
+    new_wrap = observation.get("new_wrapped_dek")
+    if not all(
+        isinstance(value, dict)
+        for value in (before, after, old_wrap, new_wrap)
+    ):
+        return False
+    payload_equal = (
+        before.get("sha256") == after.get("sha256")
+        and before.get("byte_count") == after.get("byte_count")
+    )
+    wrapped_deks_differ = old_wrap.get("sha256") != new_wrap.get("sha256")
+    independently_captured = (
+        before.get("capture_id") != after.get("capture_id")
+        and before.get("method")
+        == after.get("method")
+        == "os.ReadFile persisted payload_ciphertext.bin"
+        and before.get("phase") == "immediately-before-rewrap"
+        and after.get("phase") == "after-new-wrapped-dek-and-checkpoint"
+        and before.get("read_ordinal") == 1
+        and after.get("read_ordinal") == 2
+    )
+    return (
+        independently_captured
+        and observation.get("operation_sequence")
+        == [
+            "pre_payload_capture",
+            "new_wrapped_dek_persisted",
+            "checkpoint_persisted",
+            "post_payload_capture",
+        ]
+        and isinstance(before.get("byte_count"), int)
+        and before["byte_count"] > 0
+        and isinstance(before.get("sha256"), str)
+        and len(before["sha256"]) == 64
+        and isinstance(old_wrap.get("byte_count"), int)
+        and old_wrap["byte_count"] > 0
+        and isinstance(new_wrap.get("byte_count"), int)
+        and new_wrap["byte_count"] > 0
+        and isinstance(old_wrap.get("sha256"), str)
+        and len(old_wrap["sha256"]) == 64
+        and isinstance(new_wrap.get("sha256"), str)
+        and len(new_wrap["sha256"]) == 64
+        and old_wrap.get("persisted_path")
+        == "wrapped_dek.generation-1.bin"
+        and new_wrap.get("persisted_path")
+        == "wrapped_dek.generation-2.bin"
+        and old_wrap.get("generation") == 1
+        and new_wrap.get("generation") == 2
+        and observation.get("generations") == [1, 2]
+        and observation.get("resume_checkpoint") == 1
+        and observation.get("payload_ciphertext_sha256")
+        == before.get("sha256")
+        and observation.get("payload_ciphertext_unchanged")
+        is payload_equal
+        and observation.get("rewrap_changed") is wrapped_deks_differ
+        and payload_equal
+        and wrapped_deks_differ
+    )
 
 
 def analyzer_isolation(_: Path) -> dict[str, Any]:
@@ -637,7 +717,7 @@ def accepted(case: str, samples: list[dict[str, Any]], budgets: dict[str, Any]) 
             and o["partition_pruning"]
         ),
         "blind-index": lambda o: o["same_scope_equality"] and o["cross_org_separation"] and o["cross_field_separation"] and o["rotation_changes_token"],
-        "key-rotation": lambda o: o["rewrap_changed"] and o["payload_ciphertext_unchanged"],
+        "key-rotation": key_rotation_accepted,
         "decision-durability": lambda o: (
             o["decisions"] == o["audits"] == o["receipts"] == 1
             and o["faulted_rows"] == 0

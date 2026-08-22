@@ -32,6 +32,9 @@ CANONICAL_PLAN_COMMIT = "cfdf43bb49f3802137dc0ae887314ab7a8a01f58"
 SUCCESSOR_PLAN_COMMIT = "0f3dce5b9418a50eb031ec3fd561282462533bd3"
 SUCCESSOR_PLAN_PATH = "docs/research/benchmarks/precommit-v2.json"
 HISTORICAL_INVALID_PLAN_COMMIT = "cfdf43b1d85024ad5475f5c2afe41978f9fc2a01"
+V1_KEY_ROTATION_SHA256 = (
+    "91a9fc76ba9852954024a925438510e7996fa471a7db94c699eedf0e88cfcc68"
+)
 RECONCILED_CASES = {
     "giant-stream",
     "exact-byte",
@@ -379,6 +382,78 @@ def valid_v2_resource_sample(
         else LOCAL_SCOPE
     )
     return valid_resource_sample(sample, budgets, expected_scope)
+
+
+def valid_v2_key_rotation_observation(observation: Any) -> bool:
+    if not isinstance(observation, dict):
+        return False
+    before = observation.get("pre_rewrap_payload_capture")
+    after = observation.get("post_rewrap_payload_capture")
+    old_wrap = observation.get("old_wrapped_dek")
+    new_wrap = observation.get("new_wrapped_dek")
+    if not all(
+        isinstance(value, dict)
+        for value in (before, after, old_wrap, new_wrap)
+    ):
+        return False
+
+    def valid_digest(value: Any) -> bool:
+        return (
+            isinstance(value, str)
+            and len(value) == 64
+            and all(character in "0123456789abcdef" for character in value)
+        )
+
+    payload_equal = (
+        before.get("sha256") == after.get("sha256")
+        and before.get("byte_count") == after.get("byte_count")
+    )
+    wrapped_deks_differ = old_wrap.get("sha256") != new_wrap.get("sha256")
+    return (
+        before.get("capture_id") != after.get("capture_id")
+        and before.get("method")
+        == after.get("method")
+        == "os.ReadFile persisted payload_ciphertext.bin"
+        and before.get("phase") == "immediately-before-rewrap"
+        and after.get("phase") == "after-new-wrapped-dek-and-checkpoint"
+        and before.get("read_ordinal") == 1
+        and after.get("read_ordinal") == 2
+        and observation.get("operation_sequence")
+        == [
+            "pre_payload_capture",
+            "new_wrapped_dek_persisted",
+            "checkpoint_persisted",
+            "post_payload_capture",
+        ]
+        and isinstance(before.get("byte_count"), int)
+        and before["byte_count"] > 0
+        and isinstance(after.get("byte_count"), int)
+        and after["byte_count"] > 0
+        and valid_digest(before.get("sha256"))
+        and valid_digest(after.get("sha256"))
+        and isinstance(old_wrap.get("byte_count"), int)
+        and old_wrap["byte_count"] > 0
+        and isinstance(new_wrap.get("byte_count"), int)
+        and new_wrap["byte_count"] > 0
+        and valid_digest(old_wrap.get("sha256"))
+        and valid_digest(new_wrap.get("sha256"))
+        and old_wrap.get("persisted_path")
+        == "wrapped_dek.generation-1.bin"
+        and new_wrap.get("persisted_path")
+        == "wrapped_dek.generation-2.bin"
+        and old_wrap.get("generation") == 1
+        and new_wrap.get("generation") == 2
+        and observation.get("generations") == [1, 2]
+        and observation.get("resume_checkpoint") == 1
+        and observation.get("payload_ciphertext_sha256")
+        == before.get("sha256")
+        and observation.get("payload_ciphertext_unchanged")
+        is payload_equal
+        and observation.get("rewrap_changed") is wrapped_deks_differ
+        and observation.get("acceptance_recomputed") is True
+        and payload_equal
+        and wrapped_deks_differ
+    )
 
 
 def issue(criterion: str, code: str, path: str, message: str) -> dict[str, str]:

@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import importlib.util
+import copy
+import hashlib
 import json
 import shutil
 import tempfile
@@ -121,6 +123,88 @@ class PrototypeEvidenceTest(unittest.TestCase):
         self.assertIn(
             "incomplete_successor_finding_methods",
             self.codes(root),
+        )
+
+    def test_key_rotation_captures_payload_independently(self) -> None:
+        observation = RUN.key_rotation(ROOT)
+        self.assertTrue(RUN.key_rotation_accepted(observation))
+        self.assertTrue(VERIFY.valid_v2_key_rotation_observation(observation))
+        self.assertEqual(
+            [
+                "pre_payload_capture",
+                "new_wrapped_dek_persisted",
+                "checkpoint_persisted",
+                "post_payload_capture",
+            ],
+            observation["operation_sequence"],
+        )
+        before = observation["pre_rewrap_payload_capture"]
+        after = observation["post_rewrap_payload_capture"]
+        self.assertEqual(before["sha256"], after["sha256"])
+        self.assertEqual(before["byte_count"], after["byte_count"])
+        self.assertNotEqual(before["capture_id"], after["capture_id"])
+        self.assertEqual(1, before["read_ordinal"])
+        self.assertEqual(2, after["read_ordinal"])
+
+    def test_key_rotation_harness_rejects_changed_payload_byte(self) -> None:
+        observation = RUN.key_rotation(ROOT, mutation="payload-byte")
+        self.assertNotEqual(
+            observation["pre_rewrap_payload_capture"]["sha256"],
+            observation["post_rewrap_payload_capture"]["sha256"],
+        )
+        self.assertFalse(observation["payload_ciphertext_unchanged"])
+        self.assertFalse(RUN.key_rotation_accepted(observation))
+        self.assertFalse(VERIFY.valid_v2_key_rotation_observation(observation))
+
+    def test_key_rotation_mutations_fail_recomputed_acceptance(self) -> None:
+        observation = RUN.key_rotation(ROOT)
+        mutations = {
+            "missing capture": lambda value: value.pop(
+                "post_rewrap_payload_capture"
+            ),
+            "non-independent capture": lambda value: value[
+                "post_rewrap_payload_capture"
+            ].update(
+                capture_id=value["pre_rewrap_payload_capture"]["capture_id"]
+            ),
+            "non-independent method": lambda value: value[
+                "post_rewrap_payload_capture"
+            ].update(method="cached-in-memory-value"),
+            "changed digest": lambda value: value[
+                "post_rewrap_payload_capture"
+            ].update(sha256="0" * 64),
+            "changed byte count": lambda value: value[
+                "post_rewrap_payload_capture"
+            ].update(
+                byte_count=value["post_rewrap_payload_capture"]["byte_count"]
+                + 1
+            ),
+            "equal wrapped DEKs": lambda value: value[
+                "new_wrapped_dek"
+            ].update(sha256=value["old_wrapped_dek"]["sha256"]),
+            "wrong generations": lambda value: value.update(generations=[1, 1]),
+            "wrong checkpoint": lambda value: value.update(resume_checkpoint=2),
+            "inconsistent unchanged assertion": lambda value: value.update(
+                payload_ciphertext_unchanged=False
+            ),
+            "inconsistent rewrap assertion": lambda value: value.update(
+                rewrap_changed=False
+            ),
+        }
+        for name, mutate in mutations.items():
+            with self.subTest(name=name):
+                changed = copy.deepcopy(observation)
+                mutate(changed)
+                self.assertFalse(RUN.key_rotation_accepted(changed))
+                self.assertFalse(
+                    VERIFY.valid_v2_key_rotation_observation(changed)
+                )
+
+    def test_version_one_key_rotation_result_is_immutable(self) -> None:
+        path = ROOT / "docs/research/benchmarks/key-rotation.json"
+        self.assertEqual(
+            VERIFY.V1_KEY_ROTATION_SHA256,
+            hashlib.sha256(path.read_bytes()).hexdigest(),
         )
 
     def test_missing_raw_sample_fails(self) -> None:
