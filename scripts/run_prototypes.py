@@ -165,52 +165,111 @@ def key_rotation(root: Path) -> dict[str, Any]:
 
 
 def analyzer_isolation(_: Path) -> dict[str, Any]:
+    cpu_limit = 1
     address_space_limit = 512 << 30 if sys.platform == "darwin" else 512 << 20
+    file_descriptor_limit = 16
     output_limit = 4096
+    deadline_limit = 2
+    allowed_environment = {"PATH", "LC_CTYPE", "__CF_USER_TEXT_ENCODING"}
     script = (
         "import json,os,resource;"
         "print(json.dumps({'env':sorted(os.environ),'cwd':os.getcwd(),"
-        "'nofile':resource.getrlimit(resource.RLIMIT_NOFILE)[0]}))"
+        "'cpu':resource.getrlimit(resource.RLIMIT_CPU)[0],"
+        "'as_limit':resource.getrlimit(resource.RLIMIT_AS)[0],"
+        "'nofile':resource.getrlimit(resource.RLIMIT_NOFILE)[0],"
+        "'fsize':resource.getrlimit(resource.RLIMIT_FSIZE)[0]}))"
     )
+    output_probe_script = (
+        "import os;"
+        f"block=b'x'*{output_limit};"
+        "[os.write(1,block) for _ in range(2)]"
+    )
+    deadline_probe_script = f"import time;time.sleep({deadline_limit + 1})"
 
     def limits() -> None:
-        resource.setrlimit(resource.RLIMIT_CPU, (1, 1))
-        resource.setrlimit(resource.RLIMIT_NOFILE, (16, 16))
+        resource.setrlimit(resource.RLIMIT_CPU, (cpu_limit, cpu_limit))
+        resource.setrlimit(
+            resource.RLIMIT_NOFILE,
+            (file_descriptor_limit, file_descriptor_limit),
+        )
         resource.setrlimit(resource.RLIMIT_FSIZE, (output_limit, output_limit))
         if hasattr(resource, "RLIMIT_AS"):
             resource.setrlimit(
                 resource.RLIMIT_AS, (address_space_limit, address_space_limit)
             )
 
-    with tempfile.TemporaryDirectory() as directory, tempfile.TemporaryFile() as output:
-        result = subprocess.run(
+    with (
+        tempfile.TemporaryDirectory() as directory,
+        tempfile.TemporaryFile() as output,
+        tempfile.TemporaryFile() as output_probe,
+    ):
+        subprocess_options = {
+            "cwd": directory,
+            "env": {"PATH": "/usr/bin:/bin"},
+            "timeout": deadline_limit,
+            "preexec_fn": limits,
+        }
+        subprocess.run(
             [sys.executable, "-c", script],
-            cwd=directory,
-            env={"PATH": "/usr/bin:/bin"},
             stdout=output,
             stderr=output,
-            timeout=2,
             check=True,
-            preexec_fn=limits,
+            **subprocess_options,
         )
+        output_probe_result = subprocess.run(
+            [sys.executable, "-c", output_probe_script],
+            stdout=output_probe,
+            stderr=subprocess.DEVNULL,
+            check=False,
+            **subprocess_options,
+        )
+        deadline_limit_enforced = False
+        try:
+            subprocess.run(
+                [sys.executable, "-c", deadline_probe_script],
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+                check=False,
+                **subprocess_options,
+            )
+        except subprocess.TimeoutExpired:
+            deadline_limit_enforced = True
         output.seek(0)
         encoded_output = output.read(output_limit + 1)
+        output_probe.seek(0)
+        output_probe_bytes = len(output_probe.read(output_limit + 1))
     child = json.loads(encoded_output)
+    unexpected_environment = sorted(set(child["env"]) - allowed_environment)
     return {
-        "sanitized_environment": child["env"] == ["LC_CTYPE", "PATH"],
-        "isolated_working_directory": child["cwd"] == directory,
+        "sanitized_environment": (
+            "PATH" in child["env"] and not unexpected_environment
+        ),
+        "visible_environment_variables": child["env"],
+        "allowed_environment_variables": sorted(allowed_environment),
+        "unexpected_environment_variables": unexpected_environment,
+        "isolated_working_directory": (
+            os.path.realpath(child["cwd"]) == os.path.realpath(directory)
+        ),
+        "cpu_limit_seconds": child["cpu"],
         "file_descriptor_limit": child["nofile"],
-        "address_space_limit_bytes": address_space_limit,
-        "address_space_limit_enforced": hasattr(resource, "RLIMIT_AS"),
-        "deadline_seconds": 2,
+        "address_space_limit_bytes": child["as_limit"],
+        "address_space_limit_enforced": child["as_limit"] == address_space_limit,
+        "deadline_seconds": deadline_limit,
+        "deadline_limit_enforced": deadline_limit_enforced,
         "output_bytes": len(encoded_output),
         "output_limit_bytes": output_limit,
-        "output_limit_enforced": len(encoded_output) <= output_limit,
+        "output_probe_bytes": output_probe_bytes,
+        "output_limit_enforced": (
+            output_probe_result.returncode != 0
+            and output_probe_bytes <= child["fsize"] == output_limit
+        ),
         "network_denial_proven": False,
+        "hostile_multi_tenant_isolation_proven": False,
         "conclusion": (
             "POSIX subprocess limits bound CPU, address space, descriptors, "
             "environment, working directory, time, and output, but do not "
-            "prove network denial; plain subprocess isolation is rejected."
+            "prove network denial; plain subprocess isolation is rejected "
+            "as a hostile multi-tenant isolation boundary."
         ),
     }
 
@@ -333,6 +392,24 @@ LOCAL_RUNNERS: dict[str, Callable[[Path], dict[str, Any]]] = {
 }
 
 
+def analyzer_isolation_accepted(observation: dict[str, Any]) -> bool:
+    return (
+        observation["sanitized_environment"]
+        and not observation["unexpected_environment_variables"]
+        and observation["isolated_working_directory"]
+        and observation["cpu_limit_seconds"] == 1
+        and observation["address_space_limit_enforced"]
+        and 0 < observation["address_space_limit_bytes"] < 1 << 63
+        and observation["file_descriptor_limit"] == 16
+        and observation["output_limit_enforced"]
+        and observation["output_limit_bytes"] == 4096
+        and observation["deadline_limit_enforced"]
+        and observation["deadline_seconds"] == 2
+        and not observation["network_denial_proven"]
+        and not observation["hostile_multi_tenant_isolation_proven"]
+    )
+
+
 def sample(root: Path, case: str) -> dict[str, Any]:
     started = time.perf_counter_ns()
     before = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
@@ -361,7 +438,7 @@ def accepted(case: str, samples: list[dict[str, Any]], budgets: dict[str, Any]) 
         "blind-index": lambda o: o["same_scope_equality"] and o["cross_org_separation"] and o["cross_field_separation"] and o["rotation_changes_token"],
         "key-rotation": lambda o: o["rewrap_changed"] and o["payload_ciphertext_unchanged"],
         "decision-durability": lambda o: o["decisions"] == o["audits"] == o["receipts"] == 1 and o["faulted_rows"] == 0,
-        "analyzer-isolation": lambda o: o["sanitized_environment"] and o["isolated_working_directory"] and not o["network_denial_proven"],
+        "analyzer-isolation": analyzer_isolation_accepted,
         "offline-replay": lambda o: o["runs"] == 3 and o["recorded_replay_equal"] and o["late_revision_changed"] and o["history_preserved"],
     }
     return within and all(checks[case](item["observation"]) for item in samples)

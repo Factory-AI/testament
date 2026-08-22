@@ -54,6 +54,12 @@ EVIDENCE_FILES = [
     "policy/analyzer-evaluation.json",
     *RESULT_FILES,
 ]
+ANALYZER_CONCLUSION = (
+    "POSIX subprocess limits bound CPU, address space, descriptors, "
+    "environment, working directory, time, and output, but do not "
+    "prove network denial; plain subprocess isolation is rejected "
+    "as a hostile multi-tenant isolation boundary."
+)
 
 
 def issue(criterion: str, code: str, path: str, message: str) -> dict[str, str]:
@@ -83,6 +89,61 @@ def digest(value: Any) -> str:
     return hashlib.sha256(
         json.dumps(value, sort_keys=True, separators=(",", ":")).encode()
     ).hexdigest()
+
+
+def valid_analyzer_sample(
+    sample: Any,
+    budgets: dict[str, Any],
+) -> bool:
+    if not isinstance(sample, dict):
+        return False
+    elapsed = sample.get("elapsed_ms")
+    rss = sample.get("process_max_rss_bytes")
+    if (
+        not isinstance(elapsed, (int, float))
+        or elapsed > budgets.get("max_elapsed_ms", -1)
+        or not isinstance(rss, int)
+        or rss > budgets.get("max_process_rss_bytes", -1)
+    ):
+        return False
+    observation = sample.get("observation")
+    if not isinstance(observation, dict):
+        return False
+    visible = observation.get("visible_environment_variables")
+    allowed = observation.get("allowed_environment_variables")
+    address_space = observation.get("address_space_limit_bytes")
+    output_bytes = observation.get("output_bytes")
+    output_probe_bytes = observation.get("output_probe_bytes")
+    environment_lists_valid = (
+        isinstance(visible, list)
+        and all(isinstance(name, str) for name in visible)
+        and isinstance(allowed, list)
+        and all(isinstance(name, str) for name in allowed)
+    )
+    return (
+        observation.get("sanitized_environment") is True
+        and environment_lists_valid
+        and "PATH" in visible
+        and set(visible) <= set(allowed)
+        and observation.get("unexpected_environment_variables") == []
+        and observation.get("isolated_working_directory") is True
+        and observation.get("cpu_limit_seconds") == 1
+        and observation.get("address_space_limit_enforced") is True
+        and isinstance(address_space, int)
+        and 0 < address_space < 1 << 63
+        and observation.get("file_descriptor_limit") == 16
+        and observation.get("output_limit_enforced") is True
+        and observation.get("output_limit_bytes") == 4096
+        and isinstance(output_bytes, int)
+        and 0 < output_bytes <= 4096
+        and isinstance(output_probe_bytes, int)
+        and 0 < output_probe_bytes <= 4096
+        and observation.get("deadline_limit_enforced") is True
+        and observation.get("deadline_seconds") == 2
+        and observation.get("network_denial_proven") is False
+        and observation.get("hostile_multi_tenant_isolation_proven") is False
+        and observation.get("conclusion") == ANALYZER_CONCLUSION
+    )
 
 
 def validate(root: Path) -> list[dict[str, str]]:
@@ -153,6 +214,48 @@ def validate(root: Path) -> list[dict[str, str]]:
             problems.append(
                 issue("VAL-READY-014", "prototype_conclusion_failed", relative, "Prototype did not meet its precommitted acceptance rule")
             )
+        if case == "analyzer-isolation":
+            environment = result.get("environment")
+            required_environment = {
+                "os",
+                "architecture",
+                "cpu_count",
+                "memory_bytes",
+                "python",
+                "go",
+                "docker",
+                "tested_commit",
+                "machine_class",
+            }
+            tested_commit = (
+                environment.get("tested_commit")
+                if isinstance(environment, dict)
+                else None
+            )
+            environment_valid = (
+                isinstance(environment, dict)
+                and required_environment <= set(environment)
+                and isinstance(tested_commit, str)
+                and len(tested_commit) == 40
+            )
+            samples = result.get("samples")
+            samples_valid = (
+                isinstance(samples, list)
+                and bool(samples)
+                and all(
+                    valid_analyzer_sample(sample, row.get("budgets", {}))
+                    for sample in samples
+                )
+            )
+            if not environment_valid or not samples_valid:
+                problems.append(
+                    issue(
+                        "VAL-READY-014",
+                        "invalid_analyzer_isolation_observation",
+                        relative,
+                        "Every analyzer sample must bind the machine and enforce ambient, CPU, address-space, descriptor, output, deadline, and honest isolation bounds",
+                    )
+                )
         if case in POSTGRES_CASES:
             postgres = result.get("environment", {}).get("postgres", {})
             if (

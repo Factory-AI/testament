@@ -30,6 +30,8 @@ class PrototypeEvidenceTest(unittest.TestCase):
         root = Path(temporary.name)
         for relative in VERIFY.EVIDENCE_FILES:
             source = ROOT / relative
+            if not source.is_file():
+                continue
             target = root / relative
             target.parent.mkdir(parents=True, exist_ok=True)
             shutil.copy2(source, target)
@@ -98,10 +100,52 @@ class PrototypeEvidenceTest(unittest.TestCase):
 
     def test_analyzer_isolation_enforces_finite_resource_bounds(self) -> None:
         result = RUN.analyzer_isolation(ROOT)
+        self.assertTrue(result["sanitized_environment"])
+        self.assertTrue(result["isolated_working_directory"])
+        self.assertEqual(1, result["cpu_limit_seconds"])
         self.assertTrue(result["address_space_limit_enforced"])
         self.assertLess(result["address_space_limit_bytes"], 1 << 63)
+        self.assertEqual(16, result["file_descriptor_limit"])
         self.assertTrue(result["output_limit_enforced"])
         self.assertEqual(4096, result["output_limit_bytes"])
+        self.assertTrue(result["deadline_limit_enforced"])
+        self.assertEqual(2, result["deadline_seconds"])
+        self.assertFalse(result["network_denial_proven"])
+        self.assertFalse(result["hostile_multi_tenant_isolation_proven"])
+
+    def test_analyzer_ambient_state_mutation_fails(self) -> None:
+        root = self.copy_evidence()
+        path = root / "docs/research/benchmarks/analyzer-isolation.json"
+        result = json.loads(path.read_text(encoding="utf-8"))
+        result["samples"][0]["observation"]["sanitized_environment"] = False
+        path.write_text(json.dumps(result), encoding="utf-8")
+        self.assertIn("invalid_analyzer_isolation_observation", self.codes(root))
+
+    def test_analyzer_finite_resource_mutation_fails(self) -> None:
+        root = self.copy_evidence()
+        path = root / "docs/research/benchmarks/analyzer-isolation.json"
+        result = json.loads(path.read_text(encoding="utf-8"))
+        result["samples"][0]["observation"].pop("deadline_seconds")
+        path.write_text(json.dumps(result), encoding="utf-8")
+        self.assertIn("invalid_analyzer_isolation_observation", self.codes(root))
+
+    def test_analyzer_network_claim_mutation_fails(self) -> None:
+        root = self.copy_evidence()
+        path = root / "docs/research/benchmarks/analyzer-isolation.json"
+        result = json.loads(path.read_text(encoding="utf-8"))
+        result["samples"][0]["observation"]["network_denial_proven"] = True
+        path.write_text(json.dumps(result), encoding="utf-8")
+        self.assertIn("invalid_analyzer_isolation_observation", self.codes(root))
+
+    def test_analyzer_hostile_tenant_claim_mutation_fails(self) -> None:
+        root = self.copy_evidence()
+        path = root / "docs/research/benchmarks/analyzer-isolation.json"
+        result = json.loads(path.read_text(encoding="utf-8"))
+        result["samples"][0]["observation"][
+            "hostile_multi_tenant_isolation_proven"
+        ] = True
+        path.write_text(json.dumps(result), encoding="utf-8")
+        self.assertIn("invalid_analyzer_isolation_observation", self.codes(root))
 
 
 if __name__ == "__main__":
