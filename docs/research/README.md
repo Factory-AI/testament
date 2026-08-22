@@ -36,9 +36,12 @@ The manifest currently registers 50 stable deliverables:
 The naming study and naming decision are accepted. The trace-format,
 abuse/misuse, STRIDE, LINDDUN, attack-tree, data-inventory, sovereignty,
 no-content-egress, retention/deletion, and key-custody studies are in review.
+The [analyzer evaluation plan](analysis/evaluation-plan.md) is also in review,
+with its complete family matrix in
+[`policy/analyzer-evaluation.json`](../../policy/analyzer-evaluation.json).
 The [synthetic trace research corpus](corpus/README.md) is complete as an
 informative corpus and awaits independent security, privacy, and licensing
-review. The other deliverables are drafts. Each deliverable gets its own
+review. The remaining deliverables are drafts. Each deliverable gets its own
 artifact rather than sharing one file with an incompatible deliverable.
 
 Current studies:
@@ -56,6 +59,8 @@ Current studies:
 - [Retention, deletion, and legal holds](privacy/retention-deletion.md);
 - [Key custody model](security/key-custody.md), all backed by the
   [machine-readable threat, privacy, and sovereignty matrix](../../policy/threat-privacy-sovereignty.json);
+- [Analyzer evaluation plan](analysis/evaluation-plan.md), backed by the
+  [family-to-fixture, metric, and threshold matrix](../../policy/analyzer-evaluation.json);
   and
 - [Naming clearance](naming-clearance.md).
 
@@ -85,6 +90,10 @@ questions. Threat and privacy validation requires complete STRIDE and LINDDUN
 categories, stable mappings to mitigation, validation, owner, and residual
 risk, all four sovereignty profiles, and explicit data, boundary, egress,
 lifecycle, hold, and key-custody sections.
+
+`make verify-analyzer-evaluation` validates the analyzer evaluation plan. It
+rejects a missing family, dataset, fixture mapping, metric, threshold, source,
+required evaluation dimension, or lifecycle agreement.
 
 `make verify-corpus` separately verifies `VAL-READY-012` and
 `VAL-READY-013`, including required class and provider coverage, exact byte

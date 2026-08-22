@@ -43,6 +43,16 @@ class PrototypeEvidenceTest(unittest.TestCase):
     def test_repository_evidence_passes(self) -> None:
         self.assertEqual([], VERIFY.validate(ROOT))
 
+    def test_analyzer_evaluation_evidence_passes(self) -> None:
+        self.assertEqual(
+            [],
+            [
+                problem
+                for problem in VERIFY.validate(ROOT)
+                if problem["criterion_id"] == "VAL-READY-015"
+            ],
+        )
+
     def test_every_prototype_has_precommit_and_raw_result(self) -> None:
         plan = json.loads(
             (ROOT / "docs/research/benchmarks/precommit.json").read_text(
@@ -77,18 +87,23 @@ class PrototypeEvidenceTest(unittest.TestCase):
         path.write_text(json.dumps(result), encoding="utf-8")
         self.assertIn("wrong_sample_count", self.codes(root))
 
-    def test_analyzer_matrix_requires_every_family_and_dimension(self) -> None:
+    def test_analyzer_matrix_requires_every_family(self) -> None:
         root = self.copy_evidence()
         path = root / "policy/analyzer-evaluation.json"
         plan = json.loads(path.read_text(encoding="utf-8"))
         plan["families"] = [
             row for row in plan["families"] if row["family"] != "external-llm"
         ]
+        path.write_text(json.dumps(plan), encoding="utf-8")
+        self.assertIn("missing_analyzer_family", self.codes(root))
+
+    def test_analyzer_matrix_requires_prompt_injection_suite(self) -> None:
+        root = self.copy_evidence()
+        path = root / "policy/analyzer-evaluation.json"
+        plan = json.loads(path.read_text(encoding="utf-8"))
         plan["families"][0]["prompt_injection"].pop("suite")
         path.write_text(json.dumps(plan), encoding="utf-8")
-        codes = self.codes(root)
-        self.assertIn("missing_analyzer_family", codes)
-        self.assertIn("incomplete_analyzer_dimension", codes)
+        self.assertIn("incomplete_analyzer_dimension", self.codes(root))
 
     def test_analyzer_matrix_requires_family_source_mapping(self) -> None:
         root = self.copy_evidence()
@@ -119,6 +134,14 @@ class PrototypeEvidenceTest(unittest.TestCase):
         path = root / "policy/analyzer-evaluation.json"
         plan = json.loads(path.read_text(encoding="utf-8"))
         plan["families"][0]["metrics"].pop()
+        path.write_text(json.dumps(plan), encoding="utf-8")
+        self.assertIn("analyzer_metric_threshold_mismatch", self.codes(root))
+
+    def test_analyzer_matrix_rejects_malformed_metrics_without_exception(self) -> None:
+        root = self.copy_evidence()
+        path = root / "policy/analyzer-evaluation.json"
+        plan = json.loads(path.read_text(encoding="utf-8"))
+        plan["families"][0]["metrics"] = {"unexpected": "shape"}
         path.write_text(json.dumps(plan), encoding="utf-8")
         self.assertIn("analyzer_metric_threshold_mismatch", self.codes(root))
 

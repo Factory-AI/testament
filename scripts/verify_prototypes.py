@@ -63,6 +63,13 @@ ANALYZER_DATASETS = {
     "DATASET-AUTHORIZED-USE-TWINS-1.0.0",
     "DATASET-INJECTION-MUTATIONS-1.0.0",
 }
+ANALYZER_DATASET_PATHS = {
+    "DATASET-SYNTHETIC-CORPUS-1.0.0": "docs/research/corpus/manifest.json",
+    "DATASET-AUTHORIZED-USE-TWINS-1.0.0": "docs/research/corpus/manifest.json",
+    "DATASET-INJECTION-MUTATIONS-1.0.0": (
+        "docs/research/analysis/evaluation-plan.md#prompt-injection-suite"
+    ),
+}
 ANALYZER_SOURCES = {
     "SRC-NIST-AML-2025",
     "SRC-OWASP-LLM01-2025",
@@ -205,7 +212,7 @@ def valid_analyzer_sample(
     )
 
 
-def validate(root: Path) -> list[dict[str, str]]:
+def validate_prototype_evidence(root: Path) -> list[dict[str, str]]:
     problems: list[dict[str, str]] = []
     plan_path = "docs/research/benchmarks/precommit.json"
     plan = load(root, plan_path, problems, "VAL-READY-014")
@@ -327,6 +334,11 @@ def validate(root: Path) -> list[dict[str, str]]:
                 problems.append(
                     issue("VAL-READY-014", "invalid_postgres_environment", relative, "PostgreSQL evidence must bind version 17, port 5440, and declared lifecycle")
                 )
+    return problems
+
+
+def validate_analyzer_evaluation(root: Path) -> list[dict[str, str]]:
+    problems: list[dict[str, str]] = []
     evaluation_path = "policy/analyzer-evaluation.json"
     evaluation = load(root, evaluation_path, problems, "VAL-READY-015")
     if (
@@ -365,9 +377,11 @@ def validate(root: Path) -> list[dict[str, str]]:
         )
     corpus_path = "docs/research/corpus/manifest.json"
     corpus = load(root, corpus_path, problems, "VAL-READY-015")
+    corpus_fixtures = corpus.get("fixtures")
+    corpus_rows = corpus_fixtures if isinstance(corpus_fixtures, list) else []
     corpus_fixture_ids = {
         row.get("id")
-        for row in corpus.get("fixtures", [])
+        for row in corpus_rows
         if isinstance(row, dict) and isinstance(row.get("id"), str)
     }
     for dataset_id, row in dataset_by_id.items():
@@ -381,6 +395,7 @@ def validate(root: Path) -> list[dict[str, str]]:
         if (
             not nonempty_strings(fixture_ids)
             or not set(fixture_ids) <= corpus_fixture_ids
+            or dataset_path != ANALYZER_DATASET_PATHS.get(dataset_id)
             or not bounded_path
             or not (root / bounded_path).is_file()
             or any(
@@ -486,9 +501,10 @@ def validate(root: Path) -> list[dict[str, str]]:
         metrics = row.get("metrics")
         thresholds = row.get("thresholds")
         metric_ids = set(metrics) if nonempty_strings(metrics) else set()
+        metric_count = len(metrics) if isinstance(metrics, list) else 0
         threshold_ids = set(thresholds) if isinstance(thresholds, dict) else set()
         if (
-            len(metric_ids) != len(metrics or [])
+            len(metric_ids) != metric_count
             or not CORE_ANALYZER_METRICS <= metric_ids
             or metric_ids != threshold_ids
             or not isinstance(thresholds, dict)
@@ -582,9 +598,13 @@ def validate(root: Path) -> list[dict[str, str]]:
     research_manifest = load(
         root, research_manifest_path, problems, "VAL-READY-015"
     )
+    manifest_deliverables = research_manifest.get("deliverables")
+    deliverable_rows = (
+        manifest_deliverables if isinstance(manifest_deliverables, list) else []
+    )
     analyzer_entries = [
         row
-        for row in research_manifest.get("deliverables", [])
+        for row in deliverable_rows
         if isinstance(row, dict)
         and row.get("id") == "RES-STUDY-ANALYZER-EVALUATION-001"
     ]
@@ -599,6 +619,12 @@ def validate(root: Path) -> list[dict[str, str]]:
         )
     else:
         entry = analyzer_entries[0]
+        artifact = entry.get("artifact")
+        artifact = artifact if isinstance(artifact, dict) else {}
+        owner = entry.get("owner")
+        owner = owner if isinstance(owner, dict) else {}
+        review = entry.get("review")
+        review = review if isinstance(review, dict) else {}
         evidence_locators = {
             item.get("locator")
             for item in entry.get("evidence", [])
@@ -607,10 +633,15 @@ def validate(root: Path) -> list[dict[str, str]]:
         if (
             entry.get("state") != "in-review"
             or entry.get("version") != evaluation.get("version")
-            or entry.get("artifact", {}).get("path") != prose_path
+            or artifact.get("path") != prose_path
             or prose_path not in evidence_locators
             or evaluation_path not in evidence_locators
-            or entry.get("review", {}).get("status") != "pending"
+            or owner.get("identity") not in str(evaluation.get("owner"))
+            or review.get("reviewer")
+            != "non-author analysis, security, and privacy reviewer"
+            or review.get("status") != "pending"
+            or evaluation.get("reviewer")
+            != "non-author analysis, security, and privacy reviewer pending"
         ):
             problems.append(
                 issue(
@@ -623,6 +654,13 @@ def validate(root: Path) -> list[dict[str, str]]:
     return problems
 
 
+def validate(root: Path) -> list[dict[str, str]]:
+    return [
+        *validate_prototype_evidence(root),
+        *validate_analyzer_evaluation(root),
+    ]
+
+
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--root", type=Path, default=Path.cwd())
@@ -632,15 +670,16 @@ def main() -> int:
         help="Report one criterion while preserving the shared verifier implementation.",
     )
     args = parser.parse_args()
-    problems = validate(args.root.resolve())
+    root = args.root.resolve()
     criteria = ["VAL-READY-014", "VAL-READY-015"]
-    if args.criterion:
+    if args.criterion == "VAL-READY-014":
         criteria = [args.criterion]
-        problems = [
-            problem
-            for problem in problems
-            if problem.get("criterion_id") == args.criterion
-        ]
+        problems = validate_prototype_evidence(root)
+    elif args.criterion == "VAL-READY-015":
+        criteria = [args.criterion]
+        problems = validate_analyzer_evaluation(root)
+    else:
+        problems = validate(root)
     print(
         json.dumps(
             {
