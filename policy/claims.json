@@ -1,0 +1,54 @@
+{
+  "schema_version": "1.0.0",
+  "scan_paths": [
+    "README.md",
+    "CHARTER.md",
+    "TERMINOLOGY.md",
+    "docs/*.md",
+    "docs/**/*.md"
+  ],
+  "required_limitations": [
+    {
+      "id": "LIM-SAFETY-001",
+      "text": "No system can provide perfect safety."
+    },
+    {
+      "id": "LIM-SEMANTICS-001",
+      "text": "Testament does not claim universal semantic understanding."
+    },
+    {
+      "id": "LIM-RUNTIME-001",
+      "text": "Application-layer encryption is not end-to-end protection against a compromised runtime."
+    },
+    {
+      "id": "LIM-ENFORCEMENT-001",
+      "text": "Testament does not automatically enforce decisions."
+    },
+    {
+      "id": "LIM-CLOUD-001",
+      "text": "Real GCP Cloud KMS and Azure Key Vault end-to-end conformance is unverified."
+    }
+  ],
+  "forbidden_claims": [
+    {
+      "id": "CLAIM-PERFECT-SAFETY",
+      "pattern": "(?i)Testament guarantees perfect safety"
+    },
+    {
+      "id": "CLAIM-UNIVERSAL-SEMANTICS",
+      "pattern": "(?i)Testament understands every model"
+    },
+    {
+      "id": "CLAIM-RUNTIME-E2E",
+      "pattern": "(?i)Testament is end-to-end encrypted against a compromised runtime"
+    },
+    {
+      "id": "CLAIM-AUTOMATIC-ENFORCEMENT",
+      "pattern": "(?i)Testament automatically enforces"
+    },
+    {
+      "id": "CLAIM-UNVERIFIED-CLOUD",
+      "pattern": "(?i)Testament is verified on (GCP Cloud KMS|Azure Key Vault)"
+    }
+  ]
+}

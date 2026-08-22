@@ -1,0 +1,86 @@
+{
+  "schema_version": "1.0.0",
+  "project_license": "Apache-2.0",
+  "default_spdx_expression": "Apache-2.0",
+  "core_dependency_policy": {
+    "allowed": [
+      "0BSD",
+      "Apache-2.0",
+      "BSD-2-Clause",
+      "BSD-3-Clause",
+      "ISC",
+      "MIT"
+    ],
+    "forbidden": [
+      "AGPL-1.0",
+      "AGPL-3.0",
+      "BUSL-1.1",
+      "Elastic-2.0",
+      "GPL-1.0",
+      "GPL-2.0",
+      "GPL-3.0",
+      "SSPL-1.0"
+    ],
+    "review_required": [
+      "CC-BY-4.0",
+      "CDDL-1.0",
+      "EPL-2.0",
+      "LGPL-2.1",
+      "LGPL-3.0",
+      "MPL-2.0",
+      "OFL-1.1"
+    ]
+  },
+  "dependencies": [],
+  "artifact_classes": [
+    {
+      "id": "code",
+      "paths": ["**/*.go", "**/*.js", "**/*.ts", "**/*.tsx", "scripts/**"],
+      "license": "Apache-2.0",
+      "notice_required": true,
+      "current_status": "repository scripts only"
+    },
+    {
+      "id": "dependencies",
+      "paths": ["go.mod", "go.sum", "package.json", "package-lock.json", "third_party/**"],
+      "license": "per dependency; compatible licenses only",
+      "notice_required": true,
+      "current_status": "no runtime or build dependencies"
+    },
+    {
+      "id": "generated",
+      "paths": ["gen/**", "**/*.generated.*"],
+      "license": "Apache-2.0 unless the generator or source requires compatible attribution",
+      "notice_required": true,
+      "current_status": "none"
+    },
+    {
+      "id": "documentation",
+      "paths": ["README.md", "CHARTER.md", "TERMINOLOGY.md", "docs/**"],
+      "license": "Apache-2.0",
+      "notice_required": true,
+      "current_status": "project documentation"
+    },
+    {
+      "id": "fixtures",
+      "paths": ["fixtures/**", "testdata/**"],
+      "license": "Apache-2.0 for project-created fixtures; otherwise explicit compatible redistribution terms",
+      "notice_required": true,
+      "current_status": "none"
+    },
+    {
+      "id": "fonts",
+      "paths": ["web/fonts/**", "site/fonts/**"],
+      "license": "per-font license, with OFL-1.1 permitted after review",
+      "notice_required": true,
+      "current_status": "none"
+    },
+    {
+      "id": "notices",
+      "paths": ["NOTICE", "third_party/notices/**"],
+      "license": "informational notices governed by their referenced artifacts",
+      "notice_required": false,
+      "current_status": "project notice only"
+    }
+  ]
+}
