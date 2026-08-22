@@ -33,6 +33,9 @@ reviews, formal readiness report, and external research seal pass.
 - [ADR lifecycle and index](docs/adrs/README.md)
 - [Governance source record](docs/governance-sources.md)
 - [Machine-readable governance lifecycle](policy/governance-lifecycle.json)
+- [Naming search and conditional decision](docs/research/naming-clearance.md)
+- [Milestone 1 research registry](docs/research/README.md)
+- [Machine-readable research manifest](policy/research-manifest.json)
 
 ## Verify this foundation
 
@@ -43,7 +46,8 @@ make test-gate
 The command validates the Apache-2.0 text, checks that all artifact classes are
 accounted for, rejects prohibited core dependency licenses, confirms required
 limitations are public, scans for forbidden overclaims, and validates
-governance, security, contribution, RFC, and ADR lifecycle records.
+governance, security, contribution, RFC, ADR, naming, and research lifecycle
+records.
 
 ## License
 

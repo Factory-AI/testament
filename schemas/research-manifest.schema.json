@@ -1,0 +1,146 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/Factory-AI/testament/schemas/research-manifest.schema.json",
+  "title": "Testament Milestone 1 research manifest",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "feature_id",
+    "validation_ids",
+    "milestone",
+    "version",
+    "states",
+    "deliverables"
+  ],
+  "properties": {
+    "schema_version": {"const": "1.0.0"},
+    "feature_id": {"const": "naming-clearance-and-research-registry"},
+    "validation_ids": {
+      "const": ["VAL-READY-006", "VAL-READY-007"]
+    },
+    "milestone": {"const": "research-foundation"},
+    "version": {"type": "string", "pattern": "^\\d+\\.\\d+\\.\\d+$"},
+    "states": {
+      "const": ["draft", "in-review", "accepted", "blocked", "superseded"]
+    },
+    "deliverables": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"$ref": "#/$defs/deliverable"}
+    }
+  },
+  "$defs": {
+    "deliverable": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "type",
+        "title",
+        "summary",
+        "state",
+        "version",
+        "commit",
+        "owner",
+        "dependencies",
+        "acceptance_criteria",
+        "artifact",
+        "evidence",
+        "review",
+        "decision",
+        "lineage"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^RES-(STUDY|CORPUS|PROTOTYPE|BENCHMARK|RFC|REVIEW|DECISION)-[A-Z0-9-]+-\\d{3}$"
+        },
+        "type": {
+          "enum": ["study", "corpus", "prototype", "benchmark", "rfc", "review", "decision"]
+        },
+        "title": {"type": "string", "minLength": 1},
+        "summary": {"type": "string", "minLength": 1},
+        "state": {
+          "enum": ["draft", "in-review", "accepted", "blocked", "superseded"]
+        },
+        "version": {"type": "string", "pattern": "^\\d+\\.\\d+\\.\\d+$"},
+        "commit": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+        "owner": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["role", "identity"],
+          "properties": {
+            "role": {"type": "string", "minLength": 1},
+            "identity": {"type": "string", "minLength": 1}
+          }
+        },
+        "dependencies": {
+          "type": "array",
+          "items": {"type": "string", "minLength": 1}
+        },
+        "acceptance_criteria": {
+          "type": "array",
+          "minItems": 1,
+          "items": {"type": "string", "minLength": 1}
+        },
+        "artifact": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["path", "media_type"],
+          "properties": {
+            "path": {"type": "string", "minLength": 1},
+            "media_type": {"type": "string", "minLength": 1}
+          }
+        },
+        "evidence": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["id", "kind", "visibility", "locator", "claim_supported"],
+            "properties": {
+              "id": {"type": "string", "minLength": 1},
+              "kind": {"enum": ["repository", "url"]},
+              "visibility": {"enum": ["public", "private"]},
+              "locator": {"type": "string", "minLength": 1},
+              "claim_supported": {"type": "string", "minLength": 1}
+            }
+          }
+        },
+        "review": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["reviewer", "role", "status", "reviewed_at"],
+          "properties": {
+            "reviewer": {"type": "string", "minLength": 1},
+            "role": {"type": "string", "minLength": 1},
+            "status": {"enum": ["pending", "completed"]},
+            "reviewed_at": {"type": ["string", "null"], "format": "date"}
+          }
+        },
+        "decision": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["status", "authority", "decided_at", "rationale"],
+          "properties": {
+            "status": {"enum": ["pending", "approved", "rejected"]},
+            "authority": {"type": "string", "minLength": 1},
+            "decided_at": {"type": ["string", "null"], "format": "date"},
+            "rationale": {"type": "string", "minLength": 1}
+          }
+        },
+        "lineage": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["supersedes", "superseded_by"],
+          "properties": {
+            "supersedes": {"type": ["string", "null"]},
+            "superseded_by": {"type": ["string", "null"]}
+          }
+        }
+      }
+    }
+  }
+}

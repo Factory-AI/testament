@@ -56,10 +56,10 @@
     },
     {
       "id": "documentation",
-      "paths": ["README.md", "CHARTER.md", "TERMINOLOGY.md", "docs/**"],
+      "paths": ["README.md", "CHARTER.md", "TERMINOLOGY.md", "docs/**", "policy/**", "schemas/**"],
       "license": "Apache-2.0",
       "notice_required": true,
-      "current_status": "project documentation"
+      "current_status": "project documentation and machine-readable research contracts"
     },
     {
       "id": "fixtures",
