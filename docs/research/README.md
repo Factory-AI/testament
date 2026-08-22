@@ -41,8 +41,10 @@ with its complete family matrix in
 [`policy/analyzer-evaluation.json`](../../policy/analyzer-evaluation.json).
 The [synthetic trace research corpus](corpus/README.md) is complete as an
 informative corpus and awaits independent security, privacy, and licensing
-review. The remaining deliverables are drafts. Each deliverable gets its own
-artifact rather than sharing one file with an incompatible deliverable.
+review. The nine prototype and benchmark pairs are complete informative
+evidence and await independent review. The remaining deliverables are drafts.
+Each deliverable gets its own artifact rather than sharing one file with an
+incompatible deliverable.
 
 Current studies:
 
@@ -67,6 +69,45 @@ Current studies:
 Use the JSON manifest when exact IDs or lifecycle data matter. This page is the
 stable public evidence link for planned entries until their own artifact is
 published.
+
+## Prototype evidence
+
+The [prototype claim ledger](../../policy/prototype-claims.json) links exactly
+nine informative claims to their disposable prototype, precommitted plan,
+benchmark result, observation, inference, uncertainty, limitation, and pending
+review. The [clean-clone reproduction report](benchmarks/reproduction.json)
+contains all 27 rerun samples and comparisons. Neither file is a normative
+conformance input.
+
+All results bind the canonical precommit plan at
+`cfdf43bb49f3802137dc0ae887314ab7a8a01f58`. Five early local result files
+contained the non-resolving transcription
+`cfdf43b1d85024ad5475f5c2afe41978f9fc2a01`. Their reconciliation metadata
+records that identifier and a digest of the preserved raw samples; no sample
+was rewritten.
+
+To repeat the measurement in a fresh clone, check out the report's
+`source_commit`, run `make setup`, start PostgreSQL with `make dev`, confirm
+`docker compose exec -T postgres pg_isready -p 5440`, then run:
+
+```sh
+python3 scripts/run_prototypes.py \
+  --root . \
+  --plan-commit cfdf43bb49f3802137dc0ae887314ab7a8a01f58 \
+  --postgres \
+  --output-dir /tmp/testament-prototype-results \
+  --report /tmp/testament-prototype-reproduction.json \
+  --clean-clone
+make dev-stop
+make verify-prototypes
+```
+
+The comparison deliberately requires the same plan fields, sample counts, and
+acceptance outcome. It does not require elapsed time, randomized cryptographic
+bytes, or process RSS to be byte-identical across runs. Any plan widening
+invalidates all bound results. A future tolerance change must include an
+attributable approval plus digest-bound prior-baseline and new-rerun artifacts
+in `tolerance_history`; otherwise verification fails.
 
 ## Verification
 
@@ -94,6 +135,11 @@ lifecycle, hold, and key-custody sections.
 `make verify-analyzer-evaluation` validates the analyzer evaluation plan. It
 rejects a missing family, dataset, fixture mapping, metric, threshold, source,
 required evaluation dimension, or lifecycle agreement.
+
+`make verify-prototypes` validates exact nine-pair coverage, canonical
+precommit and tested-commit resolution, preserved historical observations,
+claim links, research-manifest agreement, clean-clone rerun comparisons,
+reviewed tolerance history, and the informative disposable boundary.
 
 `make verify-corpus` separately verifies `VAL-READY-012` and
 `VAL-READY-013`, including required class and provider coverage, exact byte

@@ -7,12 +7,22 @@ import argparse
 import hashlib
 import json
 import math
+import subprocess
 import sys
 from pathlib import Path
 from typing import Any
 from urllib.parse import urlparse
 
 
+CANONICAL_PLAN_COMMIT = "cfdf43bb49f3802137dc0ae887314ab7a8a01f58"
+HISTORICAL_INVALID_PLAN_COMMIT = "cfdf43b1d85024ad5475f5c2afe41978f9fc2a01"
+RECONCILED_CASES = {
+    "giant-stream",
+    "exact-byte",
+    "compression-encryption",
+    "blind-index",
+    "key-rotation",
+}
 PROTOTYPES = {
     "giant-stream",
     "exact-byte",
@@ -24,6 +34,29 @@ PROTOTYPES = {
     "analyzer-isolation",
     "offline-replay",
 }
+PROTOTYPE_DELIVERABLES = {
+    "giant-stream": "RES-PROTOTYPE-GIANT-STREAM-001",
+    "exact-byte": "RES-PROTOTYPE-EXACT-BYTE-001",
+    "compression-encryption": "RES-PROTOTYPE-COMPRESSION-ENCRYPTION-001",
+    "postgres-storage": "RES-PROTOTYPE-POSTGRES-STORAGE-001",
+    "blind-index": "RES-PROTOTYPE-BLIND-INDEX-001",
+    "key-rotation": "RES-PROTOTYPE-KEY-ROTATION-001",
+    "decision-durability": "RES-PROTOTYPE-DECISION-DURABILITY-001",
+    "analyzer-isolation": "RES-PROTOTYPE-ANALYZER-ISOLATION-001",
+    "offline-replay": "RES-PROTOTYPE-OFFLINE-REPLAY-001",
+}
+BENCHMARK_DELIVERABLES = {
+    case: deliverable.replace("RES-PROTOTYPE-", "RES-BENCHMARK-")
+    for case, deliverable in PROTOTYPE_DELIVERABLES.items()
+}
+PROTOTYPE_PATHS = {
+    case: f"prototypes/{case}/README.md" for case in PROTOTYPES
+}
+RESULT_PATH_BY_CASE = {
+    case: f"docs/research/benchmarks/{case}.json" for case in PROTOTYPES
+}
+CLAIMS_PATH = "policy/prototype-claims.json"
+REPRODUCTION_PATH = "docs/research/benchmarks/reproduction.json"
 POSTGRES_CASES = {"postgres-storage", "decision-durability", "offline-replay"}
 ANALYZER_FAMILIES = {
     "deterministic-rules",
@@ -85,14 +118,14 @@ CORE_ANALYZER_METRICS = {
     "abstention_on_unanswerable",
     "cost_budget_overrun_count",
 }
-RESULT_FILES = [
-    f"docs/research/benchmarks/{case}.json" for case in sorted(PROTOTYPES)
-]
+RESULT_FILES = [RESULT_PATH_BY_CASE[case] for case in sorted(PROTOTYPES)]
 EVIDENCE_FILES = [
     "docs/research/benchmarks/precommit.json",
+    REPRODUCTION_PATH,
     "docs/research/analysis/evaluation-plan.md",
     "docs/research/corpus/manifest.json",
     "policy/analyzer-evaluation.json",
+    CLAIMS_PATH,
     "policy/research-manifest.json",
     *RESULT_FILES,
 ]
@@ -136,6 +169,295 @@ def digest(value: Any) -> str:
     return hashlib.sha256(
         json.dumps(value, sort_keys=True, separators=(",", ":")).encode()
     ).hexdigest()
+
+
+def git_object_exists(root: Path, object_name: str) -> bool:
+    if not (root / ".git").exists():
+        return True
+    result = subprocess.run(
+        ["git", "cat-file", "-e", object_name],
+        cwd=root,
+        capture_output=True,
+        check=False,
+    )
+    return result.returncode == 0
+
+
+def git_file(root: Path, commit: str, relative: str) -> bytes | None:
+    if not (root / ".git").exists():
+        return None
+    result = subprocess.run(
+        ["git", "show", f"{commit}:{relative}"],
+        cwd=root,
+        capture_output=True,
+        check=False,
+    )
+    return result.stdout if result.returncode == 0 else None
+
+
+def validate_tolerance_history(
+    root: Path,
+    history: Any,
+    problems: list[dict[str, str]],
+) -> None:
+    if not isinstance(history, list):
+        problems.append(
+            issue(
+                "VAL-READY-014",
+                "missing_tolerance_history",
+                "docs/research/benchmarks/precommit.json",
+                "Tolerance history must be an array",
+            )
+        )
+        return
+    required = {
+        "case",
+        "field",
+        "previous_value",
+        "new_value",
+        "reason",
+        "reviewer",
+        "reviewed_at",
+        "prior_baseline_result_path",
+        "prior_baseline_result_sha256",
+        "rerun_result_path",
+        "rerun_result_sha256",
+        "decision",
+    }
+    for index, record in enumerate(history):
+        path = f"docs/research/benchmarks/precommit.json#tolerance_history/{index}"
+        valid = (
+            isinstance(record, dict)
+            and required <= set(record)
+            and record.get("case") in PROTOTYPES
+            and record.get("decision") == "approved"
+            and record.get("previous_value") != record.get("new_value")
+            and all(
+                isinstance(record.get(field), str) and record[field]
+                for field in (
+                    "field",
+                    "reason",
+                    "reviewer",
+                    "reviewed_at",
+                    "prior_baseline_result_path",
+                    "prior_baseline_result_sha256",
+                    "rerun_result_path",
+                    "rerun_result_sha256",
+                )
+            )
+        )
+        if valid:
+            for prefix in ("prior_baseline", "rerun"):
+                relative = record[f"{prefix}_result_path"]
+                expected = record[f"{prefix}_result_sha256"]
+                target = root / relative
+                valid = (
+                    not Path(relative).is_absolute()
+                    and ".." not in Path(relative).parts
+                    and len(expected) == 64
+                    and target.is_file()
+                    and hashlib.sha256(target.read_bytes()).hexdigest() == expected
+                )
+                if not valid:
+                    break
+        if not valid:
+            problems.append(
+                issue(
+                    "VAL-READY-014",
+                    "invalid_tolerance_change",
+                    path,
+                    "A tolerance change requires attributable review plus digest-bound prior-baseline and new rerun evidence",
+                )
+            )
+
+
+def validate_claim_links(
+    root: Path,
+    results: dict[str, dict[str, Any]],
+    problems: list[dict[str, str]],
+) -> None:
+    claims = load(root, CLAIMS_PATH, problems, "VAL-READY-014")
+    rows = claims.get("claims")
+    rows = rows if isinstance(rows, list) else []
+    by_case = {
+        row.get("prototype_id"): row
+        for row in rows
+        if isinstance(row, dict) and isinstance(row.get("prototype_id"), str)
+    }
+    if (
+        claims.get("schema_version") != "1.0.0"
+        or claims.get("validation_id") != "VAL-READY-014"
+        or claims.get("status") != "informative-in-review"
+        or claims.get("canonical_plan_commit") != CANONICAL_PLAN_COMMIT
+        or len(rows) != len(PROTOTYPES)
+        or set(by_case) != PROTOTYPES
+    ):
+        problems.append(
+            issue(
+                "VAL-READY-014",
+                "prototype_claim_coverage_mismatch",
+                CLAIMS_PATH,
+                "Claim ledger must contain exactly one informative in-review row for each of the nine prototype/benchmark pairs",
+            )
+        )
+    for case, row in by_case.items():
+        result = results.get(case, {})
+        required_text = (
+            "claim",
+            "observation",
+            "inference",
+            "uncertainty",
+            "limitations",
+            "reviewer",
+            "review_status",
+        )
+        if (
+            row.get("claim_id") != f"CLAIM-PROTOTYPE-{case.upper()}"
+            or row.get("prototype_deliverable_id") != PROTOTYPE_DELIVERABLES[case]
+            or row.get("benchmark_deliverable_id") != BENCHMARK_DELIVERABLES[case]
+            or row.get("prototype_path") != PROTOTYPE_PATHS[case]
+            or row.get("result_path") != RESULT_PATH_BY_CASE[case]
+            or row.get("conclusion") != result.get("conclusion")
+            or row.get("plan_commit") != CANONICAL_PLAN_COMMIT
+            or any(not row.get(field) for field in required_text)
+            or not (root / PROTOTYPE_PATHS[case]).is_file()
+            or not (root / RESULT_PATH_BY_CASE[case]).is_file()
+        ):
+            problems.append(
+                issue(
+                    "VAL-READY-014",
+                    "invalid_prototype_claim_link",
+                    CLAIMS_PATH,
+                    f"{case} does not agree with its prototype, benchmark result, conclusion, or review metadata",
+                )
+            )
+
+
+def validate_reproduction(
+    root: Path,
+    plan_digest: str,
+    problems: list[dict[str, str]],
+) -> None:
+    reproduction = load(root, REPRODUCTION_PATH, problems, "VAL-READY-014")
+    rows = reproduction.get("results")
+    rows = rows if isinstance(rows, list) else []
+    by_case = {
+        row.get("prototype_id"): row
+        for row in rows
+        if isinstance(row, dict) and isinstance(row.get("prototype_id"), str)
+    }
+    source_commit = reproduction.get("source_commit")
+    if (
+        reproduction.get("schema_version") != "1.0.0"
+        or reproduction.get("feature_id") != "reproducible-prototype-completion"
+        or reproduction.get("validation_id") != "VAL-READY-014"
+        or reproduction.get("status") != "pass"
+        or reproduction.get("clean_clone") is not True
+        or reproduction.get("plan_commit") != CANONICAL_PLAN_COMMIT
+        or reproduction.get("plan_sha256") != plan_digest
+        or not isinstance(source_commit, str)
+        or len(source_commit) != 40
+        or not git_object_exists(root, f"{source_commit}^{{commit}}")
+        or len(rows) != len(PROTOTYPES)
+        or set(by_case) != PROTOTYPES
+    ):
+        problems.append(
+            issue(
+                "VAL-READY-014",
+                "invalid_clean_clone_reproduction",
+                REPRODUCTION_PATH,
+                "Clean-clone evidence must bind one resolvable source commit, the canonical plan, and exactly nine passing reruns",
+            )
+        )
+    for case, row in by_case.items():
+        raw = row.get("raw_result")
+        comparison = row.get("comparison")
+        if (
+            row.get("baseline_result_path") != RESULT_PATH_BY_CASE[case]
+            or not isinstance(raw, dict)
+            or raw.get("prototype_id") != case
+            or raw.get("plan_commit") != CANONICAL_PLAN_COMMIT
+            or raw.get("plan_sha256") != plan_digest
+            or raw.get("conclusion") != "pass"
+            or raw.get("environment", {}).get("tested_commit") != source_commit
+            or not isinstance(comparison, dict)
+            or comparison.get("matches") is not True
+            or comparison.get("baseline_conclusion") != "pass"
+            or comparison.get("rerun_conclusion") != "pass"
+            or comparison.get("sample_count_matches") is not True
+            or comparison.get("plan_fields_match") is not True
+        ):
+            problems.append(
+                issue(
+                    "VAL-READY-014",
+                    "clean_clone_result_mismatch",
+                    REPRODUCTION_PATH,
+                    f"{case} does not reproduce its precommitted passing conclusion",
+                )
+            )
+
+
+def validate_manifest_agreement(
+    root: Path,
+    problems: list[dict[str, str]],
+) -> None:
+    manifest_path = "policy/research-manifest.json"
+    manifest = load(root, manifest_path, problems, "VAL-READY-014")
+    rows = manifest.get("deliverables")
+    rows = rows if isinstance(rows, list) else []
+    by_id = {
+        row.get("id"): row
+        for row in rows
+        if isinstance(row, dict) and isinstance(row.get("id"), str)
+    }
+    for case in sorted(PROTOTYPES):
+        for kind, deliverable_id, artifact_path in (
+            ("prototype", PROTOTYPE_DELIVERABLES[case], PROTOTYPE_PATHS[case]),
+            ("benchmark", BENCHMARK_DELIVERABLES[case], RESULT_PATH_BY_CASE[case]),
+        ):
+            row = by_id.get(deliverable_id, {})
+            locators = {
+                evidence.get("locator")
+                for evidence in row.get("evidence", [])
+                if isinstance(evidence, dict)
+            }
+            artifact = row.get("artifact")
+            if (
+                row.get("type") != kind
+                or row.get("state") != "in-review"
+                or row.get("version") != "1.0.0"
+                or not git_object_exists(root, f"{row.get('commit')}^{{commit}}")
+                or not isinstance(artifact, dict)
+                or artifact.get("path") != artifact_path
+                or artifact_path not in locators
+                or CLAIMS_PATH not in locators
+                or REPRODUCTION_PATH not in locators
+                or row.get("review", {}).get("status") != "pending"
+                or row.get("decision", {}).get("status") != "pending"
+            ):
+                problems.append(
+                    issue(
+                        "VAL-READY-014",
+                        "prototype_research_manifest_drift",
+                        manifest_path,
+                        f"{deliverable_id} does not agree with the complete in-review prototype evidence set",
+                    )
+                )
+        prototype_directory = (root / PROTOTYPE_PATHS[case]).parent
+        if (
+            not prototype_directory.is_dir()
+            or {path.name for path in prototype_directory.iterdir()} != {"README.md"}
+            or "Informative, disposable research"
+            not in (prototype_directory / "README.md").read_text(encoding="utf-8")
+        ):
+            problems.append(
+                issue(
+                    "VAL-READY-014",
+                    "importable_or_unlabeled_prototype",
+                    PROTOTYPE_PATHS[case],
+                    "Each prototype directory must contain only an explicitly informative, disposable README; executable harnesses stay outside production package paths",
+                )
+            )
 
 
 def nonempty_strings(value: Any) -> bool:
@@ -307,10 +629,7 @@ def validate_prototype_evidence(root: Path) -> list[dict[str, str]]:
                 f"Missing={missing}; extra={extra}",
             )
         )
-    if not isinstance(plan.get("tolerance_history"), list):
-        problems.append(
-            issue("VAL-READY-014", "missing_tolerance_history", plan_path, "Tolerance history must be an array")
-        )
+    validate_tolerance_history(root, plan.get("tolerance_history"), problems)
     for case, row in by_id.items():
         required = {
             "inputs", "sample_count", "budgets", "tolerances",
@@ -321,19 +640,88 @@ def validate_prototype_evidence(root: Path) -> list[dict[str, str]]:
                 issue("VAL-READY-014", "incomplete_precommit", plan_path, f"{case} omits required precommit fields")
             )
     plan_digest = digest(plan)
+    committed_plan = git_file(root, CANONICAL_PLAN_COMMIT, plan_path)
+    if committed_plan is not None:
+        try:
+            committed_plan_digest = digest(json.loads(committed_plan))
+        except json.JSONDecodeError:
+            committed_plan_digest = ""
+        if committed_plan_digest != plan_digest:
+            problems.append(
+                issue(
+                    "VAL-READY-014",
+                    "canonical_plan_commit_mismatch",
+                    plan_path,
+                    "The working plan differs from the precommitted plan at the canonical plan commit",
+                )
+            )
+    results: dict[str, dict[str, Any]] = {}
     for relative in RESULT_FILES:
         result = load(root, relative, problems, "VAL-READY-014")
         case = result.get("prototype_id")
         if case not in PROTOTYPES:
             continue
+        results[case] = result
         row = by_id.get(case, {})
         if result.get("plan_sha256") != plan_digest:
             problems.append(
                 issue("VAL-READY-014", "result_plan_digest_mismatch", relative, "Result does not bind current precommit bytes")
             )
-        if not isinstance(result.get("plan_commit"), str) or len(result["plan_commit"]) != 40:
+        if (
+            result.get("plan_commit") != CANONICAL_PLAN_COMMIT
+            or not git_object_exists(root, f"{CANONICAL_PLAN_COMMIT}^{{commit}}")
+        ):
             problems.append(
-                issue("VAL-READY-014", "invalid_plan_commit", relative, "Result must bind a 40-character plan commit")
+                issue(
+                    "VAL-READY-014",
+                    "unresolvable_plan_commit",
+                    relative,
+                    "Result must bind the resolvable canonical committed precommit plan",
+                )
+            )
+        tested_commit = result.get("environment", {}).get("tested_commit")
+        if (
+            not isinstance(tested_commit, str)
+            or len(tested_commit) != 40
+            or not git_object_exists(root, f"{tested_commit}^{{commit}}")
+        ):
+            problems.append(
+                issue(
+                    "VAL-READY-014",
+                    "unresolvable_tested_commit",
+                    relative,
+                    "Result must bind a resolvable tested implementation commit",
+                )
+            )
+        reconciliation = result.get("plan_commit_reconciliation")
+        if case in RECONCILED_CASES:
+            if (
+                not isinstance(reconciliation, dict)
+                or reconciliation.get("historical_invalid_identifier")
+                != HISTORICAL_INVALID_PLAN_COMMIT
+                or reconciliation.get("canonical_plan_commit")
+                != CANONICAL_PLAN_COMMIT
+                or reconciliation.get("preserved_samples_sha256")
+                != digest(result.get("samples"))
+                or not reconciliation.get("reason")
+                or not reconciliation.get("reconciled_at")
+            ):
+                problems.append(
+                    issue(
+                        "VAL-READY-014",
+                        "reconciled_sample_digest_mismatch",
+                        relative,
+                        "Historical plan-identifier reconciliation must preserve and digest-bind the original raw samples",
+                    )
+                )
+        elif reconciliation is not None:
+            problems.append(
+                issue(
+                    "VAL-READY-014",
+                    "unexpected_plan_commit_reconciliation",
+                    relative,
+                    "Only results with the documented historical invalid identifier may carry reconciliation metadata",
+                )
             )
         if result.get("sample_count") != row.get("sample_count") or len(result.get("samples", [])) != row.get("sample_count"):
             problems.append(
@@ -423,6 +811,9 @@ def validate_prototype_evidence(root: Path) -> list[dict[str, str]]:
                         "Every PostgreSQL sample must preserve its version, port, budget, and case-specific durability evidence",
                     )
                 )
+    validate_claim_links(root, results, problems)
+    validate_reproduction(root, plan_digest, problems)
+    validate_manifest_agreement(root, problems)
     return problems
 
 

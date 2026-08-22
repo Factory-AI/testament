@@ -30,7 +30,14 @@
   "limitations": [
     "This prototype tests filesystem custody, not HTTP transfer framing."
   ],
-  "plan_commit": "cfdf43b1d85024ad5475f5c2afe41978f9fc2a01",
+  "plan_commit": "cfdf43bb49f3802137dc0ae887314ab7a8a01f58",
+  "plan_commit_reconciliation": {
+    "canonical_plan_commit": "cfdf43bb49f3802137dc0ae887314ab7a8a01f58",
+    "historical_invalid_identifier": "cfdf43b1d85024ad5475f5c2afe41978f9fc2a01",
+    "preserved_samples_sha256": "96ab1dff67c1b11b1d4a3246b587fb3a8cc7ee062922f23836bb851444afc2e2",
+    "reason": "The historical identifier was a transcription error and never resolved to a Git object. This metadata correction binds the existing raw observations to the canonical precommit plan without changing any sample.",
+    "reconciled_at": "2026-08-22"
+  },
   "plan_sha256": "5e12d9e04c0852c87c7b86a3e832e61f72e5e136af0792b29d4c7c3811432d76",
   "prototype_id": "exact-byte",
   "sample_count": 3,

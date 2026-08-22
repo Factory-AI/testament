@@ -28,7 +28,14 @@
   "limitations": [
     "Equality and frequency leakage within a scope remains and is explicitly recorded."
   ],
-  "plan_commit": "cfdf43b1d85024ad5475f5c2afe41978f9fc2a01",
+  "plan_commit": "cfdf43bb49f3802137dc0ae887314ab7a8a01f58",
+  "plan_commit_reconciliation": {
+    "canonical_plan_commit": "cfdf43bb49f3802137dc0ae887314ab7a8a01f58",
+    "historical_invalid_identifier": "cfdf43b1d85024ad5475f5c2afe41978f9fc2a01",
+    "preserved_samples_sha256": "1e3204025ce2245224fb8b2d42b65fc997ba4323b6def3528cc0950ec874e549",
+    "reason": "The historical identifier was a transcription error and never resolved to a Git object. This metadata correction binds the existing raw observations to the canonical precommit plan without changing any sample.",
+    "reconciled_at": "2026-08-22"
+  },
   "plan_sha256": "5e12d9e04c0852c87c7b86a3e832e61f72e5e136af0792b29d4c7c3811432d76",
   "prototype_id": "blind-index",
   "sample_count": 3,

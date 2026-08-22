@@ -20,6 +20,7 @@ lint: _python-check
 	@$(PYTHON) -m json.tool policy/analyzer-evaluation.json >/dev/null
 	@$(PYTHON) -m json.tool policy/architecture.json >/dev/null
 	@$(PYTHON) -m json.tool policy/claims.json >/dev/null
+	@$(PYTHON) -m json.tool policy/prototype-claims.json >/dev/null
 	@$(PYTHON) -m json.tool policy/naming-clearance.json >/dev/null
 	@$(PYTHON) -m json.tool policy/readiness.json >/dev/null
 	@$(PYTHON) -m json.tool policy/repository-contracts.json >/dev/null
@@ -28,6 +29,7 @@ lint: _python-check
 	@$(PYTHON) -m json.tool policy/toolchain.json >/dev/null
 	@$(PYTHON) -m json.tool policy/trace-landscape.json >/dev/null
 	@$(PYTHON) -m json.tool docs/research/corpus/manifest.json >/dev/null
+	@$(PYTHON) -m json.tool docs/research/benchmarks/reproduction.json >/dev/null
 	@$(PYTHON) -m json.tool generated/contract-index.json >/dev/null
 	@$(PYTHON) -m json.tool schemas/actionable-error.schema.json >/dev/null
 	@$(PYTHON) -m json.tool schemas/abuse-misuse-research.schema.json >/dev/null
@@ -49,6 +51,7 @@ test-gate:
 	@$(MAKE) verify-governance
 	@$(MAKE) verify-research
 	@$(MAKE) verify-corpus
+	@$(MAKE) verify-prototypes
 	@$(MAKE) verify-analyzer-evaluation
 	@$(MAKE) verify-readiness
 
@@ -56,6 +59,7 @@ build: verify-foundation
 	@$(MAKE) verify-governance
 	@$(MAKE) verify-research
 	@$(MAKE) verify-corpus
+	@$(MAKE) verify-prototypes
 	@$(MAKE) verify-analyzer-evaluation
 	@$(MAKE) verify-readiness
 	@echo "Static research foundation validated."
@@ -64,6 +68,7 @@ agent-ready: verify-foundation
 	@$(MAKE) verify-governance
 	@$(MAKE) verify-research
 	@$(MAKE) verify-corpus
+	@$(MAKE) verify-prototypes
 	@$(MAKE) verify-analyzer-evaluation
 	@$(MAKE) verify-readiness
 
@@ -71,6 +76,7 @@ conformance: verify-foundation
 	@$(MAKE) verify-governance
 	@$(MAKE) verify-research
 	@$(MAKE) verify-corpus
+	@$(MAKE) verify-prototypes
 	@$(MAKE) verify-analyzer-evaluation
 	@$(MAKE) verify-readiness
 	@echo "Foundation policy conformance passed."

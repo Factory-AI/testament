@@ -87,6 +87,74 @@ class PrototypeEvidenceTest(unittest.TestCase):
         path.write_text(json.dumps(result), encoding="utf-8")
         self.assertIn("wrong_sample_count", self.codes(root))
 
+    def test_every_plan_commit_resolves_to_the_canonical_plan(self) -> None:
+        root = self.copy_evidence()
+        path = root / "docs/research/benchmarks/giant-stream.json"
+        result = json.loads(path.read_text(encoding="utf-8"))
+        result["plan_commit"] = "0" * 40
+        path.write_text(json.dumps(result), encoding="utf-8")
+        self.assertIn("unresolvable_plan_commit", self.codes(root))
+
+    def test_reconciled_plan_identifier_preserves_raw_samples(self) -> None:
+        root = self.copy_evidence()
+        path = root / "docs/research/benchmarks/giant-stream.json"
+        result = json.loads(path.read_text(encoding="utf-8"))
+        result["samples"][0]["elapsed_ms"] += 1
+        path.write_text(json.dumps(result), encoding="utf-8")
+        self.assertIn("reconciled_sample_digest_mismatch", self.codes(root))
+
+    def test_tolerance_change_requires_review_and_prior_baseline_rerun(self) -> None:
+        root = self.copy_evidence()
+        path = root / "docs/research/benchmarks/precommit.json"
+        plan = json.loads(path.read_text(encoding="utf-8"))
+        plan["tolerance_history"].append(
+            {
+                "case": "giant-stream",
+                "field": "max_elapsed_ms",
+                "old": 10000,
+                "new": 12000,
+            }
+        )
+        path.write_text(json.dumps(plan), encoding="utf-8")
+        self.assertIn("invalid_tolerance_change", self.codes(root))
+
+    def test_claim_links_cover_exactly_nine_prototype_benchmark_pairs(self) -> None:
+        claims = json.loads(
+            (ROOT / "policy/prototype-claims.json").read_text(encoding="utf-8")
+        )
+        self.assertEqual(
+            set(VERIFY.PROTOTYPES),
+            {claim["prototype_id"] for claim in claims["claims"]},
+        )
+        self.assertEqual(9, len(claims["claims"]))
+        for claim in claims["claims"]:
+            self.assertTrue((ROOT / claim["prototype_path"]).is_file())
+            self.assertTrue((ROOT / claim["result_path"]).is_file())
+
+    def test_clean_clone_reproduction_covers_every_conclusion(self) -> None:
+        reproduction = json.loads(
+            (ROOT / "docs/research/benchmarks/reproduction.json").read_text(
+                encoding="utf-8"
+            )
+        )
+        self.assertEqual(
+            set(VERIFY.PROTOTYPES),
+            {result["prototype_id"] for result in reproduction["results"]},
+        )
+        self.assertTrue(all(result["comparison"]["matches"] for result in reproduction["results"]))
+
+    def test_research_manifest_marks_complete_pairs_in_review(self) -> None:
+        manifest = json.loads(
+            (ROOT / "policy/research-manifest.json").read_text(encoding="utf-8")
+        )
+        relevant = [
+            row
+            for row in manifest["deliverables"]
+            if row["type"] in {"prototype", "benchmark"}
+        ]
+        self.assertEqual(18, len(relevant))
+        self.assertTrue(all(row["state"] == "in-review" for row in relevant))
+
     def test_analyzer_matrix_requires_every_family(self) -> None:
         root = self.copy_evidence()
         path = root / "policy/analyzer-evaluation.json"

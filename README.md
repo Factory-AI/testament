@@ -52,6 +52,8 @@ PostgreSQL is needed. The complete command and recovery map is in
 - [Naming search and conditional decision](docs/research/naming-clearance.md)
 - [Milestone 1 research registry](docs/research/README.md)
 - [Machine-readable research manifest](policy/research-manifest.json)
+- [Prototype claim-to-result ledger](policy/prototype-claims.json)
+- [Clean-clone prototype reproduction](docs/research/benchmarks/reproduction.json)
 - [Threat, privacy, and sovereignty research](policy/threat-privacy-sovereignty.json)
 - [Machine-readable repository contracts](policy/repository-contracts.json)
 - [Generated contract index](generated/contract-index.json)

@@ -31,6 +31,16 @@ RESULT_PATHS = {
     "offline-replay": "docs/research/benchmarks/offline-replay.json",
 }
 POSTGRES_CASES = {"postgres-storage", "decision-durability", "offline-replay"}
+PLAN_FIELDS = (
+    "inputs",
+    "sample_count",
+    "budgets",
+    "tolerances",
+    "comparison_method",
+    "acceptance_rule",
+    "limitations",
+    "tolerance_history",
+)
 
 
 def canonical_digest(value: Any) -> str:
@@ -521,6 +531,21 @@ def main() -> int:
     parser.add_argument("--plan-commit", required=True)
     parser.add_argument("--postgres", action="store_true")
     parser.add_argument("--case", action="append", choices=sorted(RESULT_PATHS))
+    parser.add_argument(
+        "--output-dir",
+        type=Path,
+        help="Write result JSON under this directory instead of the repository.",
+    )
+    parser.add_argument(
+        "--report",
+        type=Path,
+        help="Write a clean-clone comparison report after all nine cases run.",
+    )
+    parser.add_argument(
+        "--clean-clone",
+        action="store_true",
+        help="Attest that the root is a newly created Git clone.",
+    )
     args = parser.parse_args()
     root = args.root.resolve()
     plan = json.loads(
@@ -531,6 +556,7 @@ def main() -> int:
         selected -= POSTGRES_CASES
     environment = machine_environment(root)
     plan_digest = canonical_digest(plan)
+    generated: dict[str, dict[str, Any]] = {}
     for case_plan in plan["cases"]:
         case = case_plan["id"]
         if case not in selected:
@@ -568,14 +594,81 @@ def main() -> int:
                 "lifecycle_manifest": "services.yaml",
                 "healthcheck": "pg_isready -p 5440",
             }
-        path = root / RESULT_PATHS[case]
+        path = (
+            args.output_dir / f"{case}.json"
+            if args.output_dir
+            else root / RESULT_PATHS[case]
+        )
         path.parent.mkdir(parents=True, exist_ok=True)
         temporary = path.with_suffix(".tmp")
         temporary.write_text(
             json.dumps(result, indent=2, sort_keys=True) + "\n", encoding="utf-8"
         )
         temporary.replace(path)
+        generated[case] = result
         print(json.dumps({"case": case, "conclusion": conclusion, "path": str(path)}))
+    if args.report:
+        source_commit = environment["tested_commit"]
+        comparisons = []
+        for case in sorted(RESULT_PATHS):
+            if case not in generated:
+                raise RuntimeError("A reproduction report requires all nine cases")
+            baseline = json.loads(
+                (root / RESULT_PATHS[case]).read_text(encoding="utf-8")
+            )
+            rerun = generated[case]
+            plan_fields_match = all(
+                baseline.get(field) == rerun.get(field) for field in PLAN_FIELDS
+            )
+            sample_count_matches = (
+                baseline.get("sample_count") == rerun.get("sample_count")
+                == len(rerun.get("samples", []))
+            )
+            comparisons.append(
+                {
+                    "prototype_id": case,
+                    "baseline_result_path": RESULT_PATHS[case],
+                    "raw_result": rerun,
+                    "comparison": {
+                        "method": "Compare plan-bound fields, declared sample count, and acceptance-rule conclusion; timing and randomized cryptographic observations are not required to be byte-identical.",
+                        "baseline_conclusion": baseline.get("conclusion"),
+                        "rerun_conclusion": rerun.get("conclusion"),
+                        "sample_count_matches": sample_count_matches,
+                        "plan_fields_match": plan_fields_match,
+                        "matches": (
+                            baseline.get("conclusion") == "pass"
+                            and rerun.get("conclusion") == "pass"
+                            and sample_count_matches
+                            and plan_fields_match
+                        ),
+                    },
+                }
+            )
+        report = {
+            "schema_version": "1.0.0",
+            "feature_id": "reproducible-prototype-completion",
+            "validation_id": "VAL-READY-014",
+            "status": (
+                "pass"
+                if all(row["comparison"]["matches"] for row in comparisons)
+                else "fail"
+            ),
+            "clean_clone": args.clean_clone,
+            "clone_method": "git clone --no-local from the candidate object database into an empty temporary directory",
+            "source_commit": source_commit,
+            "plan_commit": args.plan_commit,
+            "plan_sha256": plan_digest,
+            "sample_count": sum(
+                result["sample_count"] for result in generated.values()
+            ),
+            "results": comparisons,
+        }
+        args.report.parent.mkdir(parents=True, exist_ok=True)
+        args.report.write_text(
+            json.dumps(report, indent=2, sort_keys=True) + "\n",
+            encoding="utf-8",
+        )
+        print(json.dumps({"report": str(args.report), "status": report["status"]}))
     return 0
 
 
