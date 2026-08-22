@@ -87,6 +87,14 @@ class ResearchRegistryTest(unittest.TestCase):
         )
         self.assertIn("schema_validation_failed", self.codes(root))
 
+    def test_schema_patterns_must_use_reviewed_non_backtracking_allowlist(self) -> None:
+        root = self.copy_repository()
+        schema_path = root / "schemas/research-manifest.schema.json"
+        schema = json.loads(schema_path.read_text(encoding="utf-8"))
+        schema["properties"]["version"]["pattern"] = "^(a|aa)+$"
+        schema_path.write_text(json.dumps(schema), encoding="utf-8")
+        self.assertIn("schema_validation_failed", self.codes(root))
+
     def test_naming_schema_rejects_missing_required_field(self) -> None:
         root = self.copy_repository()
         path = root / "policy/naming-clearance.json"
@@ -175,6 +183,22 @@ class ResearchRegistryTest(unittest.TestCase):
 
         self.mutate_manifest(root, break_commit)
         self.assertIn("unbound_artifact_commit", self.codes(root))
+
+    def test_bound_artifact_bytes_cannot_change_with_manifest_unchanged(self) -> None:
+        root = self.copy_repository()
+        shutil.copytree(ROOT / ".git", root / ".git")
+        manifest = json.loads(
+            (root / "policy/research-manifest.json").read_text(encoding="utf-8")
+        )
+        in_review = next(
+            record for record in manifest["deliverables"] if record["state"] == "in-review"
+        )
+        artifact = root / in_review["artifact"]["path"]
+        artifact.write_text(
+            artifact.read_text(encoding="utf-8") + "\nUnreviewed mutation.\n",
+            encoding="utf-8",
+        )
+        self.assertIn("unbound_artifact_content", self.codes(root))
 
     def test_naming_record_requires_every_search_class(self) -> None:
         root = self.copy_repository()
@@ -275,6 +299,95 @@ class ResearchRegistryTest(unittest.TestCase):
         codes = self.codes(root)
         self.assertIn("schema_validation_failed", codes)
         self.assertIn("missing_cross_cutting_safeguards", codes)
+
+    def test_threat_privacy_research_requires_all_framework_categories(self) -> None:
+        root = self.copy_repository()
+        path = root / "policy/threat-privacy-sovereignty.json"
+        if not path.is_file():
+            self.assertIn("missing_public_research_file", self.codes(root))
+            return
+        research = json.loads(path.read_text(encoding="utf-8"))
+        research["threats"] = [
+            threat
+            for threat in research["threats"]
+            if threat["category"] not in {"spoofing", "linkability"}
+        ]
+        path.write_text(json.dumps(research), encoding="utf-8")
+        codes = self.codes(root)
+        self.assertIn("incomplete_stride_coverage", codes)
+        self.assertIn("incomplete_linddun_coverage", codes)
+
+    def test_threat_requires_mitigation_validation_owner_and_residual_risk(self) -> None:
+        root = self.copy_repository()
+        path = root / "policy/threat-privacy-sovereignty.json"
+        if not path.is_file():
+            self.assertIn("missing_public_research_file", self.codes(root))
+            return
+        research = json.loads(path.read_text(encoding="utf-8"))
+        research["threats"][0]["validations"] = []
+        path.write_text(json.dumps(research), encoding="utf-8")
+        self.assertIn("incomplete_threat_mapping", self.codes(root))
+
+    def test_sovereignty_research_requires_all_profiles(self) -> None:
+        root = self.copy_repository()
+        path = root / "policy/threat-privacy-sovereignty.json"
+        if not path.is_file():
+            self.assertIn("missing_public_research_file", self.codes(root))
+            return
+        research = json.loads(path.read_text(encoding="utf-8"))
+        research["sovereignty_profiles"].pop()
+        path.write_text(json.dumps(research), encoding="utf-8")
+        self.assertIn("incomplete_sovereignty_profiles", self.codes(root))
+
+    def test_threat_and_attack_tree_references_must_resolve(self) -> None:
+        root = self.copy_repository()
+        path = root / "policy/threat-privacy-sovereignty.json"
+        research = json.loads(path.read_text(encoding="utf-8"))
+        research["threats"][0]["boundary_ids"] = ["TB-99"]
+        research["attack_trees"][0]["threat_ids"] = ["STRIDE-999"]
+        path.write_text(json.dumps(research), encoding="utf-8")
+        codes = self.codes(root)
+        self.assertIn("dangling_threat_boundary", codes)
+        self.assertIn("dangling_attack_tree_threat", codes)
+
+    def test_lifecycle_and_key_custody_coverage_is_exact(self) -> None:
+        root = self.copy_repository()
+        path = root / "policy/threat-privacy-sovereignty.json"
+        research = json.loads(path.read_text(encoding="utf-8"))
+        research["lifecycle_model"]["classes"].pop()
+        research["key_custody"]["providers"].pop()
+        path.write_text(json.dumps(research), encoding="utf-8")
+        codes = self.codes(root)
+        self.assertIn("incomplete_lifecycle_coverage", codes)
+        self.assertIn("incomplete_key_custody_coverage", codes)
+
+    def test_control_boundary_and_signing_key_mappings_are_complete(self) -> None:
+        root = self.copy_repository()
+        path = root / "policy/threat-privacy-sovereignty.json"
+        research = json.loads(path.read_text(encoding="utf-8"))
+        research["threats"][0]["control_ids"] = ["CTRL-UNKNOWN"]
+        research["boundary_category_coverage"].pop()
+        research["key_custody"]["signing_and_transport_keys"].pop()
+        path.write_text(json.dumps(research), encoding="utf-8")
+        codes = self.codes(root)
+        self.assertIn("dangling_threat_mapping", codes)
+        self.assertIn("incomplete_boundary_category_coverage", codes)
+        self.assertIn("incomplete_signing_key_coverage", codes)
+
+    def test_controls_analyzer_tiers_and_egress_schemas_are_executable(self) -> None:
+        root = self.copy_repository()
+        path = root / "policy/threat-privacy-sovereignty.json"
+        research = json.loads(path.read_text(encoding="utf-8"))
+        research["controls"][0]["validation_ids"] = []
+        research["analyzer_trust_tiers"].pop()
+        research["no_content_egress_contract"]["permitted_egress_schemas"][0][
+            "wire_fields"
+        ] = []
+        path.write_text(json.dumps(research), encoding="utf-8")
+        codes = self.codes(root)
+        self.assertIn("incomplete_control_validation_binding", codes)
+        self.assertIn("incomplete_analyzer_trust_tiers", codes)
+        self.assertIn("incomplete_executable_egress_schema", codes)
 
 
 if __name__ == "__main__":

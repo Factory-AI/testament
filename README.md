@@ -36,6 +36,7 @@ reviews, formal readiness report, and external research seal pass.
 - [Naming search and conditional decision](docs/research/naming-clearance.md)
 - [Milestone 1 research registry](docs/research/README.md)
 - [Machine-readable research manifest](policy/research-manifest.json)
+- [Threat, privacy, and sovereignty research](policy/threat-privacy-sovereignty.json)
 
 ## Verify this foundation
 
