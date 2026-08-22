@@ -1,0 +1,56 @@
+{
+  "contracts": [
+    {
+      "human_path": "CHARTER.md",
+      "id": "architecture",
+      "machine_path": "policy/architecture.json",
+      "machine_sha256": "b704e5e4437d75a6b6e6eecbc15a9b4ed3a17d9fa3ad5714ec358d51c7c5a24b",
+      "version": "1.0.0"
+    },
+    {
+      "human_path": "docs/workflows.md#workflow-index",
+      "id": "commands",
+      "machine_path": "Makefile",
+      "machine_sha256": "aa058e75ff24c81458681a4c3c7173f7fc2ed6e2fcad1f07fcad83ae4b22fe0a",
+      "version": "1.0.0"
+    },
+    {
+      "human_path": "docs/rfcs/0014-conformance-profiles.md",
+      "id": "conformance",
+      "machine_path": "docs/rfcs/index.json",
+      "machine_sha256": "88df748c3518e45602bc28ad4ad3e07514383e41cf82b0c8b339f1806e8cf14d",
+      "version": "0.1.0-draft"
+    },
+    {
+      "human_path": "docs/agent-guide.md",
+      "id": "readiness",
+      "machine_path": "policy/readiness.json",
+      "machine_sha256": "72a285dde006d1e840c18810ada90622b9c2782847ba55e308f9468ce33aa350",
+      "version": "1.0.0"
+    },
+    {
+      "human_path": "docs/workflows.md#contracts-and-generation",
+      "id": "schemas",
+      "machine_path": "schemas/repository-contracts.schema.json",
+      "machine_sha256": "bee8ecfcc332ab35703acff842b8f467bcbec7f3907bd72c23facfc7f875cf10",
+      "version": "2020-12"
+    },
+    {
+      "human_path": "docs/workflows.md#development",
+      "id": "services",
+      "machine_path": "compose.yaml",
+      "machine_sha256": "f5700128ff50326825645e236483afb4b6418789ec4961114d7156c422567c87",
+      "version": "1.0.0"
+    },
+    {
+      "human_path": "docs/workflows.md#setup",
+      "id": "toolchain",
+      "machine_path": "policy/toolchain.json",
+      "machine_sha256": "913bb3898f121f66a1eabde3fc3ad60186548d97f2daba6051205dc21b3c52b5",
+      "version": "1.0.0"
+    }
+  ],
+  "schema_version": "1.0.0",
+  "source": "policy/repository-contracts.json",
+  "source_sha256": "e140decfa9c4857de0ddfe4aca2b201905976db2ad22b96ce6ca671251398c18"
+}

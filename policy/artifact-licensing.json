@@ -49,10 +49,10 @@
     },
     {
       "id": "generated",
-      "paths": ["gen/**", "**/*.generated.*"],
+      "paths": ["gen/**", "generated/**", "**/*.generated.*"],
       "license": "Apache-2.0 unless the generator or source requires compatible attribution",
       "notice_required": true,
-      "current_status": "none"
+      "current_status": "generated Apache-2.0 repository contract index"
     },
     {
       "id": "documentation",

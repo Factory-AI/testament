@@ -1,0 +1,29 @@
+{
+  "schema_version": "1.0.0",
+  "profile": "local-research-foundation",
+  "status": "local-contract-checks-only",
+  "entry_point": "make agent-ready",
+  "covered_validation_ids": [
+    "VAL-READY-020",
+    "VAL-READY-021",
+    "VAL-READY-022",
+    "VAL-READY-023",
+    "VAL-READY-024"
+  ],
+  "evidence": [
+    "policy/toolchain.json",
+    "policy/repository-contracts.json",
+    "generated/contract-index.json",
+    "scripts/verify_readiness.py",
+    "tests/test_readiness.py"
+  ],
+  "formal_factory_report": {
+    "status": "pending",
+    "credit": 0,
+    "owner_feature": "formal-level-five-readiness-gate"
+  },
+  "limitations": [
+    "This record does not claim a formal Factory readiness level.",
+    "Hosted, protection, deployment, and incident-history evidence remains pending."
+  ]
+}

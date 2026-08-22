@@ -12,6 +12,22 @@ The project is in its research and standards foundation milestone. Production
 implementation is blocked until the research exit criteria, independent
 reviews, formal readiness report, and external research seal pass.
 
+## Quick start
+
+Install the exact bootstrap versions in
+[`policy/toolchain.json`](policy/toolchain.json), then run:
+
+```sh
+make setup
+make agent-ready
+```
+
+Setup verifies pinned tools and starts no service. Use `make dev` only when
+PostgreSQL is needed. The complete command and recovery map is in
+[docs/workflows.md](docs/workflows.md); unfamiliar agents should also read
+[AGENTS.md](AGENTS.md), the [agent guide](docs/agent-guide.md), and the scoped
+[repository skills](.agents/skills/).
+
 ## Start here
 
 - [Project charter](CHARTER.md): purpose, scope, non-goals, authority, and
@@ -37,6 +53,9 @@ reviews, formal readiness report, and external research seal pass.
 - [Milestone 1 research registry](docs/research/README.md)
 - [Machine-readable research manifest](policy/research-manifest.json)
 - [Threat, privacy, and sovereignty research](policy/threat-privacy-sovereignty.json)
+- [Machine-readable repository contracts](policy/repository-contracts.json)
+- [Generated contract index](generated/contract-index.json)
+- [Pinned environments and services](policy/toolchain.json)
 
 ## Verify this foundation
 

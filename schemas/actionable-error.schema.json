@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://testament.dev/schemas/actionable-error/1.0.0",
+  "title": "Testament agent-actionable repository failure",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "criterion_id",
+    "code",
+    "path",
+    "message",
+    "remediation_command"
+  ],
+  "properties": {
+    "schema_version": {"const": "1.0.0"},
+    "criterion_id": {"type": "string", "pattern": "^VAL-[A-Z]+-[0-9]{3}$"},
+    "code": {"type": "string", "pattern": "^[a-z][a-z0-9_]*$"},
+    "path": {"type": "string", "minLength": 1},
+    "message": {"type": "string", "minLength": 1},
+    "remediation_command": {"type": "string", "minLength": 1}
+  }
+}

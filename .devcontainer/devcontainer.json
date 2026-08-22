@@ -1,0 +1,29 @@
+{
+  "name": "Testament",
+  "build": {
+    "dockerfile": "Dockerfile",
+    "context": ".."
+  },
+  "features": {
+    "ghcr.io/devcontainers/features/node@sha256:8c0de46939b61958041700ee89e3493f3b2e4131a06dc46b4d9423427d06e5f6": {
+      "version": "22.19.0",
+      "nodeGypDependencies": false
+    },
+    "ghcr.io/devcontainers/features/python@sha256:fbcad6955caeecc5ad3f7886baf652e25cba5225a6c4c2287c536de2e5607511": {
+      "version": "3.14.7",
+      "installTools": false
+    },
+    "ghcr.io/devcontainers/features/git@sha256:fd75977de13a9979000e0e78baf949adb0ca71d2398995fa22e0a36d7e7e7fe2": {
+      "version": "2.50.1",
+      "ppa": false
+    }
+  },
+  "forwardPorts": [4700, 4701, 5440],
+  "portsAttributes": {
+    "4700": {"label": "Testament API and console", "onAutoForward": "silent"},
+    "4701": {"label": "Testament standards site", "onAutoForward": "silent"},
+    "5440": {"label": "Testament PostgreSQL 17", "onAutoForward": "silent"}
+  },
+  "remoteUser": "testament",
+  "containerUser": "testament"
+}
