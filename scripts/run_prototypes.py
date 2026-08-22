@@ -53,6 +53,16 @@ RESULT_PATHS = {
 SUCCESSOR_PLAN_COMMIT = "0f3dce5b9418a50eb031ec3fd561282462533bd3"
 SUCCESSOR_PLAN_PATH = "docs/research/benchmarks/precommit-v2.json"
 POSTGRES_CASES = {"postgres-storage", "decision-durability", "offline-replay"}
+RESULT_PLAN_FIELDS = (
+    "inputs",
+    "sample_count",
+    "budgets",
+    "tolerances",
+    "comparison_method",
+    "acceptance_rule",
+    "limitations",
+    "tolerance_history",
+)
 
 
 def clean_clone_evidence(root: Path) -> dict[str, Any]:
@@ -784,15 +794,7 @@ def main() -> int:
         v1_result_path = RESULT_PATHS[case]
         result = {
             "schema_version": "1.0.0",
-            "feature_id": (
-                "key-rotation-independent-ciphertext-evidence"
-                if case == "key-rotation"
-                else (
-                    "decision-durability-disconnect-fault-evidence"
-                    if case == "decision-durability"
-                    else "prototype-v2-precommit-and-workload-resource-accounting"
-                )
-            ),
+            "feature_id": "prototype-v2-clean-clone-reconciliation",
             "validation_id": "VAL-READY-014",
             "prototype_id": case,
             "benchmark_id": f"{case}-benchmark",
@@ -847,20 +849,36 @@ def main() -> int:
             if case not in generated:
                 raise RuntimeError("A reproduction report requires all nine cases")
             rerun = generated[case]
+            case_plan = next(
+                row for row in plan["cases"] if row["id"] == case
+            )
             sample_count_matches = (
                 rerun.get("sample_count") == len(rerun.get("samples", []))
+            )
+            plan_fields_match = all(
+                rerun.get(field)
+                == (
+                    plan.get("tolerance_history")
+                    if field == "tolerance_history"
+                    else case_plan.get(field)
+                )
+                for field in RESULT_PLAN_FIELDS
             )
             comparisons.append(
                 {
                     "prototype_id": case,
+                    "result_path": f"docs/research/benchmarks/v2/{case}.json",
+                    "supersedes_result_path": RESULT_PATHS[case],
                     "raw_result": rerun,
                     "comparison": {
                         "method": "Recompute version 2 plan fields, declared sample count, workload acceptance, and resource accounting; timing and randomized cryptographic observations are not required to be byte-identical.",
                         "rerun_conclusion": rerun.get("conclusion"),
                         "sample_count_matches": sample_count_matches,
+                        "plan_fields_match": plan_fields_match,
                         "matches": (
                             rerun.get("conclusion") == "pass"
                             and sample_count_matches
+                            and plan_fields_match
                         ),
                     },
                 }

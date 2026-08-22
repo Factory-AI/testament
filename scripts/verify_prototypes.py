@@ -35,6 +35,7 @@ V2_KEY_ROTATION_PATH = "docs/research/benchmarks/v2/key-rotation.json"
 V2_DECISION_DURABILITY_PATH = (
     "docs/research/benchmarks/v2/decision-durability.json"
 )
+V2_REPRODUCTION_PATH = "docs/research/benchmarks/v2/reproduction.json"
 HISTORICAL_INVALID_PLAN_COMMIT = "cfdf43b1d85024ad5475f5c2afe41978f9fc2a01"
 V1_KEY_ROTATION_SHA256 = (
     "91a9fc76ba9852954024a925438510e7996fa471a7db94c699eedf0e88cfcc68"
@@ -81,6 +82,24 @@ PROTOTYPE_PATHS = {
 RESULT_PATH_BY_CASE = {
     case: f"docs/research/benchmarks/{case}.json" for case in PROTOTYPES
 }
+V2_RESULT_PATH_BY_CASE = {
+    case: f"docs/research/benchmarks/v2/{case}.json"
+    for case in PROTOTYPES
+}
+V1_RESULT_SHA256_BY_CASE = {
+    "giant-stream": "3f5890082d0eef097c29ad82f033ba73fc2b2fef70f90e79faa8595a252e4a48",
+    "exact-byte": "9fe9ba8ded7a1a70daf0dc95d85536dd8684d2435efb04e8baffa98399fd3038",
+    "compression-encryption": "dcb1beb882e731044532adc59e095fee1dfe207f8fbe493407bfd16815dc3d51",
+    "postgres-storage": "08ea0e80614ba19ed2ba35b723d350f91d34303a7de88d892e5b87a714ad6522",
+    "blind-index": "8e7085c8d52b695cc55b4f12cb430b3e636c18bbefa702ff42cad4e45c49a4cf",
+    "key-rotation": V1_KEY_ROTATION_SHA256,
+    "decision-durability": V1_DECISION_DURABILITY_SHA256,
+    "analyzer-isolation": "40e815405dc429bd0bdc1954a4c618f397f41a8a847533a4bde900d64746e045",
+    "offline-replay": "30ce5d01bf6e83ec56df07641609453e2d31f151c90a12b0df5f6acb0d018b08",
+}
+V1_REPRODUCTION_SHA256 = (
+    "a275b0993c733032b11684fe64f5ab2673d558e7b1b5cb38e3e2f09460d3d59a"
+)
 CLAIMS_PATH = "policy/prototype-claims.json"
 REPRODUCTION_PATH = "docs/research/benchmarks/reproduction.json"
 RESULT_PLAN_FIELDS = (
@@ -163,6 +182,8 @@ EVIDENCE_FILES = [
     SUCCESSOR_PLAN_PATH,
     V2_KEY_ROTATION_PATH,
     V2_DECISION_DURABILITY_PATH,
+    *[V2_RESULT_PATH_BY_CASE[case] for case in sorted(PROTOTYPES)],
+    V2_REPRODUCTION_PATH,
     REPRODUCTION_PATH,
     "docs/research/analysis/evaluation-plan.md",
     "docs/research/corpus/manifest.json",
@@ -498,7 +519,10 @@ def valid_v2_key_rotation_result(
     return (
         result.get("schema_version") == "1.0.0"
         and result.get("feature_id")
-        == "key-rotation-independent-ciphertext-evidence"
+        in {
+            "key-rotation-independent-ciphertext-evidence",
+            "prototype-v2-clean-clone-reconciliation",
+        }
         and result.get("validation_id") == "VAL-READY-014"
         and result.get("prototype_id") == "key-rotation"
         and result.get("benchmark_id") == "key-rotation-benchmark"
@@ -654,7 +678,10 @@ def valid_v2_decision_durability_result(
     return (
         result.get("schema_version") == "1.0.0"
         and result.get("feature_id")
-        == "decision-durability-disconnect-fault-evidence"
+        in {
+            "decision-durability-disconnect-fault-evidence",
+            "prototype-v2-clean-clone-reconciliation",
+        }
         and result.get("validation_id") == "VAL-READY-014"
         and result.get("prototype_id") == "decision-durability"
         and result.get("benchmark_id") == "decision-durability-benchmark"
@@ -688,6 +715,210 @@ def valid_v2_decision_durability_result(
             "preserved": True,
         }
         and result.get("conclusion") == expected_conclusion == "pass"
+    )
+
+
+def valid_v2_case_observation(case: str, observation: Any) -> bool:
+    if not isinstance(observation, dict):
+        return False
+    if case == "giant-stream":
+        return (
+            observation.get("exact_digest") is True
+            and observation.get("bounded_chunk_bytes") == 65536
+            and observation.get("bytes") == 1100055
+            and observation.get("chunks") == 17
+        )
+    if case == "exact-byte":
+        return (
+            observation.get("all_exact") is True
+            and observation.get("classes", 0) >= 6
+        )
+    if case == "compression-encryption":
+        return (
+            observation.get("round_trip_exact") is True
+            and observation.get("tamper_rejected") is True
+            and observation.get("compression_before_aead") is True
+        )
+    if case == "postgres-storage":
+        explain_lines = observation.get("explain_lines")
+        return (
+            observation.get("rows") == 200
+            and observation.get("partitions") == 2
+            and observation.get("ciphertext_nonempty_rows") == 200
+            and observation.get("content_column") == "ciphertext"
+            and observation.get("content_column_type") == "bytea"
+            and observation.get("forbidden_plaintext_columns") == 0
+            and observation.get("ciphertext_only_columns") is True
+            and observation.get("partition_pruning") is True
+            and observation.get("executed_partition") == "chunks_2026_08"
+            and observation.get("pruned_partition") == "chunks_2026_09"
+            and isinstance(explain_lines, list)
+            and any("chunks_2026_08" in line for line in explain_lines)
+            and not any("chunks_2026_09" in line for line in explain_lines)
+            and str(observation.get("postgres_version", "")).startswith("17.")
+            and observation.get("port") == 5440
+        )
+    if case == "blind-index":
+        return (
+            observation.get("same_scope_equality") is True
+            and observation.get("cross_org_separation") is True
+            and observation.get("cross_field_separation") is True
+            and observation.get("rotation_changes_token") is True
+            and observation.get("token_bytes") == 32
+        )
+    if case == "key-rotation":
+        return valid_v2_key_rotation_observation(observation)
+    if case == "decision-durability":
+        return valid_v2_decision_durability_observation(observation)
+    if case == "analyzer-isolation":
+        visible = observation.get("visible_environment_variables")
+        allowed = observation.get("allowed_environment_variables")
+        return (
+            observation.get("sanitized_environment") is True
+            and isinstance(visible, list)
+            and isinstance(allowed, list)
+            and "PATH" in visible
+            and set(visible) <= set(allowed)
+            and observation.get("unexpected_environment_variables") == []
+            and observation.get("isolated_working_directory") is True
+            and observation.get("cpu_limit_seconds") == 1
+            and observation.get("address_space_limit_enforced") is True
+            and isinstance(observation.get("address_space_limit_bytes"), int)
+            and 0 < observation["address_space_limit_bytes"] < 1 << 63
+            and observation.get("file_descriptor_limit") == 16
+            and observation.get("output_limit_enforced") is True
+            and observation.get("output_limit_bytes") == 4096
+            and observation.get("deadline_limit_enforced") is True
+            and observation.get("deadline_seconds") == 2
+            and observation.get("network_denial_proven") is False
+            and observation.get("hostile_multi_tenant_isolation_proven")
+            is False
+            and observation.get("conclusion") == ANALYZER_CONCLUSION
+        )
+    if case == "offline-replay":
+        pinned = observation.get("pinned_replay_digests")
+        late = observation.get("late_revision")
+        history = observation.get("run_history")
+        return (
+            observation.get("runs") == 3
+            and observation.get("recorded_replay_equal") is True
+            and isinstance(pinned, list)
+            and len(pinned) == 2
+            and len(set(pinned)) == 1
+            and observation.get("late_revision_changed") is True
+            and isinstance(late, dict)
+            and late.get("id") == 3
+            and late.get("supersedes") == 2
+            and late.get("includes_late_event") is True
+            and isinstance(history, list)
+            and [row.get("id") for row in history] == [1, 2, 3]
+            and [row.get("supersedes") for row in history] == [None, 1, 2]
+            and observation.get("history_preserved") is True
+            and str(observation.get("postgres_version", "")).startswith("17.")
+            and observation.get("port") == 5440
+        )
+    return False
+
+
+def valid_v2_result(
+    case: str,
+    result: Any,
+    successor_plan: dict[str, Any],
+) -> bool:
+    if not isinstance(result, dict):
+        return False
+    case_plan = next(
+        (
+            row
+            for row in successor_plan.get("cases", [])
+            if isinstance(row, dict) and row.get("id") == case
+        ),
+        {},
+    )
+    budgets = case_plan.get("budgets")
+    samples = result.get("samples")
+    environment = result.get("environment")
+    if (
+        not isinstance(budgets, dict)
+        or not isinstance(samples, list)
+        or not isinstance(environment, dict)
+    ):
+        return False
+    expected_environment = {
+        "os",
+        "architecture",
+        "cpu_count",
+        "memory_bytes",
+        "python",
+        "go",
+        "docker",
+        "tested_commit",
+        "machine_class",
+    }
+    samples_valid = (
+        len(samples) == case_plan.get("sample_count") == 3
+        and all(
+            isinstance(sample, dict)
+            and valid_v2_resource_sample(sample, budgets, case)
+            and valid_v2_case_observation(
+                case, sample.get("observation")
+            )
+            for sample in samples
+        )
+    )
+    if case in POSTGRES_CASES:
+        postgres = environment.get("postgres")
+        postgres_valid = (
+            isinstance(postgres, dict)
+            and postgres.get("major") == 17
+            and postgres.get("port") == 5440
+            and postgres.get("service") == "postgres"
+            and postgres.get("lifecycle_manifest") == "services.yaml"
+            and postgres.get("healthcheck") == "pg_isready -p 5440"
+            and "container cgroup" in postgres.get("resource_source", "")
+        )
+    else:
+        postgres_valid = "postgres" not in environment
+    return (
+        result.get("schema_version") == "1.0.0"
+        and result.get("feature_id")
+        == "prototype-v2-clean-clone-reconciliation"
+        and result.get("validation_id") == "VAL-READY-014"
+        and result.get("prototype_id") == case
+        and result.get("benchmark_id") == f"{case}-benchmark"
+        and result.get("version") == "2.0.0"
+        and result.get("plan_commit") == SUCCESSOR_PLAN_COMMIT
+        and result.get("plan_sha256") == digest(successor_plan)
+        and all(
+            result.get(field) == case_plan.get(field)
+            for field in (
+                "inputs",
+                "sample_count",
+                "budgets",
+                "tolerances",
+                "comparison_method",
+                "acceptance_rule",
+                "limitations",
+            )
+        )
+        and result.get("tolerance_history")
+        == successor_plan.get("tolerance_history")
+        and expected_environment <= set(environment)
+        and environment.get("machine_class")
+        == successor_plan.get("environment", {}).get("machine_class")
+        and isinstance(environment.get("tested_commit"), str)
+        and len(environment["tested_commit"]) == 40
+        and postgres_valid
+        and result.get("supersedes")
+        == {
+            "path": RESULT_PATH_BY_CASE[case],
+            "version": "1.0.0",
+            "sha256": V1_RESULT_SHA256_BY_CASE[case],
+            "status": "superseded-evidence",
+            "preserved": True,
+        }
+        and samples_valid
+        and result.get("conclusion") == "pass"
     )
 
 
@@ -843,7 +1074,10 @@ def validate_claim_links(
         claims.get("schema_version") != "1.0.0"
         or claims.get("validation_id") != "VAL-READY-014"
         or claims.get("status") != "informative-in-review"
-        or claims.get("canonical_plan_commit") != CANONICAL_PLAN_COMMIT
+        or claims.get("feature_id")
+        != "prototype-v2-clean-clone-reconciliation"
+        or claims.get("version") != "2.0.0"
+        or claims.get("canonical_plan_commit") != SUCCESSOR_PLAN_COMMIT
         or len(rows) != len(PROTOTYPES)
         or set(by_case) != PROTOTYPES
     ):
@@ -855,40 +1089,12 @@ def validate_claim_links(
                 "Claim ledger must contain exactly one informative in-review row for each of the nine prototype/benchmark pairs",
             )
         )
-    v2_key_rotation = load(
-        root,
-        V2_KEY_ROTATION_PATH,
-        problems,
-        "VAL-READY-014",
-    )
-    v2_decision = load(
-        root,
-        V2_DECISION_DURABILITY_PATH,
-        problems,
-        "VAL-READY-014",
-    )
-    active_v2 = {
-        "key-rotation": (
-            V2_KEY_ROTATION_PATH,
-            v2_key_rotation,
-            V1_KEY_ROTATION_SHA256,
-        ),
-        "decision-durability": (
-            V2_DECISION_DURABILITY_PATH,
-            v2_decision,
-            V1_DECISION_DURABILITY_SHA256,
-        ),
-    }
     for case, row in by_case.items():
-        v2_record = active_v2.get(case)
-        result = v2_record[1] if v2_record else results.get(case, {})
-        expected_result_path = (
-            v2_record[0] if v2_record else RESULT_PATH_BY_CASE[case]
-        )
-        expected_plan_commit = (
-            SUCCESSOR_PLAN_COMMIT
-            if v2_record
-            else CANONICAL_PLAN_COMMIT
+        result = load(
+            root,
+            V2_RESULT_PATH_BY_CASE[case],
+            problems,
+            "VAL-READY-014",
         )
         required_text = (
             "claim",
@@ -904,22 +1110,20 @@ def validate_claim_links(
             or row.get("prototype_deliverable_id") != PROTOTYPE_DELIVERABLES[case]
             or row.get("benchmark_deliverable_id") != BENCHMARK_DELIVERABLES[case]
             or row.get("prototype_path") != PROTOTYPE_PATHS[case]
-            or row.get("result_path") != expected_result_path
+            or row.get("result_path") != V2_RESULT_PATH_BY_CASE[case]
             or row.get("conclusion") != result.get("conclusion")
-            or row.get("plan_commit") != expected_plan_commit
+            or row.get("plan_commit") != SUCCESSOR_PLAN_COMMIT
             or any(not row.get(field) for field in required_text)
             or not (root / PROTOTYPE_PATHS[case]).is_file()
-            or not (root / expected_result_path).is_file()
-            or (
-                v2_record is not None
-                and row.get("supersedes_result")
-                != {
-                    "path": RESULT_PATH_BY_CASE[case],
-                    "version": "1.0.0",
-                    "sha256": v2_record[2],
-                    "status": "superseded-evidence",
-                }
-            )
+            or not (root / V2_RESULT_PATH_BY_CASE[case]).is_file()
+            or row.get("clean_clone_report") != V2_REPRODUCTION_PATH
+            or row.get("supersedes_result")
+            != {
+                "path": RESULT_PATH_BY_CASE[case],
+                "version": "1.0.0",
+                "sha256": V1_RESULT_SHA256_BY_CASE[case],
+                "status": "superseded-evidence",
+            }
         ):
             problems.append(
                 issue(
@@ -1056,6 +1260,226 @@ def validate_reproduction(
         )
 
 
+def validate_v2_reproduction(
+    root: Path,
+    successor_plan: dict[str, Any],
+    problems: list[dict[str, str]],
+) -> None:
+    for case, expected_sha256 in V1_RESULT_SHA256_BY_CASE.items():
+        path = root / RESULT_PATH_BY_CASE[case]
+        if (
+            not path.is_file()
+            or hashlib.sha256(path.read_bytes()).hexdigest()
+            != expected_sha256
+        ):
+            problems.append(
+                issue(
+                    "VAL-READY-014",
+                    "modified_v1_prototype_evidence",
+                    RESULT_PATH_BY_CASE[case],
+                    "Version 1 prototype evidence must remain byte-for-byte immutable and queryable as superseded evidence",
+                )
+            )
+    v1_reproduction = root / REPRODUCTION_PATH
+    if (
+        not v1_reproduction.is_file()
+        or hashlib.sha256(v1_reproduction.read_bytes()).hexdigest()
+        != V1_REPRODUCTION_SHA256
+    ):
+        problems.append(
+            issue(
+                "VAL-READY-014",
+                "modified_v1_reproduction_evidence",
+                REPRODUCTION_PATH,
+                "Version 1 clean-clone evidence must remain byte-for-byte immutable and queryable as superseded evidence",
+            )
+        )
+
+    standalone: dict[str, dict[str, Any]] = {}
+    for case in sorted(PROTOTYPES):
+        relative = V2_RESULT_PATH_BY_CASE[case]
+        result = load(root, relative, problems, "VAL-READY-014")
+        standalone[case] = result
+        tested_commit = result.get("environment", {}).get("tested_commit")
+        commit_valid = (
+            isinstance(tested_commit, str)
+            and len(tested_commit) == 40
+            and git_object_exists(root, f"{tested_commit}^{{commit}}")
+        )
+        if commit_valid and (root / ".git").exists():
+            commit_valid = (
+                subprocess.run(
+                    [
+                        "git",
+                        "merge-base",
+                        "--is-ancestor",
+                        SUCCESSOR_PLAN_COMMIT,
+                        tested_commit,
+                    ],
+                    cwd=root,
+                    capture_output=True,
+                    check=False,
+                ).returncode
+                == 0
+            )
+        if not valid_v2_result(case, result, successor_plan) or not commit_valid:
+            problems.append(
+                issue(
+                    "VAL-READY-014",
+                    "invalid_v2_prototype_result",
+                    relative,
+                    f"{case} must contain exactly three valid plan-bound, externally resource-accounted version 2 samples from a committed successor",
+                )
+            )
+
+    reproduction = load(
+        root,
+        V2_REPRODUCTION_PATH,
+        problems,
+        "VAL-READY-014",
+    )
+    rows = reproduction.get("results")
+    rows = rows if isinstance(rows, list) else []
+    by_case = {
+        row.get("prototype_id"): row
+        for row in rows
+        if isinstance(row, dict) and isinstance(row.get("prototype_id"), str)
+    }
+    source_commit = reproduction.get("source_commit")
+    clone_evidence = reproduction.get("clean_clone_evidence")
+    source_commit_valid = (
+        isinstance(source_commit, str)
+        and len(source_commit) == 40
+        and git_object_exists(root, f"{source_commit}^{{commit}}")
+    )
+    if source_commit_valid and (root / ".git").exists():
+        source_commit_valid = (
+            subprocess.run(
+                [
+                    "git",
+                    "merge-base",
+                    "--is-ancestor",
+                    SUCCESSOR_PLAN_COMMIT,
+                    source_commit,
+                ],
+                cwd=root,
+                capture_output=True,
+                check=False,
+            ).returncode
+            == 0
+        )
+    if (
+        reproduction.get("schema_version") != "1.0.0"
+        or reproduction.get("feature_id")
+        != "prototype-v2-clean-clone-reconciliation"
+        or reproduction.get("validation_id") != "VAL-READY-014"
+        or reproduction.get("status") != "pass"
+        or reproduction.get("clean_clone") is not True
+        or clone_evidence
+        != {
+            "complete_history": True,
+            "independent_object_store": True,
+            "worktree_clean_before_measurement": True,
+        }
+        or reproduction.get("clone_method")
+        != "git clone --no-local from the candidate object database into an empty temporary directory"
+        or reproduction.get("plan_commit") != SUCCESSOR_PLAN_COMMIT
+        or reproduction.get("plan_sha256") != digest(successor_plan)
+        or not source_commit_valid
+        or len(rows) != len(PROTOTYPES)
+        or set(by_case) != PROTOTYPES
+    ):
+        problems.append(
+            issue(
+                "VAL-READY-014",
+                "invalid_v2_clean_clone_reproduction",
+                V2_REPRODUCTION_PATH,
+                "The active report must bind one complete independent clean clone, the immutable version 2 plan, one successor commit, and all nine prototype results",
+            )
+        )
+
+    matches: list[bool] = []
+    for case in sorted(PROTOTYPES):
+        row = by_case.get(case, {})
+        raw = row.get("raw_result")
+        raw_result = raw if isinstance(raw, dict) else {}
+        comparison = row.get("comparison")
+        standalone_result = standalone.get(case, {})
+        sample_count_matches = (
+            isinstance(raw, dict)
+            and isinstance(raw.get("samples"), list)
+            and raw.get("sample_count") == len(raw["samples"]) == 3
+        )
+        case_plan = next(
+            (
+                item
+                for item in successor_plan.get("cases", [])
+                if isinstance(item, dict) and item.get("id") == case
+            ),
+            {},
+        )
+        plan_fields_match = isinstance(raw, dict) and all(
+            raw.get(field)
+            == (
+                successor_plan.get("tolerance_history")
+                if field == "tolerance_history"
+                else case_plan.get(field)
+            )
+            for field in RESULT_PLAN_FIELDS
+        )
+        row_matches = (
+            raw == standalone_result
+            and valid_v2_result(case, raw, successor_plan)
+            and raw_result.get("environment", {}).get("tested_commit")
+            == source_commit
+            and sample_count_matches
+            and plan_fields_match
+        )
+        matches.append(row_matches)
+        if (
+            row.get("result_path") != V2_RESULT_PATH_BY_CASE[case]
+            or row.get("supersedes_result_path")
+            != RESULT_PATH_BY_CASE[case]
+            or not isinstance(comparison, dict)
+            or comparison.get("rerun_conclusion") != raw.get("conclusion")
+            or comparison.get("rerun_conclusion")
+            != raw_result.get("conclusion")
+            is not sample_count_matches
+            or comparison.get("plan_fields_match") is not plan_fields_match
+            or comparison.get("matches") is not row_matches
+            or not row_matches
+        ):
+            problems.append(
+                issue(
+                    "VAL-READY-014",
+                    "v2_clean_clone_result_mismatch",
+                    V2_REPRODUCTION_PATH,
+                    f"{case} does not reconcile its active result, raw samples, resource provenance, plan fields, and conclusion",
+                )
+            )
+    observed_samples = sum(
+        len(row.get("raw_result", {}).get("samples", []))
+        for row in rows
+        if isinstance(row, dict)
+        and isinstance(row.get("raw_result"), dict)
+        and isinstance(row["raw_result"].get("samples"), list)
+    )
+    expected_status = "pass" if matches and all(matches) else "fail"
+    if (
+        reproduction.get("sample_count") != 27
+        or observed_samples != 27
+        or reproduction.get("status") != expected_status
+    ):
+        problems.append(
+            issue(
+                "VAL-READY-014",
+                "invalid_v2_reproduction_summary",
+                V2_REPRODUCTION_PATH,
+                "The active clean-clone summary must recompute exactly 27 valid samples and may not widen any budget or tolerance",
+            )
+        )
+
+
 def validate_manifest_agreement(
     root: Path,
     problems: list[dict[str, str]],
@@ -1069,13 +1493,8 @@ def validate_manifest_agreement(
         for row in rows
         if isinstance(row, dict) and isinstance(row.get("id"), str)
     }
-    v2_paths = {
-        "key-rotation": V2_KEY_ROTATION_PATH,
-        "decision-durability": V2_DECISION_DURABILITY_PATH,
-    }
     for case in sorted(PROTOTYPES):
-        active_result_path = v2_paths.get(case, RESULT_PATH_BY_CASE[case])
-        active_version = "2.0.0" if case in v2_paths else "1.0.0"
+        active_result_path = V2_RESULT_PATH_BY_CASE[case]
         for kind, deliverable_id, artifact_path in (
             ("prototype", PROTOTYPE_DELIVERABLES[case], PROTOTYPE_PATHS[case]),
             ("benchmark", BENCHMARK_DELIVERABLES[case], active_result_path),
@@ -1090,24 +1509,16 @@ def validate_manifest_agreement(
             if (
                 row.get("type") != kind
                 or row.get("state") != "in-review"
-                or row.get("version") != active_version
+                or row.get("version") != "2.0.0"
                 or not git_object_exists(root, f"{row.get('commit')}^{{commit}}")
                 or not isinstance(artifact, dict)
                 or artifact.get("path") != artifact_path
                 or artifact_path not in locators
                 or CLAIMS_PATH not in locators
-                or (
-                    case not in v2_paths
-                    and REPRODUCTION_PATH not in locators
-                )
-                or (
-                    case in v2_paths
-                    and (
-                        active_result_path not in locators
-                        or RESULT_PATH_BY_CASE[case] not in locators
-                        or SUCCESSOR_PLAN_PATH not in locators
-                    )
-                )
+                or active_result_path not in locators
+                or RESULT_PATH_BY_CASE[case] not in locators
+                or SUCCESSOR_PLAN_PATH not in locators
+                or V2_REPRODUCTION_PATH not in locators
                 or row.get("review", {}).get("status") != "pending"
                 or row.get("decision", {}).get("status") != "pending"
             ):
@@ -1673,6 +2084,7 @@ def validate_prototype_evidence(root: Path) -> list[dict[str, str]]:
                 )
     validate_claim_links(root, results, problems)
     validate_reproduction(root, plan_digest, problems)
+    validate_v2_reproduction(root, successor_plan, problems)
     validate_manifest_agreement(root, problems)
     return problems
 

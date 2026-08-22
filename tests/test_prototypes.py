@@ -402,6 +402,107 @@ class PrototypeEvidenceTest(unittest.TestCase):
         )
         self.assertTrue(all(result["comparison"]["matches"] for result in reproduction["results"]))
 
+    def test_v2_clean_clone_reconciliation_covers_exactly_27_samples(self) -> None:
+        reproduction = json.loads(
+            (ROOT / "docs/research/benchmarks/v2/reproduction.json").read_text(
+                encoding="utf-8"
+            )
+        )
+        self.assertEqual(
+            set(VERIFY.PROTOTYPES),
+            {result["prototype_id"] for result in reproduction["results"]},
+        )
+        self.assertEqual(27, reproduction["sample_count"])
+        self.assertEqual(
+            27,
+            sum(
+                len(result["raw_result"]["samples"])
+                for result in reproduction["results"]
+            ),
+        )
+        self.assertTrue(
+            all(
+                result["comparison"]["matches"]
+                for result in reproduction["results"]
+            )
+        )
+
+    def mutate_v2_reproduction(self, mutate) -> set[str]:
+        root = self.copy_evidence()
+        path = root / "docs/research/benchmarks/v2/reproduction.json"
+        reproduction = json.loads(path.read_text(encoding="utf-8"))
+        mutate(reproduction)
+        path.write_text(json.dumps(reproduction), encoding="utf-8")
+        return self.codes(root)
+
+    def test_v2_clean_clone_status_mutation_fails(self) -> None:
+        self.assertIn(
+            "invalid_v2_clean_clone_reproduction",
+            self.mutate_v2_reproduction(
+                lambda value: value.update(clean_clone=False)
+            ),
+        )
+
+    def test_v2_sample_count_mutation_fails(self) -> None:
+        self.assertIn(
+            "invalid_v2_reproduction_summary",
+            self.mutate_v2_reproduction(
+                lambda value: value.update(sample_count=26)
+            ),
+        )
+
+    def test_v2_resource_provenance_mutation_fails(self) -> None:
+        self.assertIn(
+            "v2_clean_clone_result_mismatch",
+            self.mutate_v2_reproduction(
+                lambda value: value["results"][0]["raw_result"]["samples"][0][
+                    "resource_accounting"
+                ].update(source="")
+            ),
+        )
+
+    def test_v2_resource_budget_mutation_fails(self) -> None:
+        self.assertIn(
+            "v2_clean_clone_result_mismatch",
+            self.mutate_v2_reproduction(
+                lambda value: value["results"][0]["raw_result"]["samples"][0][
+                    "resource_accounting"
+                ].update(budget_bytes=536870913)
+            ),
+        )
+
+    def test_v2_key_rotation_digest_mutation_fails(self) -> None:
+        def mutate(value) -> None:
+            result = next(
+                row
+                for row in value["results"]
+                if row["prototype_id"] == "key-rotation"
+            )
+            result["raw_result"]["samples"][0]["observation"][
+                "post_rewrap_payload_capture"
+            ]["sha256"] = "0" * 64
+
+        self.assertIn(
+            "v2_clean_clone_result_mismatch",
+            self.mutate_v2_reproduction(mutate),
+        )
+
+    def test_v2_disconnect_fault_mutation_fails(self) -> None:
+        def mutate(value) -> None:
+            result = next(
+                row
+                for row in value["results"]
+                if row["prototype_id"] == "decision-durability"
+            )
+            result["raw_result"]["samples"][0]["observation"][
+                "readiness_observed"
+            ] = False
+
+        self.assertIn(
+            "v2_clean_clone_result_mismatch",
+            self.mutate_v2_reproduction(mutate),
+        )
+
     def test_reproduction_recomputes_comparison_from_raw_samples(self) -> None:
         root = self.copy_evidence()
         path = root / "docs/research/benchmarks/reproduction.json"
