@@ -6,6 +6,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import math
 import sys
 from pathlib import Path
 from typing import Any
@@ -34,6 +35,7 @@ ANALYZER_FAMILIES = {
     "longitudinal",
 }
 ANALYZER_DIMENSIONS = {
+    "datasets",
     "fixtures",
     "metrics",
     "thresholds",
@@ -45,13 +47,46 @@ ANALYZER_DIMENSIONS = {
     "cost",
     "prompt_injection",
     "sovereignty",
+    "source_ids",
+}
+ANALYZER_NESTED_DIMENSIONS = {
+    "digests": {"prompt", "model", "config"},
+    "calibration": {"method", "split"},
+    "nondeterminism": {"class", "repeats", "comparison"},
+    "abstention": {"required_cases", "metric"},
+    "cost": {"measure", "hard_budget_required"},
+    "prompt_injection": {"suite", "pass"},
+    "sovereignty": {"profiles", "attestation_required"},
+}
+ANALYZER_DATASETS = {
+    "DATASET-SYNTHETIC-CORPUS-1.0.0",
+    "DATASET-AUTHORIZED-USE-TWINS-1.0.0",
+    "DATASET-INJECTION-MUTATIONS-1.0.0",
+}
+ANALYZER_SOURCES = {
+    "SRC-NIST-AML-2025",
+    "SRC-OWASP-LLM01-2025",
+    "SRC-SKLEARN-CALIBRATION-1.9",
+}
+CORE_ANALYZER_METRICS = {
+    "evidence_reference_precision",
+    "evidence_reference_recall",
+    "schema_valid_rate",
+    "cross_org_reference_count",
+    "unauthorized_capability_count",
+    "injection_control_success_rate",
+    "abstention_on_unanswerable",
+    "cost_budget_overrun_count",
 }
 RESULT_FILES = [
     f"docs/research/benchmarks/{case}.json" for case in sorted(PROTOTYPES)
 ]
 EVIDENCE_FILES = [
     "docs/research/benchmarks/precommit.json",
+    "docs/research/analysis/evaluation-plan.md",
+    "docs/research/corpus/manifest.json",
     "policy/analyzer-evaluation.json",
+    "policy/research-manifest.json",
     *RESULT_FILES,
 ]
 ANALYZER_CONCLUSION = (
@@ -63,13 +98,18 @@ ANALYZER_CONCLUSION = (
 
 
 def issue(criterion: str, code: str, path: str, message: str) -> dict[str, str]:
+    remediation = (
+        "make verify-analyzer-evaluation"
+        if criterion == "VAL-READY-015"
+        else "make verify-prototypes"
+    )
     return {
         "schema_version": "1.0.0",
         "criterion_id": criterion,
         "code": code,
         "path": path,
         "message": message,
-        "remediation_command": "make verify-prototypes",
+        "remediation_command": remediation,
     }
 
 
@@ -89,6 +129,25 @@ def digest(value: Any) -> str:
     return hashlib.sha256(
         json.dumps(value, sort_keys=True, separators=(",", ":")).encode()
     ).hexdigest()
+
+
+def nonempty_strings(value: Any) -> bool:
+    return (
+        isinstance(value, list)
+        and bool(value)
+        and all(isinstance(item, str) and bool(item) for item in value)
+    )
+
+
+def valid_threshold(value: Any) -> bool:
+    return (
+        isinstance(value, dict)
+        and set(value) == {"operator", "value"}
+        and value.get("operator") in {"<=", ">=", "=="}
+        and isinstance(value.get("value"), (int, float))
+        and not isinstance(value.get("value"), bool)
+        and math.isfinite(value["value"])
+    )
 
 
 def valid_analyzer_sample(
@@ -270,6 +329,87 @@ def validate(root: Path) -> list[dict[str, str]]:
                 )
     evaluation_path = "policy/analyzer-evaluation.json"
     evaluation = load(root, evaluation_path, problems, "VAL-READY-015")
+    if (
+        evaluation.get("schema_version") != "1.0.0"
+        or evaluation.get("feature_id") != "analyzer-family-evaluation-plan"
+        or evaluation.get("validation_ids") != ["VAL-READY-015"]
+        or evaluation.get("version") != "1.0.0"
+        or evaluation.get("status") != "in-review"
+    ):
+        problems.append(
+            issue(
+                "VAL-READY-015",
+                "invalid_analyzer_plan_identity",
+                evaluation_path,
+                "Analyzer plan identity, version, validation scope, or review state drifted",
+            )
+        )
+    datasets = evaluation.get("datasets")
+    dataset_rows = datasets if isinstance(datasets, list) else []
+    dataset_by_id = {
+        row.get("id"): row
+        for row in dataset_rows
+        if isinstance(row, dict) and isinstance(row.get("id"), str)
+    }
+    if (
+        set(dataset_by_id) != ANALYZER_DATASETS
+        or len(dataset_by_id) != len(dataset_rows)
+    ):
+        problems.append(
+            issue(
+                "VAL-READY-015",
+                "analyzer_dataset_coverage_mismatch",
+                evaluation_path,
+                f"Expected {sorted(ANALYZER_DATASETS)}, found {sorted(dataset_by_id)}",
+            )
+        )
+    corpus_path = "docs/research/corpus/manifest.json"
+    corpus = load(root, corpus_path, problems, "VAL-READY-015")
+    corpus_fixture_ids = {
+        row.get("id")
+        for row in corpus.get("fixtures", [])
+        if isinstance(row, dict) and isinstance(row.get("id"), str)
+    }
+    for dataset_id, row in dataset_by_id.items():
+        fixture_ids = row.get("fixture_ids")
+        dataset_path = row.get("path")
+        bounded_path = (
+            dataset_path.split("#", 1)[0]
+            if isinstance(dataset_path, str)
+            else ""
+        )
+        if (
+            not nonempty_strings(fixture_ids)
+            or not set(fixture_ids) <= corpus_fixture_ids
+            or not bounded_path
+            or not (root / bounded_path).is_file()
+            or any(
+                not row.get(field)
+                for field in ("split", "leakage_control", "limitations")
+            )
+        ):
+            problems.append(
+                issue(
+                    "VAL-READY-015",
+                    "invalid_analyzer_dataset_mapping",
+                    evaluation_path,
+                    f"{dataset_id} must bind fixtures, split, leakage control, limitations, and a repository path",
+                )
+            )
+    global_thresholds = evaluation.get("global_thresholds")
+    if (
+        not isinstance(global_thresholds, dict)
+        or set(global_thresholds) != CORE_ANALYZER_METRICS
+        or not all(valid_threshold(value) for value in global_thresholds.values())
+    ):
+        problems.append(
+            issue(
+                "VAL-READY-015",
+                "analyzer_metric_threshold_mismatch",
+                evaluation_path,
+                "Global analyzer metrics require fixed numeric thresholds",
+            )
+        )
     families = evaluation.get("families", [])
     if not isinstance(families, list):
         families = []
@@ -278,7 +418,10 @@ def validate(root: Path) -> list[dict[str, str]]:
         for row in families
         if isinstance(row, dict) and isinstance(row.get("family"), str)
     }
-    if set(family_by_id) != ANALYZER_FAMILIES:
+    if (
+        set(family_by_id) != ANALYZER_FAMILIES
+        or len(family_by_id) != len(families)
+    ):
         problems.append(
             issue(
                 "VAL-READY-015",
@@ -288,12 +431,88 @@ def validate(root: Path) -> list[dict[str, str]]:
             )
         )
     for family, row in family_by_id.items():
-        if ANALYZER_DIMENSIONS - set(row):
+        missing_dimensions = ANALYZER_DIMENSIONS - set(row)
+        for dimension, keys in ANALYZER_NESTED_DIMENSIONS.items():
+            value = row.get(dimension)
+            if not isinstance(value, dict) or keys - set(value):
+                missing_dimensions.add(dimension)
+        if missing_dimensions:
             problems.append(
-                issue("VAL-READY-015", "incomplete_analyzer_dimension", evaluation_path, f"{family} omits {sorted(ANALYZER_DIMENSIONS - set(row))}")
+                issue(
+                    "VAL-READY-015",
+                    "incomplete_analyzer_dimension",
+                    evaluation_path,
+                    f"{family} omits or incompletely defines {sorted(missing_dimensions)}",
+                )
+            )
+        family_datasets = row.get("datasets")
+        if (
+            not nonempty_strings(family_datasets)
+            or not set(family_datasets) <= set(dataset_by_id)
+        ):
+            problems.append(
+                issue(
+                    "VAL-READY-015",
+                    "invalid_analyzer_dataset_mapping",
+                    evaluation_path,
+                    f"{family} must map to registered datasets",
+                )
+            )
+        fixtures = row.get("fixtures")
+        if (
+            not nonempty_strings(fixtures)
+            or not set(fixtures) <= corpus_fixture_ids
+            or (
+                nonempty_strings(family_datasets)
+                and not set(fixtures)
+                <= {
+                    fixture_id
+                    for dataset_id in family_datasets
+                    for fixture_id in dataset_by_id.get(dataset_id, {}).get(
+                        "fixture_ids", []
+                    )
+                    if isinstance(fixture_id, str)
+                }
+            )
+        ):
+            problems.append(
+                issue(
+                    "VAL-READY-015",
+                    "invalid_analyzer_fixture_mapping",
+                    evaluation_path,
+                    f"{family} must map to registered synthetic corpus fixture IDs",
+                )
+            )
+        metrics = row.get("metrics")
+        thresholds = row.get("thresholds")
+        metric_ids = set(metrics) if nonempty_strings(metrics) else set()
+        threshold_ids = set(thresholds) if isinstance(thresholds, dict) else set()
+        if (
+            len(metric_ids) != len(metrics or [])
+            or not CORE_ANALYZER_METRICS <= metric_ids
+            or metric_ids != threshold_ids
+            or not isinstance(thresholds, dict)
+            or not all(valid_threshold(value) for value in thresholds.values())
+            or (
+                isinstance(global_thresholds, dict)
+                and any(
+                    thresholds.get(metric) != global_thresholds.get(metric)
+                    for metric in CORE_ANALYZER_METRICS
+                )
+            )
+        ):
+            problems.append(
+                issue(
+                    "VAL-READY-015",
+                    "analyzer_metric_threshold_mismatch",
+                    evaluation_path,
+                    f"{family} requires one fixed numeric threshold for each unique metric",
+                )
             )
     source_ids: set[str] = set()
-    for source in evaluation.get("sources", []):
+    sources = evaluation.get("sources")
+    source_rows = sources if isinstance(sources, list) else []
+    for source in source_rows:
         if not isinstance(source, dict):
             continue
         source_ids.add(str(source.get("id")))
@@ -303,23 +522,130 @@ def validate(root: Path) -> list[dict[str, str]]:
             problems.append(
                 issue("VAL-READY-015", "incomplete_analyzer_source", evaluation_path, f"Incomplete source {source.get('id')}")
             )
-    if source_ids != {"SRC-NIST-AML-2025", "SRC-OWASP-LLM01-2025", "SRC-SKLEARN-CALIBRATION-1.9"}:
+    if source_ids != ANALYZER_SOURCES or len(source_ids) != len(source_rows):
         problems.append(
             issue("VAL-READY-015", "analyzer_source_coverage_mismatch", evaluation_path, "Required reviewed sources are missing")
         )
+    for family, row in family_by_id.items():
+        family_sources = row.get("source_ids")
+        if (
+            not nonempty_strings(family_sources)
+            or not set(family_sources) <= source_ids
+        ):
+            problems.append(
+                issue(
+                    "VAL-READY-015",
+                    "analyzer_source_coverage_mismatch",
+                    evaluation_path,
+                    f"{family} must map to complete source records",
+                )
+            )
+    prose_path = "docs/research/analysis/evaluation-plan.md"
+    try:
+        prose = (root / prose_path).read_text(encoding="utf-8")
+    except OSError as error:
+        problems.append(
+            issue("VAL-READY-015", "invalid_analyzer_plan_prose", prose_path, str(error))
+        )
+    else:
+        required_prose = {
+            "Status: In review",
+            "Version: 1.0.0",
+            "Validation: `VAL-READY-015`",
+            "Machine matrix: [`policy/analyzer-evaluation.json`]",
+        }
+        if not all(value in prose for value in required_prose):
+            problems.append(
+                issue(
+                    "VAL-READY-015",
+                    "analyzer_plan_prose_drift",
+                    prose_path,
+                    "Prose version, review state, validation ID, or matrix link drifted",
+                )
+            )
+        source_urls = {
+            source.get("source_url")
+            for source in source_rows
+            if isinstance(source, dict)
+            and isinstance(source.get("source_url"), str)
+        }
+        if any(source_url not in prose for source_url in source_urls):
+            problems.append(
+                issue(
+                    "VAL-READY-015",
+                    "analyzer_plan_prose_drift",
+                    prose_path,
+                    "The prose plan does not cite every machine-readable source URL",
+                )
+            )
+    research_manifest_path = "policy/research-manifest.json"
+    research_manifest = load(
+        root, research_manifest_path, problems, "VAL-READY-015"
+    )
+    analyzer_entries = [
+        row
+        for row in research_manifest.get("deliverables", [])
+        if isinstance(row, dict)
+        and row.get("id") == "RES-STUDY-ANALYZER-EVALUATION-001"
+    ]
+    if len(analyzer_entries) != 1:
+        problems.append(
+            issue(
+                "VAL-READY-015",
+                "analyzer_research_manifest_drift",
+                research_manifest_path,
+                "Analyzer evaluation deliverable must appear exactly once",
+            )
+        )
+    else:
+        entry = analyzer_entries[0]
+        evidence_locators = {
+            item.get("locator")
+            for item in entry.get("evidence", [])
+            if isinstance(item, dict)
+        }
+        if (
+            entry.get("state") != "in-review"
+            or entry.get("version") != evaluation.get("version")
+            or entry.get("artifact", {}).get("path") != prose_path
+            or prose_path not in evidence_locators
+            or evaluation_path not in evidence_locators
+            or entry.get("review", {}).get("status") != "pending"
+        ):
+            problems.append(
+                issue(
+                    "VAL-READY-015",
+                    "analyzer_research_manifest_drift",
+                    research_manifest_path,
+                    "Manifest version, review state, artifacts, or evidence disagree with the analyzer plan",
+                )
+            )
     return problems
 
 
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--root", type=Path, default=Path.cwd())
+    parser.add_argument(
+        "--criterion",
+        choices=["VAL-READY-014", "VAL-READY-015"],
+        help="Report one criterion while preserving the shared verifier implementation.",
+    )
     args = parser.parse_args()
     problems = validate(args.root.resolve())
+    criteria = ["VAL-READY-014", "VAL-READY-015"]
+    if args.criterion:
+        criteria = [args.criterion]
+        problems = [
+            problem
+            for problem in problems
+            if problem.get("criterion_id") == args.criterion
+        ]
     print(
         json.dumps(
             {
                 "schema_version": "1.0.0",
-                "criteria": ["VAL-READY-014", "VAL-READY-015"],
+                "criteria": criteria,
                 "status": "pass" if not problems else "fail",
                 "prototype_count": len(PROTOTYPES),
                 "analyzer_family_count": len(ANALYZER_FAMILIES),

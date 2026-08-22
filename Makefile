@@ -1,4 +1,4 @@
-.PHONY: setup dev dev-stop lint typecheck test test-gate build agent-ready conformance generate generate-corpus migrate release rollback doctor incident verify-corpus verify-foundation verify-governance verify-readiness verify-research _python-check
+.PHONY: setup dev dev-stop lint typecheck test test-gate build agent-ready conformance generate generate-corpus migrate release rollback doctor incident verify-analyzer-evaluation verify-corpus verify-foundation verify-governance verify-prototypes verify-readiness verify-research _python-check
 
 PYTHON ?= python3
 
@@ -12,11 +12,12 @@ dev-stop:
 	@TESTAMENT_POSTGRES_PORT=5440 docker compose stop postgres
 
 _python-check:
-	@$(PYTHON) -m py_compile scripts/generate_corpus.py scripts/verify_corpus.py scripts/verify_foundation.py scripts/verify_governance.py scripts/verify_readiness.py scripts/verify_research.py scripts/workflow.py tests/test_corpus.py tests/test_foundation.py tests/test_governance.py tests/test_readiness.py tests/test_research_registry.py
+	@$(PYTHON) -m py_compile scripts/generate_corpus.py scripts/run_prototypes.py scripts/verify_corpus.py scripts/verify_foundation.py scripts/verify_governance.py scripts/verify_prototypes.py scripts/verify_readiness.py scripts/verify_research.py scripts/workflow.py tests/test_corpus.py tests/test_foundation.py tests/test_governance.py tests/test_prototypes.py tests/test_readiness.py tests/test_research_registry.py
 
 lint: _python-check
 	@$(PYTHON) -m json.tool policy/artifact-licensing.json >/dev/null
 	@$(PYTHON) -m json.tool policy/abuse-misuse-research.json >/dev/null
+	@$(PYTHON) -m json.tool policy/analyzer-evaluation.json >/dev/null
 	@$(PYTHON) -m json.tool policy/architecture.json >/dev/null
 	@$(PYTHON) -m json.tool policy/claims.json >/dev/null
 	@$(PYTHON) -m json.tool policy/naming-clearance.json >/dev/null
@@ -48,12 +49,14 @@ test-gate:
 	@$(MAKE) verify-governance
 	@$(MAKE) verify-research
 	@$(MAKE) verify-corpus
+	@$(MAKE) verify-analyzer-evaluation
 	@$(MAKE) verify-readiness
 
 build: verify-foundation
 	@$(MAKE) verify-governance
 	@$(MAKE) verify-research
 	@$(MAKE) verify-corpus
+	@$(MAKE) verify-analyzer-evaluation
 	@$(MAKE) verify-readiness
 	@echo "Static research foundation validated."
 
@@ -61,12 +64,14 @@ agent-ready: verify-foundation
 	@$(MAKE) verify-governance
 	@$(MAKE) verify-research
 	@$(MAKE) verify-corpus
+	@$(MAKE) verify-analyzer-evaluation
 	@$(MAKE) verify-readiness
 
 conformance: verify-foundation
 	@$(MAKE) verify-governance
 	@$(MAKE) verify-research
 	@$(MAKE) verify-corpus
+	@$(MAKE) verify-analyzer-evaluation
 	@$(MAKE) verify-readiness
 	@echo "Foundation policy conformance passed."
 
@@ -93,6 +98,12 @@ verify-foundation:
 
 verify-governance:
 	@$(PYTHON) scripts/verify_governance.py --root .
+
+verify-prototypes:
+	@$(PYTHON) scripts/verify_prototypes.py --root .
+
+verify-analyzer-evaluation:
+	@$(PYTHON) scripts/verify_prototypes.py --root . --criterion VAL-READY-015
 
 verify-readiness:
 	@$(PYTHON) scripts/verify_readiness.py --root .

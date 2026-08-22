@@ -13,13 +13,22 @@ This informative plan evaluates deterministic rules, traditional classifiers,
 local and external LLMs, ensembles, sequence analyzers, and longitudinal
 analysis before production implementation. It does not claim that a passing
 analyzer is safe, policy-authoritative, or effective on unknown production
-distributions. Analyzer output remains an untrusted assertion.
+distributions. Analyzer output remains an untrusted assertion. This feature
+defines the evaluation only. It performs no local or external model inference.
 
-The machine matrix freezes datasets, splits, metrics, thresholds,
-prompt/model/config digests, evidence checks, calibration, nondeterminism,
-abstention, cost, injection resistance, and sovereignty attestations. A family
-fails if any applicable hard threshold, evidence check, budget, or sovereignty
-constraint fails. Critical and high review findings block acceptance.
+The machine matrix maps every family to named datasets and exact fixture IDs.
+It also gives every metric a numeric threshold and records prompt, model, and
+configuration digest requirements. Evidence checks, calibration,
+nondeterminism, abstention, cost, injection resistance, and sovereignty
+attestations are required for every family. A family fails if a threshold,
+evidence check, budget, or sovereignty constraint fails. Critical and high
+review findings block acceptance.
+
+The three registered datasets are the versioned synthetic corpus, its
+authorized-use twin subset, and the seeded prompt-injection mutation suite.
+The matrix is authoritative for the family-to-dataset, fixture, metric, and
+threshold mapping. The synthetic fixtures test contract behavior, not
+real-world detector effectiveness.
 
 ## Protocol
 
@@ -39,6 +48,16 @@ constraint fails. Critical and high review findings block acceptance.
    distributions rather than selecting a favorable attempt.
 6. Recompute metrics independently and route false positives, abstentions, and
    appeals to non-author review.
+
+## Fixed thresholds
+
+Thresholds are frozen research acceptance criteria, not measured results.
+Every family uses the same evidence, schema, isolation, injection, abstention,
+and budget checks. Family-specific thresholds cover detection quality,
+calibration, variance, ordering, state, recovery, latency, token use, and
+cost where applicable. Each metric has exactly one `>=`, `<=`, or `==`
+comparison in the machine matrix. A missing metric or threshold invalidates
+the plan rather than becoming an implicit pass.
 
 ## Prompt-injection suite
 
@@ -71,9 +90,10 @@ behavior.
 
 - National Institute of Standards and Technology, *Adversarial Machine
   Learning: A Taxonomy and Terminology of Attacks and Mitigations*, NIST AI
-  100-2 E2025, March 2025, accessed 2026-08-21:
+  100-2 E2025, published 2025-03-24 with a corrected PDF uploaded
+  2025-04-01, accessed 2026-08-21:
   <https://csrc.nist.gov/pubs/ai/100/2/e2025/final>. Supports lifecycle- and
-  capability-aware adversarial evaluation.
+  capability-aware evaluation across different machine-learning methods.
 - OWASP GenAI Security Project, *LLM01:2025 Prompt Injection*, 2025, accessed
   2026-08-21:
   <https://genai.owasp.org/llmrisk/llm01-prompt-injection/>. Supports direct,
@@ -90,4 +110,5 @@ Owner: Eno Reyes (@enoreyes), standards maintainer. Independent analysis,
 security, and privacy review is pending. Production label availability,
 subgroup coverage, remote provider drift, and production prevalence remain
 uncertain. RFC-0007's extension transport and the minimum sample size for
-production calibration remain open.
+production calibration remain open. The plan is `in-review`, not accepted,
+until that independent review is complete.

@@ -84,11 +84,53 @@ class PrototypeEvidenceTest(unittest.TestCase):
         plan["families"] = [
             row for row in plan["families"] if row["family"] != "external-llm"
         ]
-        plan["families"][0]["prompt_injection"].pop()
+        plan["families"][0]["prompt_injection"].pop("suite")
         path.write_text(json.dumps(plan), encoding="utf-8")
         codes = self.codes(root)
         self.assertIn("missing_analyzer_family", codes)
         self.assertIn("incomplete_analyzer_dimension", codes)
+
+    def test_analyzer_matrix_requires_family_source_mapping(self) -> None:
+        root = self.copy_evidence()
+        path = root / "policy/analyzer-evaluation.json"
+        plan = json.loads(path.read_text(encoding="utf-8"))
+        plan["sources"].pop()
+        path.write_text(json.dumps(plan), encoding="utf-8")
+        self.assertIn("analyzer_source_coverage_mismatch", self.codes(root))
+
+    def test_analyzer_matrix_requires_fixture_mapping(self) -> None:
+        root = self.copy_evidence()
+        path = root / "policy/analyzer-evaluation.json"
+        plan = json.loads(path.read_text(encoding="utf-8"))
+        plan["families"][0]["fixtures"] = []
+        path.write_text(json.dumps(plan), encoding="utf-8")
+        self.assertIn("invalid_analyzer_fixture_mapping", self.codes(root))
+
+    def test_analyzer_matrix_requires_dataset_mapping(self) -> None:
+        root = self.copy_evidence()
+        path = root / "policy/analyzer-evaluation.json"
+        plan = json.loads(path.read_text(encoding="utf-8"))
+        plan["families"][0]["datasets"] = []
+        path.write_text(json.dumps(plan), encoding="utf-8")
+        self.assertIn("invalid_analyzer_dataset_mapping", self.codes(root))
+
+    def test_analyzer_matrix_requires_metric_mapping(self) -> None:
+        root = self.copy_evidence()
+        path = root / "policy/analyzer-evaluation.json"
+        plan = json.loads(path.read_text(encoding="utf-8"))
+        plan["families"][0]["metrics"].pop()
+        path.write_text(json.dumps(plan), encoding="utf-8")
+        self.assertIn("analyzer_metric_threshold_mismatch", self.codes(root))
+
+    def test_analyzer_matrix_requires_fixed_threshold(self) -> None:
+        root = self.copy_evidence()
+        path = root / "policy/analyzer-evaluation.json"
+        plan = json.loads(path.read_text(encoding="utf-8"))
+        plan["families"][0]["thresholds"].pop(
+            next(iter(plan["families"][0]["thresholds"]))
+        )
+        path.write_text(json.dumps(plan), encoding="utf-8")
+        self.assertIn("analyzer_metric_threshold_mismatch", self.codes(root))
 
     def test_postgres_result_binds_declared_lifecycle(self) -> None:
         root = self.copy_evidence()
