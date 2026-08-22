@@ -4,8 +4,12 @@
 from __future__ import annotations
 
 import argparse
+import errno
 import hashlib
 import json
+import os
+import secrets
+import stat
 import sys
 from pathlib import Path
 from typing import Any, Callable
@@ -23,6 +27,7 @@ RESEARCH_DEPENDENCIES = [
     "RES-STUDY-STRIDE-001",
     "RES-STUDY-DATA-INVENTORY-001",
 ]
+TEMP_FILE_ATTEMPTS = 128
 
 
 def json_bytes(value: Any) -> bytes:
@@ -516,11 +521,138 @@ def check(root: Path) -> list[str]:
     return failures
 
 
+def safe_relative_path(root: Path, relative: str) -> Path:
+    path = Path(relative)
+    if path.is_absolute() or ".." in path.parts:
+        raise ValueError(f"output target is outside repository: {relative}")
+    if not path.parts or path.name in ("", ".", ".."):
+        raise ValueError(f"invalid output target: {relative}")
+    candidate = Path(os.path.abspath(root / path))
+    try:
+        if os.path.commonpath((root, candidate)) != str(root):
+            raise ValueError(f"output target is outside repository: {relative}")
+    except ValueError as error:
+        raise ValueError(f"output target is outside repository: {relative}") from error
+    return path
+
+
+def open_parent_directory(root: Path, relative: Path) -> int:
+    directory_flags = os.O_RDONLY | os.O_DIRECTORY
+    if hasattr(os, "O_NOFOLLOW"):
+        directory_flags |= os.O_NOFOLLOW
+    descriptor = os.open(root, directory_flags)
+    try:
+        for part in relative.parts[:-1]:
+            try:
+                entry = os.stat(part, dir_fd=descriptor, follow_symlinks=False)
+            except FileNotFoundError:
+                os.mkdir(part, dir_fd=descriptor)
+                entry = os.stat(part, dir_fd=descriptor, follow_symlinks=False)
+            if stat.S_ISLNK(entry.st_mode):
+                raise ValueError(
+                    f"output target has symlink path ancestor: {relative.as_posix()}"
+                )
+            if not stat.S_ISDIR(entry.st_mode):
+                raise ValueError(
+                    f"output target ancestor is not a directory: {relative.as_posix()}"
+                )
+            try:
+                next_descriptor = os.open(part, directory_flags, dir_fd=descriptor)
+            except OSError as error:
+                if error.errno in (errno.ELOOP, errno.ENOTDIR):
+                    raise ValueError(
+                        f"output target has symlink path ancestor: {relative.as_posix()}"
+                    ) from error
+                raise
+            os.close(descriptor)
+            descriptor = next_descriptor
+        return descriptor
+    except BaseException:
+        os.close(descriptor)
+        raise
+
+
+def reject_symlinked_target(parent_descriptor: int, name: str, relative: Path) -> None:
+    try:
+        entry = os.stat(name, dir_fd=parent_descriptor, follow_symlinks=False)
+    except FileNotFoundError:
+        return
+    if stat.S_ISLNK(entry.st_mode):
+        raise ValueError(f"output target is a symlink: {relative.as_posix()}")
+    if not stat.S_ISREG(entry.st_mode):
+        raise ValueError(f"output target is not a regular file: {relative.as_posix()}")
+
+
+def create_temporary_file(parent_descriptor: int, target_name: str) -> tuple[int, str]:
+    flags = os.O_WRONLY | os.O_CREAT | os.O_EXCL
+    if hasattr(os, "O_NOFOLLOW"):
+        flags |= os.O_NOFOLLOW
+    for _ in range(TEMP_FILE_ATTEMPTS):
+        temporary_name = f".{target_name}.tmp-{secrets.token_hex(16)}"
+        try:
+            descriptor = os.open(
+                temporary_name,
+                flags,
+                0o600,
+                dir_fd=parent_descriptor,
+            )
+        except FileExistsError:
+            continue
+        return descriptor, temporary_name
+    raise FileExistsError(
+        f"could not exclusively create a temporary file for {target_name}"
+    )
+
+
+def atomic_write(root: Path, relative: Path, content: bytes) -> None:
+    parent_descriptor = open_parent_directory(root, relative)
+    temporary_name: str | None = None
+    try:
+        reject_symlinked_target(parent_descriptor, relative.name, relative)
+        descriptor, temporary_name = create_temporary_file(
+            parent_descriptor, relative.name
+        )
+        try:
+            try:
+                handle = os.fdopen(descriptor, "wb")
+            except BaseException:
+                os.close(descriptor)
+                raise
+            with handle:
+                handle.write(content)
+                handle.flush()
+                os.fsync(handle.fileno())
+            reject_symlinked_target(parent_descriptor, relative.name, relative)
+            os.replace(
+                temporary_name,
+                relative.name,
+                src_dir_fd=parent_descriptor,
+                dst_dir_fd=parent_descriptor,
+            )
+            temporary_name = None
+            os.fsync(parent_descriptor)
+        finally:
+            if temporary_name is not None:
+                try:
+                    os.unlink(temporary_name, dir_fd=parent_descriptor)
+                except FileNotFoundError:
+                    pass
+    finally:
+        os.close(parent_descriptor)
+
+
 def write(root: Path, files: dict[str, bytes]) -> None:
+    root = Path(os.path.abspath(root))
+    try:
+        root_entry = os.lstat(root)
+    except OSError as error:
+        raise ValueError(f"repository root is unavailable: {root}") from error
+    if stat.S_ISLNK(root_entry.st_mode):
+        raise ValueError(f"repository root is a symlink: {root}")
+    if not stat.S_ISDIR(root_entry.st_mode):
+        raise ValueError(f"repository root is not a directory: {root}")
     for relative, content in files.items():
-        path = root / relative
-        path.parent.mkdir(parents=True, exist_ok=True)
-        path.write_bytes(content)
+        atomic_write(root, safe_relative_path(root, relative), content)
 
 
 def main() -> int:

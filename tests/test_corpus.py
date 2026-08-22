@@ -8,6 +8,7 @@ import subprocess
 import tempfile
 import unittest
 from pathlib import Path
+from unittest import mock
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -17,6 +18,7 @@ SPEC = importlib.util.spec_from_file_location(
 assert SPEC and SPEC.loader
 VERIFY = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(VERIFY)
+GENERATOR = VERIFY.GENERATOR
 
 
 class SyntheticCorpusTest(unittest.TestCase):
@@ -199,6 +201,75 @@ class SyntheticCorpusTest(unittest.TestCase):
             text=True,
         )
         self.assertEqual(0, completed.returncode, completed.stderr)
+
+    def test_write_rejects_traversal_outside_repository(self) -> None:
+        root = Path(tempfile.mkdtemp())
+        self.addCleanup(shutil.rmtree, root)
+        outside = root.parent / f"{root.name}-escaped"
+        self.addCleanup(outside.unlink, missing_ok=True)
+
+        with self.assertRaisesRegex(ValueError, "outside repository"):
+            GENERATOR.write(root, {f"../{outside.name}": b"escaped"})
+
+        self.assertFalse(outside.exists())
+
+    def test_write_rejects_symlinked_target(self) -> None:
+        root = Path(tempfile.mkdtemp())
+        self.addCleanup(shutil.rmtree, root)
+        outside = root.parent / f"{root.name}-outside"
+        outside.write_bytes(b"unchanged")
+        self.addCleanup(outside.unlink, missing_ok=True)
+        target = root / "fixture.json"
+        target.symlink_to(outside)
+
+        with self.assertRaisesRegex(ValueError, "symlink"):
+            GENERATOR.write(root, {"fixture.json": b"replacement"})
+
+        self.assertEqual(b"unchanged", outside.read_bytes())
+
+    def test_write_rejects_symlinked_path_ancestor(self) -> None:
+        root = Path(tempfile.mkdtemp())
+        self.addCleanup(shutil.rmtree, root)
+        outside = Path(tempfile.mkdtemp())
+        self.addCleanup(shutil.rmtree, outside)
+        (root / "fixtures").symlink_to(outside, target_is_directory=True)
+
+        with self.assertRaisesRegex(ValueError, "symlink"):
+            GENERATOR.write(root, {"fixtures/nested.json": b"replacement"})
+
+        self.assertFalse((outside / "nested.json").exists())
+
+    def test_write_uses_exclusive_random_temp_names_after_collision(self) -> None:
+        root = Path(tempfile.mkdtemp())
+        self.addCleanup(shutil.rmtree, root)
+        collision = root / ".fixture.json.tmp-collision"
+        collision.write_bytes(b"do-not-overwrite")
+
+        with mock.patch.object(
+            GENERATOR.secrets,
+            "token_hex",
+            side_effect=["collision", "replacement"],
+        ):
+            GENERATOR.write(root, {"fixture.json": b"fixture"})
+
+        self.assertEqual(b"do-not-overwrite", collision.read_bytes())
+        self.assertEqual(b"fixture", (root / "fixture.json").read_bytes())
+        self.assertFalse((root / ".fixture.json.tmp-replacement").exists())
+
+    def test_interrupted_atomic_replace_cleans_temporary_file(self) -> None:
+        root = Path(tempfile.mkdtemp())
+        self.addCleanup(shutil.rmtree, root)
+
+        with mock.patch.object(
+            GENERATOR.os,
+            "replace",
+            side_effect=OSError("injected replacement interruption"),
+        ):
+            with self.assertRaisesRegex(OSError, "injected replacement interruption"):
+                GENERATOR.write(root, {"fixture.json": b"fixture"})
+
+        self.assertFalse((root / "fixture.json").exists())
+        self.assertEqual([], list(root.glob(".fixture.json.tmp-*")))
 
     def test_git_attributes_preserve_fixture_bytes(self) -> None:
         root = self.copy_corpus()
