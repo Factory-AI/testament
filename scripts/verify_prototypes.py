@@ -456,6 +456,76 @@ def valid_v2_key_rotation_observation(observation: Any) -> bool:
     )
 
 
+def valid_v2_key_rotation_result(
+    result: Any,
+    successor_plan: dict[str, Any],
+) -> bool:
+    if not isinstance(result, dict):
+        return False
+    case_plan = next(
+        (
+            row
+            for row in successor_plan.get("cases", [])
+            if isinstance(row, dict) and row.get("id") == "key-rotation"
+        ),
+        {},
+    )
+    budgets = case_plan.get("budgets")
+    samples = result.get("samples")
+    if (
+        not isinstance(budgets, dict)
+        or not isinstance(samples, list)
+        or not samples
+    ):
+        return False
+    samples_valid = all(
+        valid_v2_resource_sample(sample, budgets, "key-rotation")
+        and valid_v2_key_rotation_observation(sample.get("observation"))
+        for sample in samples
+        if isinstance(sample, dict)
+    ) and all(isinstance(sample, dict) for sample in samples)
+    expected_conclusion = "pass" if samples_valid else "fail"
+    tested_commit = result.get("environment", {}).get("tested_commit")
+    return (
+        result.get("schema_version") == "1.0.0"
+        and result.get("feature_id")
+        == "key-rotation-independent-ciphertext-evidence"
+        and result.get("validation_id") == "VAL-READY-014"
+        and result.get("prototype_id") == "key-rotation"
+        and result.get("benchmark_id") == "key-rotation-benchmark"
+        and result.get("version") == "2.0.0"
+        and result.get("plan_commit") == SUCCESSOR_PLAN_COMMIT
+        and result.get("plan_sha256") == digest(successor_plan)
+        and all(
+            result.get(field) == case_plan.get(field)
+            for field in (
+                "inputs",
+                "sample_count",
+                "budgets",
+                "tolerances",
+                "comparison_method",
+                "acceptance_rule",
+                "limitations",
+            )
+        )
+        and result.get("tolerance_history")
+        == successor_plan.get("tolerance_history")
+        and result.get("sample_count") == 3
+        and len(samples) == result.get("sample_count")
+        and isinstance(tested_commit, str)
+        and len(tested_commit) == 40
+        and result.get("supersedes")
+        == {
+            "path": "docs/research/benchmarks/key-rotation.json",
+            "version": "1.0.0",
+            "sha256": V1_KEY_ROTATION_SHA256,
+            "status": "superseded-evidence",
+            "preserved": True,
+        }
+        and result.get("conclusion") == expected_conclusion == "pass"
+    )
+
+
 def issue(criterion: str, code: str, path: str, message: str) -> dict[str, str]:
     remediation = (
         "make verify-analyzer-evaluation"

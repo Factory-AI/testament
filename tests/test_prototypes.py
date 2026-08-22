@@ -207,6 +207,86 @@ class PrototypeEvidenceTest(unittest.TestCase):
             hashlib.sha256(path.read_bytes()).hexdigest(),
         )
 
+    def test_key_rotation_v2_result_recomputes_every_sample(self) -> None:
+        plan = json.loads(
+            (ROOT / VERIFY.SUCCESSOR_PLAN_PATH).read_text(encoding="utf-8")
+        )
+        case_plan = next(
+            row for row in plan["cases"] if row["id"] == "key-rotation"
+        )
+        observation = RUN.key_rotation(ROOT)
+        observation["worker_completed"] = True
+        accounting = {
+            "accounting_version": "2.0.0",
+            "scope": "worker_descendant_tree",
+            "metric": "aggregate_peak_resident_bytes",
+            "source": "external_ps_process_table",
+            "target": "worker_pid:1",
+            "isolation": "fresh_process_group",
+            "descendants_included": True,
+            "peak_rss_bytes": 1,
+            "budget_bytes": case_plan["budgets"]["max_process_rss_bytes"],
+            "hard_limit_bytes": case_plan["budgets"]["max_process_rss_bytes"],
+            "within_budget": True,
+        }
+        sample = {
+            "elapsed_ms": 1,
+            "resource_accounting": accounting,
+            "observation": observation,
+        }
+        result = {
+            "schema_version": "1.0.0",
+            "feature_id": "key-rotation-independent-ciphertext-evidence",
+            "validation_id": "VAL-READY-014",
+            "prototype_id": "key-rotation",
+            "benchmark_id": "key-rotation-benchmark",
+            "version": "2.0.0",
+            "plan_commit": VERIFY.SUCCESSOR_PLAN_COMMIT,
+            "plan_sha256": VERIFY.digest(plan),
+            "environment": {"tested_commit": "1" * 40},
+            "inputs": case_plan["inputs"],
+            "sample_count": case_plan["sample_count"],
+            "budgets": case_plan["budgets"],
+            "tolerances": case_plan["tolerances"],
+            "comparison_method": case_plan["comparison_method"],
+            "acceptance_rule": case_plan["acceptance_rule"],
+            "samples": [copy.deepcopy(sample) for _ in range(3)],
+            "conclusion": "pass",
+            "limitations": case_plan["limitations"],
+            "tolerance_history": plan["tolerance_history"],
+            "supersedes": {
+                "path": "docs/research/benchmarks/key-rotation.json",
+                "version": "1.0.0",
+                "sha256": VERIFY.V1_KEY_ROTATION_SHA256,
+                "status": "superseded-evidence",
+                "preserved": True,
+            },
+        }
+        self.assertTrue(VERIFY.valid_v2_key_rotation_result(result, plan))
+        mutations = {
+            "asserted pass": lambda value: value["samples"][0][
+                "observation"
+            ]["post_rewrap_payload_capture"].update(sha256="0" * 64),
+            "missing sample": lambda value: value["samples"].pop(),
+            "equal wrapped DEKs": lambda value: value["samples"][0][
+                "observation"
+            ]["new_wrapped_dek"].update(
+                sha256=value["samples"][0]["observation"]["old_wrapped_dek"][
+                    "sha256"
+                ]
+            ),
+            "v1 not superseded": lambda value: value["supersedes"].update(
+                status="active"
+            ),
+        }
+        for name, mutate in mutations.items():
+            with self.subTest(name=name):
+                changed = copy.deepcopy(result)
+                mutate(changed)
+                self.assertFalse(
+                    VERIFY.valid_v2_key_rotation_result(changed, plan)
+                )
+
     def test_missing_raw_sample_fails(self) -> None:
         root = self.copy_evidence()
         path = root / VERIFY.RESULT_FILES[0]

@@ -814,9 +814,14 @@ def main() -> int:
         ]
         conclusion = "pass" if accepted(case, samples, case_plan["budgets"]) else "fail"
         result_environment = dict(environment)
+        v1_result_path = RESULT_PATHS[case]
         result = {
             "schema_version": "1.0.0",
-            "feature_id": "prototype-v2-precommit-and-workload-resource-accounting",
+            "feature_id": (
+                "key-rotation-independent-ciphertext-evidence"
+                if case == "key-rotation"
+                else "prototype-v2-precommit-and-workload-resource-accounting"
+            ),
             "validation_id": "VAL-READY-014",
             "prototype_id": case,
             "benchmark_id": f"{case}-benchmark",
@@ -834,6 +839,15 @@ def main() -> int:
             "conclusion": conclusion,
             "limitations": case_plan["limitations"],
             "tolerance_history": plan["tolerance_history"],
+            "supersedes": {
+                "path": v1_result_path,
+                "version": "1.0.0",
+                "sha256": hashlib.sha256(
+                    (root / v1_result_path).read_bytes()
+                ).hexdigest(),
+                "status": "superseded-evidence",
+                "preserved": True,
+            },
         }
         if case in POSTGRES_CASES:
             result_environment["postgres"] = {
