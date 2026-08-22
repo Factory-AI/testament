@@ -1,0 +1,240 @@
+{
+  "acceptance_rule": "Independently captured pre/post payload lengths and digests match, wrapped-DEK digests differ, generations and checkpoint match the precommit, and every sample stays within both unchanged resource budgets.",
+  "benchmark_id": "key-rotation-benchmark",
+  "budgets": {
+    "max_elapsed_ms": 10000,
+    "max_process_rss_bytes": 536870912
+  },
+  "comparison_method": "Independently capture payload ciphertext immediately before and after rewrap, then compare payload lengths/digests, old/new wrapped-DEK digests, generations, source identity, and checkpoint.",
+  "conclusion": "pass",
+  "environment": {
+    "architecture": "arm64",
+    "cpu_count": 12,
+    "docker": "Docker version 28.5.1, build e180ab8",
+    "go": "go version go1.26.4 darwin/arm64",
+    "machine_class": "developer-workstation-12cpu-18gib",
+    "memory_bytes": 19327352832,
+    "os": "macOS-26.6.1-arm64-arm-64bit-Mach-O",
+    "python": "3.14.7",
+    "tested_commit": "4455a87b4a0869eb6d4bd2a710e2aa9695edd1e5"
+  },
+  "feature_id": "key-rotation-independent-ciphertext-evidence",
+  "inputs": [
+    "one synthetic payload DEK",
+    "old and new synthetic wrapping roots",
+    "one immutable payload ciphertext"
+  ],
+  "limitations": [
+    "No cloud KMS call is made; provider conformance remains later work."
+  ],
+  "plan_commit": "0f3dce5b9418a50eb031ec3fd561282462533bd3",
+  "plan_sha256": "dee0f3d2574b9bc9db319090a43f6fd7745bbb2594b12f0f871fe8a66c051896",
+  "prototype_id": "key-rotation",
+  "sample_count": 3,
+  "samples": [
+    {
+      "elapsed_ms": 320.46,
+      "observation": {
+        "acceptance_recomputed": true,
+        "generations": [
+          1,
+          2
+        ],
+        "new_wrapped_dek": {
+          "byte_count": 48,
+          "generation": 2,
+          "persisted_path": "wrapped_dek.generation-2.bin",
+          "sha256": "537b0435dc48dae1f610c64374cf837d909fce6cfadc2e77b4f5285a4c29d3f2"
+        },
+        "old_wrapped_dek": {
+          "byte_count": 48,
+          "generation": 1,
+          "persisted_path": "wrapped_dek.generation-1.bin",
+          "sha256": "ee692f3047250cc46d8da15476153d1296546055d5fef8c886455ea559b7d07a"
+        },
+        "operation_sequence": [
+          "pre_payload_capture",
+          "new_wrapped_dek_persisted",
+          "checkpoint_persisted",
+          "post_payload_capture"
+        ],
+        "payload_ciphertext_sha256": "e933577bc6b771612926ad045b79ca2b5b34203c941dda79e17639a48aaf96fd",
+        "payload_ciphertext_unchanged": true,
+        "post_rewrap_payload_capture": {
+          "byte_count": 1100071,
+          "capture_id": "payload_ciphertext.bin:read-2-after-checkpoint",
+          "method": "os.ReadFile persisted payload_ciphertext.bin",
+          "phase": "after-new-wrapped-dek-and-checkpoint",
+          "read_ordinal": 2,
+          "sha256": "e933577bc6b771612926ad045b79ca2b5b34203c941dda79e17639a48aaf96fd"
+        },
+        "pre_rewrap_payload_capture": {
+          "byte_count": 1100071,
+          "capture_id": "payload_ciphertext.bin:read-1-before-rewrap",
+          "method": "os.ReadFile persisted payload_ciphertext.bin",
+          "phase": "immediately-before-rewrap",
+          "read_ordinal": 1,
+          "sha256": "e933577bc6b771612926ad045b79ca2b5b34203c941dda79e17639a48aaf96fd"
+        },
+        "resume_checkpoint": 1,
+        "rewrap_changed": true,
+        "source_sha256": "11b87e08e5f3a9c025819a0230cb8f4543187c58eea9edeae40f95a29282bee2",
+        "worker_completed": true
+      },
+      "resource_accounting": {
+        "accounting_version": "2.0.0",
+        "budget_bytes": 536870912,
+        "descendants_included": true,
+        "hard_limit_bytes": 536870912,
+        "isolation": "fresh_process_group",
+        "metric": "aggregate_peak_resident_bytes",
+        "peak_rss_bytes": 66617344,
+        "scope": "worker_descendant_tree",
+        "source": "external_ps_process_table",
+        "target": "worker_pid:58138",
+        "within_budget": true
+      }
+    },
+    {
+      "elapsed_ms": 259.684,
+      "observation": {
+        "acceptance_recomputed": true,
+        "generations": [
+          1,
+          2
+        ],
+        "new_wrapped_dek": {
+          "byte_count": 48,
+          "generation": 2,
+          "persisted_path": "wrapped_dek.generation-2.bin",
+          "sha256": "537b0435dc48dae1f610c64374cf837d909fce6cfadc2e77b4f5285a4c29d3f2"
+        },
+        "old_wrapped_dek": {
+          "byte_count": 48,
+          "generation": 1,
+          "persisted_path": "wrapped_dek.generation-1.bin",
+          "sha256": "ee692f3047250cc46d8da15476153d1296546055d5fef8c886455ea559b7d07a"
+        },
+        "operation_sequence": [
+          "pre_payload_capture",
+          "new_wrapped_dek_persisted",
+          "checkpoint_persisted",
+          "post_payload_capture"
+        ],
+        "payload_ciphertext_sha256": "e933577bc6b771612926ad045b79ca2b5b34203c941dda79e17639a48aaf96fd",
+        "payload_ciphertext_unchanged": true,
+        "post_rewrap_payload_capture": {
+          "byte_count": 1100071,
+          "capture_id": "payload_ciphertext.bin:read-2-after-checkpoint",
+          "method": "os.ReadFile persisted payload_ciphertext.bin",
+          "phase": "after-new-wrapped-dek-and-checkpoint",
+          "read_ordinal": 2,
+          "sha256": "e933577bc6b771612926ad045b79ca2b5b34203c941dda79e17639a48aaf96fd"
+        },
+        "pre_rewrap_payload_capture": {
+          "byte_count": 1100071,
+          "capture_id": "payload_ciphertext.bin:read-1-before-rewrap",
+          "method": "os.ReadFile persisted payload_ciphertext.bin",
+          "phase": "immediately-before-rewrap",
+          "read_ordinal": 1,
+          "sha256": "e933577bc6b771612926ad045b79ca2b5b34203c941dda79e17639a48aaf96fd"
+        },
+        "resume_checkpoint": 1,
+        "rewrap_changed": true,
+        "source_sha256": "11b87e08e5f3a9c025819a0230cb8f4543187c58eea9edeae40f95a29282bee2",
+        "worker_completed": true
+      },
+      "resource_accounting": {
+        "accounting_version": "2.0.0",
+        "budget_bytes": 536870912,
+        "descendants_included": true,
+        "hard_limit_bytes": 536870912,
+        "isolation": "fresh_process_group",
+        "metric": "aggregate_peak_resident_bytes",
+        "peak_rss_bytes": 68730880,
+        "scope": "worker_descendant_tree",
+        "source": "external_ps_process_table",
+        "target": "worker_pid:58151",
+        "within_budget": true
+      }
+    },
+    {
+      "elapsed_ms": 256.082,
+      "observation": {
+        "acceptance_recomputed": true,
+        "generations": [
+          1,
+          2
+        ],
+        "new_wrapped_dek": {
+          "byte_count": 48,
+          "generation": 2,
+          "persisted_path": "wrapped_dek.generation-2.bin",
+          "sha256": "537b0435dc48dae1f610c64374cf837d909fce6cfadc2e77b4f5285a4c29d3f2"
+        },
+        "old_wrapped_dek": {
+          "byte_count": 48,
+          "generation": 1,
+          "persisted_path": "wrapped_dek.generation-1.bin",
+          "sha256": "ee692f3047250cc46d8da15476153d1296546055d5fef8c886455ea559b7d07a"
+        },
+        "operation_sequence": [
+          "pre_payload_capture",
+          "new_wrapped_dek_persisted",
+          "checkpoint_persisted",
+          "post_payload_capture"
+        ],
+        "payload_ciphertext_sha256": "e933577bc6b771612926ad045b79ca2b5b34203c941dda79e17639a48aaf96fd",
+        "payload_ciphertext_unchanged": true,
+        "post_rewrap_payload_capture": {
+          "byte_count": 1100071,
+          "capture_id": "payload_ciphertext.bin:read-2-after-checkpoint",
+          "method": "os.ReadFile persisted payload_ciphertext.bin",
+          "phase": "after-new-wrapped-dek-and-checkpoint",
+          "read_ordinal": 2,
+          "sha256": "e933577bc6b771612926ad045b79ca2b5b34203c941dda79e17639a48aaf96fd"
+        },
+        "pre_rewrap_payload_capture": {
+          "byte_count": 1100071,
+          "capture_id": "payload_ciphertext.bin:read-1-before-rewrap",
+          "method": "os.ReadFile persisted payload_ciphertext.bin",
+          "phase": "immediately-before-rewrap",
+          "read_ordinal": 1,
+          "sha256": "e933577bc6b771612926ad045b79ca2b5b34203c941dda79e17639a48aaf96fd"
+        },
+        "resume_checkpoint": 1,
+        "rewrap_changed": true,
+        "source_sha256": "11b87e08e5f3a9c025819a0230cb8f4543187c58eea9edeae40f95a29282bee2",
+        "worker_completed": true
+      },
+      "resource_accounting": {
+        "accounting_version": "2.0.0",
+        "budget_bytes": 536870912,
+        "descendants_included": true,
+        "hard_limit_bytes": 536870912,
+        "isolation": "fresh_process_group",
+        "metric": "aggregate_peak_resident_bytes",
+        "peak_rss_bytes": 67649536,
+        "scope": "worker_descendant_tree",
+        "source": "external_ps_process_table",
+        "target": "worker_pid:58163",
+        "within_budget": true
+      }
+    }
+  ],
+  "schema_version": "1.0.0",
+  "supersedes": {
+    "path": "docs/research/benchmarks/key-rotation.json",
+    "preserved": true,
+    "sha256": "91a9fc76ba9852954024a925438510e7996fa471a7db94c699eedf0e88cfcc68",
+    "status": "superseded-evidence",
+    "version": "1.0.0"
+  },
+  "tolerance_history": [],
+  "tolerances": {
+    "payload_ciphertext_changes": 0,
+    "source_digest_changes": 0
+  },
+  "validation_id": "VAL-READY-014",
+  "version": "2.0.0"
+}
