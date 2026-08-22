@@ -1,0 +1,54 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://testament.dev/schemas/toolchain/1.0.0",
+  "title": "Testament pinned toolchain",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "feature_id",
+    "validation_ids",
+    "tools",
+    "environments",
+    "services",
+    "limitations"
+  ],
+  "properties": {
+    "schema_version": {"const": "1.0.0"},
+    "feature_id": {"const": "deterministic-agent-ready-repository"},
+    "validation_ids": {
+      "type": "array",
+      "items": {"type": "string"},
+      "uniqueItems": true
+    },
+    "tools": {
+      "type": "array",
+      "minItems": 7,
+      "maxItems": 7,
+      "uniqueItems": true,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "version", "probe"],
+        "properties": {
+          "id": {
+            "enum": [
+              "go",
+              "node",
+              "npm",
+              "python",
+              "docker",
+              "docker-compose",
+              "git"
+            ]
+          },
+          "version": {"type": "string"},
+          "probe": {"type": "string"}
+        }
+      }
+    },
+    "environments": {"type": "array", "minItems": 3, "uniqueItems": true},
+    "services": {"type": "array", "minItems": 4, "uniqueItems": true},
+    "limitations": {"type": "array", "items": {"type": "string"}}
+  }
+}

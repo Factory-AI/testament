@@ -69,5 +69,10 @@ end-to-end protection against the runtime. Do not describe an issued decision
 or receipt as an enforced action without separate enforcement evidence.
 
 The machine-readable [claims policy](../policy/claims.json) supplies mandatory
-limitation text and forbidden positive-claim patterns. `make
-verify-foundation` checks both.
+limitation text and forbidden positive-claim patterns. The
+[claims-evidence ledger](../policy/claims-ledger.json) traces every
+architecture-shaping and release-blocking claim to its source pointer,
+dated/versioned primary or reproducible evidence, contradiction, uncertainty,
+limitations, owner, review, status, and supersession. `make
+verify-foundation` checks public language and `make verify-claims` checks the
+ledger and reverse coverage.

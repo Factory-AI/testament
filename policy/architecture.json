@@ -1,0 +1,29 @@
+{
+  "schema_version": "1.0.0",
+  "status": "research-foundation",
+  "human_explanation": "CHARTER.md",
+  "system": {
+    "artifact": "one statically linked Go application with role-separated runtime modes",
+    "database": "PostgreSQL 17",
+    "operational_surface": "same-origin API and embedded console",
+    "standards_surface": "separate static site"
+  },
+  "authoritative_data": {
+    "source": "exact accepted source bytes",
+    "derived": "versioned projections that never rewrite source or prior history"
+  },
+  "invariants": [
+    "Content-bearing source and derived data is encrypted in the application before SQL.",
+    "All tenant-owned state is organization-scoped.",
+    "External inference requires an explicit sovereignty profile.",
+    "Analyzer output is an untrusted assertion and never directly enforces policy.",
+    "Unavailable or indeterminate safety checks allow and durably audit a degraded outcome only while core trust and durability remain healthy.",
+    "Native Droid integration is out of scope."
+  ],
+  "ports": {
+    "api_console": 4700,
+    "standards_site": 4701,
+    "postgres": 5440,
+    "integration_range": [4710, 4799]
+  }
+}

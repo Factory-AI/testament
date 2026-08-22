@@ -1,0 +1,134 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/Factory-AI/testament/schemas/synthetic-corpus.schema.json",
+  "title": "Testament synthetic trace research corpus",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "deliverable_id", "feature_id", "validation_ids", "status", "version", "generated_at", "generator", "license_policy", "safety_policy", "fixtures", "limitations"],
+  "properties": {
+    "schema_version": {"const": "1.0.0"},
+    "deliverable_id": {"const": "RES-CORPUS-SYNTHETIC-TRACE-001"},
+    "feature_id": {"const": "synthetic-corpus-and-reproducibility"},
+    "validation_ids": {"const": ["VAL-READY-012", "VAL-READY-013"]},
+    "status": {"const": "informative-research"},
+    "version": {"type": "string", "pattern": "^\\d+\\.\\d+\\.\\d+$"},
+    "generated_at": {"type": "string", "format": "date"},
+    "generator": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "version", "runtime", "root_seed", "seed_derivation", "canonicalization"],
+      "properties": {
+        "path": {"const": "scripts/generate_corpus.py"},
+        "version": {"type": "string", "pattern": "^\\d+\\.\\d+\\.\\d+$"},
+        "runtime": {"type": "string", "minLength": 1},
+        "root_seed": {"type": "string", "minLength": 1},
+        "seed_derivation": {"type": "string", "minLength": 1},
+        "canonicalization": {"type": "string", "minLength": 1}
+      }
+    },
+    "license_policy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["allowed_spdx", "default", "third_party_content"],
+      "properties": {
+        "allowed_spdx": {"const": ["Apache-2.0"]},
+        "default": {"const": "Apache-2.0"},
+        "third_party_content": {"const": false}
+      }
+    },
+    "safety_policy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["synthetic_only", "customer_data_forbidden", "production_data_forbidden", "pii_forbidden", "live_credentials_forbidden", "actionable_harm_forbidden"],
+      "properties": {
+        "synthetic_only": {"const": true},
+        "customer_data_forbidden": {"const": true},
+        "production_data_forbidden": {"const": true},
+        "pii_forbidden": {"const": true},
+        "live_credentials_forbidden": {"const": true},
+        "actionable_harm_forbidden": {"const": true}
+      }
+    },
+    "fixtures": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/fixture"}},
+    "limitations": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}}
+  },
+  "$defs": {
+    "fixture": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "version", "path", "classes", "format", "media_type", "provider", "byte_count", "sha256", "provenance", "redistribution_license", "expectations", "privacy_review", "safety_review"],
+      "properties": {
+        "id": {"type": "string", "minLength": 1},
+        "version": {"type": "string", "pattern": "^\\d+\\.\\d+\\.\\d+$"},
+        "path": {"type": "string", "minLength": 1},
+        "classes": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}},
+        "format": {"enum": ["json", "jsonl", "sse"]},
+        "media_type": {"type": "string", "minLength": 1},
+        "provider": {"type": ["string", "null"]},
+        "byte_count": {"type": "integer", "minimum": 0},
+        "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "provenance": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["kind", "generator", "generator_version", "seed", "recipe", "source_dependencies", "customer_or_production_data"],
+          "properties": {
+            "kind": {"const": "project-created-synthetic"},
+            "generator": {"const": "scripts/generate_corpus.py"},
+            "generator_version": {"type": "string", "pattern": "^\\d+\\.\\d+\\.\\d+$"},
+            "seed": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+            "recipe": {"type": "string", "minLength": 1},
+            "source_dependencies": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}},
+            "customer_or_production_data": {"const": false}
+          }
+        },
+        "redistribution_license": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["spdx", "copyright", "notice"],
+          "properties": {
+            "spdx": {"const": "Apache-2.0"},
+            "copyright": {"type": "string", "minLength": 1},
+            "notice": {"type": "string", "minLength": 1}
+          }
+        },
+        "expectations": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["raw_authority", "parse_status", "record_count", "semantic_assertions", "normative_conformance"],
+          "properties": {
+            "raw_authority": {"const": "exact-bytes"},
+            "parse_status": {"enum": ["complete", "partial", "parse-failed"]},
+            "record_count": {"type": "integer", "minimum": 0},
+            "semantic_assertions": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}},
+            "normative_conformance": {"const": false}
+          }
+        },
+        "privacy_review": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["status", "reviewed_at", "reviewer_role", "result", "personal_data", "live_credentials", "customer_data"],
+          "properties": {
+            "status": {"const": "completed"},
+            "reviewed_at": {"type": "string", "format": "date"},
+            "reviewer_role": {"type": "string", "minLength": 1},
+            "result": {"const": "safe-synthetic"},
+            "personal_data": {"const": false},
+            "live_credentials": {"const": false},
+            "customer_data": {"const": false}
+          }
+        },
+        "safety_review": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["status", "result", "actionable_harm", "limitations"],
+          "properties": {
+            "status": {"const": "completed"},
+            "result": {"const": "harmless-abstract-content"},
+            "actionable_harm": {"const": false},
+            "limitations": {"type": "string", "minLength": 1}
+          }
+        }
+      }
+    }
+  }
+}

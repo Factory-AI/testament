@@ -1,0 +1,141 @@
+{
+  "acceptance_rule": "Resource and ambient-state bounds hold, but acceptance requires the honest conclusion that a plain subprocess does not prove network denial.",
+  "benchmark_id": "analyzer-isolation-benchmark",
+  "budgets": {
+    "max_elapsed_ms": 10000,
+    "max_process_rss_bytes": 536870912
+  },
+  "comparison_method": "Inspect child-visible environment, directory, descriptor limit, output size, and timeout while explicitly testing whether network denial is proven.",
+  "conclusion": "pass",
+  "environment": {
+    "architecture": "arm64",
+    "cpu_count": 12,
+    "docker": "Docker version 28.5.1, build e180ab8",
+    "go": "go version go1.26.4 darwin/arm64",
+    "machine_class": "developer-workstation-12cpu-18gib",
+    "memory_bytes": 19327352832,
+    "os": "macOS-26.6.1-arm64-arm-64bit-Mach-O",
+    "python": "3.14.7",
+    "tested_commit": "e9504645d9926f386bbd3819c8188aba39bbe8d6"
+  },
+  "feature_id": "storage-analysis-prototypes-and-evaluation-plan",
+  "inputs": [
+    "Python child process",
+    "sanitized environment",
+    "temporary working directory",
+    "CPU/address-space/file-descriptor/deadline bounds"
+  ],
+  "limitations": [
+    "This negative result rejects plain subprocess isolation as the complete hostile-extension boundary."
+  ],
+  "plan_commit": "cfdf43bb49f3802137dc0ae887314ab7a8a01f58",
+  "plan_sha256": "5e12d9e04c0852c87c7b86a3e832e61f72e5e136af0792b29d4c7c3811432d76",
+  "prototype_id": "analyzer-isolation",
+  "sample_count": 3,
+  "samples": [
+    {
+      "elapsed_ms": 2189.862,
+      "observation": {
+        "address_space_limit_bytes": 549755813888,
+        "address_space_limit_enforced": true,
+        "allowed_environment_variables": [
+          "LC_CTYPE",
+          "PATH",
+          "__CF_USER_TEXT_ENCODING"
+        ],
+        "conclusion": "POSIX subprocess limits bound CPU, address space, descriptors, environment, working directory, time, and output, but do not prove network denial; plain subprocess isolation is rejected as a hostile multi-tenant isolation boundary.",
+        "cpu_limit_seconds": 1,
+        "deadline_limit_enforced": true,
+        "deadline_seconds": 2,
+        "file_descriptor_limit": 16,
+        "hostile_multi_tenant_isolation_proven": false,
+        "isolated_working_directory": true,
+        "network_denial_proven": false,
+        "output_bytes": 201,
+        "output_limit_bytes": 4096,
+        "output_limit_enforced": true,
+        "output_probe_bytes": 4096,
+        "sanitized_environment": true,
+        "unexpected_environment_variables": [],
+        "visible_environment_variables": [
+          "LC_CTYPE",
+          "PATH",
+          "__CF_USER_TEXT_ENCODING"
+        ]
+      },
+      "process_max_rss_bytes": 27639808
+    },
+    {
+      "elapsed_ms": 2167.973,
+      "observation": {
+        "address_space_limit_bytes": 549755813888,
+        "address_space_limit_enforced": true,
+        "allowed_environment_variables": [
+          "LC_CTYPE",
+          "PATH",
+          "__CF_USER_TEXT_ENCODING"
+        ],
+        "conclusion": "POSIX subprocess limits bound CPU, address space, descriptors, environment, working directory, time, and output, but do not prove network denial; plain subprocess isolation is rejected as a hostile multi-tenant isolation boundary.",
+        "cpu_limit_seconds": 1,
+        "deadline_limit_enforced": true,
+        "deadline_seconds": 2,
+        "file_descriptor_limit": 16,
+        "hostile_multi_tenant_isolation_proven": false,
+        "isolated_working_directory": true,
+        "network_denial_proven": false,
+        "output_bytes": 201,
+        "output_limit_bytes": 4096,
+        "output_limit_enforced": true,
+        "output_probe_bytes": 4096,
+        "sanitized_environment": true,
+        "unexpected_environment_variables": [],
+        "visible_environment_variables": [
+          "LC_CTYPE",
+          "PATH",
+          "__CF_USER_TEXT_ENCODING"
+        ]
+      },
+      "process_max_rss_bytes": 27639808
+    },
+    {
+      "elapsed_ms": 2221.3,
+      "observation": {
+        "address_space_limit_bytes": 549755813888,
+        "address_space_limit_enforced": true,
+        "allowed_environment_variables": [
+          "LC_CTYPE",
+          "PATH",
+          "__CF_USER_TEXT_ENCODING"
+        ],
+        "conclusion": "POSIX subprocess limits bound CPU, address space, descriptors, environment, working directory, time, and output, but do not prove network denial; plain subprocess isolation is rejected as a hostile multi-tenant isolation boundary.",
+        "cpu_limit_seconds": 1,
+        "deadline_limit_enforced": true,
+        "deadline_seconds": 2,
+        "file_descriptor_limit": 16,
+        "hostile_multi_tenant_isolation_proven": false,
+        "isolated_working_directory": true,
+        "network_denial_proven": false,
+        "output_bytes": 201,
+        "output_limit_bytes": 4096,
+        "output_limit_enforced": true,
+        "output_probe_bytes": 4096,
+        "sanitized_environment": true,
+        "unexpected_environment_variables": [],
+        "visible_environment_variables": [
+          "LC_CTYPE",
+          "PATH",
+          "__CF_USER_TEXT_ENCODING"
+        ]
+      },
+      "process_max_rss_bytes": 27639808
+    }
+  ],
+  "schema_version": "1.0.0",
+  "tolerance_history": [],
+  "tolerances": {
+    "ambient_secret_variables": 0,
+    "deadline_overruns": 0
+  },
+  "validation_id": "VAL-READY-014",
+  "version": "1.0.0"
+}

@@ -1,0 +1,609 @@
+{
+  "deliverable_id": "RES-CORPUS-SYNTHETIC-TRACE-001",
+  "feature_id": "synthetic-corpus-and-reproducibility",
+  "fixtures": [
+    {
+      "byte_count": 478,
+      "classes": [
+        "provider",
+        "stream",
+        "tool"
+      ],
+      "expectations": {
+        "normative_conformance": false,
+        "parse_status": "complete",
+        "raw_authority": "exact-bytes",
+        "record_count": 3,
+        "semantic_assertions": [
+          "Preserve event order, tool arguments, native IDs, and exact line bytes."
+        ]
+      },
+      "format": "jsonl",
+      "id": "FIX-PROVIDER-OPENAI-STREAM-TOOL-001",
+      "media_type": "application/x-ndjson",
+      "path": "fixtures/research-corpus/provider-openai-stream-tool.jsonl",
+      "privacy_review": {
+        "customer_data": false,
+        "live_credentials": false,
+        "personal_data": false,
+        "result": "safe-synthetic",
+        "reviewed_at": "2026-08-21",
+        "reviewer_role": "corpus author safety self-review; independent review pending",
+        "status": "completed"
+      },
+      "provenance": {
+        "customer_or_production_data": false,
+        "generator": "scripts/generate_corpus.py",
+        "generator_version": "1.0.0",
+        "kind": "project-created-synthetic",
+        "recipe": "openai_stream_tool",
+        "seed": "ede10e83fd38fa4bc0790bdb4022aeb5c6fff536039f108a9238e33150f99044",
+        "source_dependencies": [
+          "RES-STUDY-TRACE-LANDSCAPE-001",
+          "RES-STUDY-ABUSE-MISUSE-001",
+          "RES-STUDY-STRIDE-001",
+          "RES-STUDY-DATA-INVENTORY-001"
+        ]
+      },
+      "provider": "openai",
+      "redistribution_license": {
+        "copyright": "Testament contributors",
+        "notice": "Project-created synthetic fixture; redistribution permitted under Apache-2.0.",
+        "spdx": "Apache-2.0"
+      },
+      "safety_review": {
+        "actionable_harm": false,
+        "limitations": "Fixtures exercise trace shape and review labels only; they are not detection efficacy evidence.",
+        "result": "harmless-abstract-content",
+        "status": "completed"
+      },
+      "sha256": "00a9af3faaffa75280c710602b74c7ccfe653101df5ad07cd9bd177176d2219e",
+      "version": "1.0.0"
+    },
+    {
+      "byte_count": 347,
+      "classes": [
+        "provider",
+        "stream",
+        "retry"
+      ],
+      "expectations": {
+        "normative_conformance": false,
+        "parse_status": "complete",
+        "raw_authority": "exact-bytes",
+        "record_count": 3,
+        "semantic_assertions": [
+          "Preserve SSE framing, retry identity, event names, and exact bytes."
+        ]
+      },
+      "format": "sse",
+      "id": "FIX-PROVIDER-ANTHROPIC-RETRY-STREAM-001",
+      "media_type": "text/event-stream",
+      "path": "fixtures/research-corpus/provider-anthropic-retry-stream.sse",
+      "privacy_review": {
+        "customer_data": false,
+        "live_credentials": false,
+        "personal_data": false,
+        "result": "safe-synthetic",
+        "reviewed_at": "2026-08-21",
+        "reviewer_role": "corpus author safety self-review; independent review pending",
+        "status": "completed"
+      },
+      "provenance": {
+        "customer_or_production_data": false,
+        "generator": "scripts/generate_corpus.py",
+        "generator_version": "1.0.0",
+        "kind": "project-created-synthetic",
+        "recipe": "anthropic_retry_stream",
+        "seed": "cdedbcacc970328a31d0a63dca94d663152e34b80bcc7553a4f1edc3945ae979",
+        "source_dependencies": [
+          "RES-STUDY-TRACE-LANDSCAPE-001",
+          "RES-STUDY-ABUSE-MISUSE-001",
+          "RES-STUDY-STRIDE-001",
+          "RES-STUDY-DATA-INVENTORY-001"
+        ]
+      },
+      "provider": "anthropic",
+      "redistribution_license": {
+        "copyright": "Testament contributors",
+        "notice": "Project-created synthetic fixture; redistribution permitted under Apache-2.0.",
+        "spdx": "Apache-2.0"
+      },
+      "safety_review": {
+        "actionable_harm": false,
+        "limitations": "Fixtures exercise trace shape and review labels only; they are not detection efficacy evidence.",
+        "result": "harmless-abstract-content",
+        "status": "completed"
+      },
+      "sha256": "d3e7cddcdc379195eca99f9157fdf12505e51dbe2d9b9f12116b8c27518b687f",
+      "version": "1.0.0"
+    },
+    {
+      "byte_count": 305,
+      "classes": [
+        "provider",
+        "multimodal"
+      ],
+      "expectations": {
+        "normative_conformance": false,
+        "parse_status": "complete",
+        "raw_authority": "exact-bytes",
+        "record_count": 1,
+        "semantic_assertions": [
+          "Retain text and external artifact reference without fetching it."
+        ]
+      },
+      "format": "json",
+      "id": "FIX-PROVIDER-GEMINI-MULTIMODAL-001",
+      "media_type": "application/json",
+      "path": "fixtures/research-corpus/provider-gemini-multimodal.json",
+      "privacy_review": {
+        "customer_data": false,
+        "live_credentials": false,
+        "personal_data": false,
+        "result": "safe-synthetic",
+        "reviewed_at": "2026-08-21",
+        "reviewer_role": "corpus author safety self-review; independent review pending",
+        "status": "completed"
+      },
+      "provenance": {
+        "customer_or_production_data": false,
+        "generator": "scripts/generate_corpus.py",
+        "generator_version": "1.0.0",
+        "kind": "project-created-synthetic",
+        "recipe": "gemini_multimodal",
+        "seed": "d46cc15d179e52725e7f9f3f042f5e4daf04eea60347eb8351c6eece983631cd",
+        "source_dependencies": [
+          "RES-STUDY-TRACE-LANDSCAPE-001",
+          "RES-STUDY-ABUSE-MISUSE-001",
+          "RES-STUDY-STRIDE-001",
+          "RES-STUDY-DATA-INVENTORY-001"
+        ]
+      },
+      "provider": "gemini",
+      "redistribution_license": {
+        "copyright": "Testament contributors",
+        "notice": "Project-created synthetic fixture; redistribution permitted under Apache-2.0.",
+        "spdx": "Apache-2.0"
+      },
+      "safety_review": {
+        "actionable_harm": false,
+        "limitations": "Fixtures exercise trace shape and review labels only; they are not detection efficacy evidence.",
+        "result": "harmless-abstract-content",
+        "status": "completed"
+      },
+      "sha256": "2894302394219c4d3e04f6656f667331d8143a1a5e2de335fd966a95c84cde66",
+      "version": "1.0.0"
+    },
+    {
+      "byte_count": 461,
+      "classes": [
+        "provider",
+        "late",
+        "missing-lineage"
+      ],
+      "expectations": {
+        "normative_conformance": false,
+        "parse_status": "complete",
+        "raw_authority": "exact-bytes",
+        "record_count": 2,
+        "semantic_assertions": [
+          "Keep event, arrival, and lineage states distinct; do not invent a parent."
+        ]
+      },
+      "format": "jsonl",
+      "id": "FIX-PROVIDER-BEDROCK-LATE-LINEAGE-001",
+      "media_type": "application/x-ndjson",
+      "path": "fixtures/research-corpus/provider-bedrock-late-missing-lineage.jsonl",
+      "privacy_review": {
+        "customer_data": false,
+        "live_credentials": false,
+        "personal_data": false,
+        "result": "safe-synthetic",
+        "reviewed_at": "2026-08-21",
+        "reviewer_role": "corpus author safety self-review; independent review pending",
+        "status": "completed"
+      },
+      "provenance": {
+        "customer_or_production_data": false,
+        "generator": "scripts/generate_corpus.py",
+        "generator_version": "1.0.0",
+        "kind": "project-created-synthetic",
+        "recipe": "bedrock_late_missing_lineage",
+        "seed": "01c0504e3c7cd588d93a2f58bf2ce389642c96ca5dbdc9274c2600e0db2c56f1",
+        "source_dependencies": [
+          "RES-STUDY-TRACE-LANDSCAPE-001",
+          "RES-STUDY-ABUSE-MISUSE-001",
+          "RES-STUDY-STRIDE-001",
+          "RES-STUDY-DATA-INVENTORY-001"
+        ]
+      },
+      "provider": "bedrock",
+      "redistribution_license": {
+        "copyright": "Testament contributors",
+        "notice": "Project-created synthetic fixture; redistribution permitted under Apache-2.0.",
+        "spdx": "Apache-2.0"
+      },
+      "safety_review": {
+        "actionable_harm": false,
+        "limitations": "Fixtures exercise trace shape and review labels only; they are not detection efficacy evidence.",
+        "result": "harmless-abstract-content",
+        "status": "completed"
+      },
+      "sha256": "91e8b3c39227972fd95618b7a2d4d6865a5d4d09c3c4f1b7860ebc2d5b8af728",
+      "version": "1.0.0"
+    },
+    {
+      "byte_count": 1100055,
+      "classes": [
+        "giant"
+      ],
+      "expectations": {
+        "normative_conformance": false,
+        "parse_status": "complete",
+        "raw_authority": "exact-bytes",
+        "record_count": 1,
+        "semantic_assertions": [
+          "Retain a JSON scalar larger than one million bytes exactly."
+        ]
+      },
+      "format": "json",
+      "id": "FIX-GIANT-JSON-001",
+      "media_type": "application/json",
+      "path": "fixtures/research-corpus/giant.json",
+      "privacy_review": {
+        "customer_data": false,
+        "live_credentials": false,
+        "personal_data": false,
+        "result": "safe-synthetic",
+        "reviewed_at": "2026-08-21",
+        "reviewer_role": "corpus author safety self-review; independent review pending",
+        "status": "completed"
+      },
+      "provenance": {
+        "customer_or_production_data": false,
+        "generator": "scripts/generate_corpus.py",
+        "generator_version": "1.0.0",
+        "kind": "project-created-synthetic",
+        "recipe": "giant_json",
+        "seed": "eaa5d2c8c9089fc139cf90a5983dc5af4a96d71b25a419e48585910607cd951d",
+        "source_dependencies": [
+          "RES-STUDY-TRACE-LANDSCAPE-001",
+          "RES-STUDY-ABUSE-MISUSE-001",
+          "RES-STUDY-STRIDE-001",
+          "RES-STUDY-DATA-INVENTORY-001"
+        ]
+      },
+      "provider": null,
+      "redistribution_license": {
+        "copyright": "Testament contributors",
+        "notice": "Project-created synthetic fixture; redistribution permitted under Apache-2.0.",
+        "spdx": "Apache-2.0"
+      },
+      "safety_review": {
+        "actionable_harm": false,
+        "limitations": "Fixtures exercise trace shape and review labels only; they are not detection efficacy evidence.",
+        "result": "harmless-abstract-content",
+        "status": "completed"
+      },
+      "sha256": "11b87e08e5f3a9c025819a0230cb8f4543187c58eea9edeae40f95a29282bee2",
+      "version": "1.0.0"
+    },
+    {
+      "byte_count": 1076138,
+      "classes": [
+        "giant"
+      ],
+      "expectations": {
+        "normative_conformance": false,
+        "parse_status": "complete",
+        "raw_authority": "exact-bytes",
+        "record_count": 4096,
+        "semantic_assertions": [
+          "Retain all 4096 lines and their delimiters exactly."
+        ]
+      },
+      "format": "jsonl",
+      "id": "FIX-GIANT-JSONL-001",
+      "media_type": "application/x-ndjson",
+      "path": "fixtures/research-corpus/giant.jsonl",
+      "privacy_review": {
+        "customer_data": false,
+        "live_credentials": false,
+        "personal_data": false,
+        "result": "safe-synthetic",
+        "reviewed_at": "2026-08-21",
+        "reviewer_role": "corpus author safety self-review; independent review pending",
+        "status": "completed"
+      },
+      "provenance": {
+        "customer_or_production_data": false,
+        "generator": "scripts/generate_corpus.py",
+        "generator_version": "1.0.0",
+        "kind": "project-created-synthetic",
+        "recipe": "giant_jsonl",
+        "seed": "4bd18d4024929fe8cc1cd9068c34991d6c161ef2aa2aad401c03a12a1750bc7e",
+        "source_dependencies": [
+          "RES-STUDY-TRACE-LANDSCAPE-001",
+          "RES-STUDY-ABUSE-MISUSE-001",
+          "RES-STUDY-STRIDE-001",
+          "RES-STUDY-DATA-INVENTORY-001"
+        ]
+      },
+      "provider": null,
+      "redistribution_license": {
+        "copyright": "Testament contributors",
+        "notice": "Project-created synthetic fixture; redistribution permitted under Apache-2.0.",
+        "spdx": "Apache-2.0"
+      },
+      "safety_review": {
+        "actionable_harm": false,
+        "limitations": "Fixtures exercise trace shape and review labels only; they are not detection efficacy evidence.",
+        "result": "harmless-abstract-content",
+        "status": "completed"
+      },
+      "sha256": "d452952ba1542c64167a21e45b4310480391656eee34ef3a37242be9e12e6be0",
+      "version": "1.0.0"
+    },
+    {
+      "byte_count": 74,
+      "classes": [
+        "malformed"
+      ],
+      "expectations": {
+        "normative_conformance": false,
+        "parse_status": "parse-failed",
+        "raw_authority": "exact-bytes",
+        "record_count": 0,
+        "semantic_assertions": [
+          "Retain malformed CRLF-terminated bytes without repair or projection."
+        ]
+      },
+      "format": "json",
+      "id": "FIX-MALFORMED-JSON-001",
+      "media_type": "application/json",
+      "path": "fixtures/research-corpus/malformed.json",
+      "privacy_review": {
+        "customer_data": false,
+        "live_credentials": false,
+        "personal_data": false,
+        "result": "safe-synthetic",
+        "reviewed_at": "2026-08-21",
+        "reviewer_role": "corpus author safety self-review; independent review pending",
+        "status": "completed"
+      },
+      "provenance": {
+        "customer_or_production_data": false,
+        "generator": "scripts/generate_corpus.py",
+        "generator_version": "1.0.0",
+        "kind": "project-created-synthetic",
+        "recipe": "malformed_json",
+        "seed": "fb08d7fd14b0cf0d50c05a4427c2d16d038c360d973b2540d5b66ac7e296736c",
+        "source_dependencies": [
+          "RES-STUDY-TRACE-LANDSCAPE-001",
+          "RES-STUDY-ABUSE-MISUSE-001",
+          "RES-STUDY-STRIDE-001",
+          "RES-STUDY-DATA-INVENTORY-001"
+        ]
+      },
+      "provider": null,
+      "redistribution_license": {
+        "copyright": "Testament contributors",
+        "notice": "Project-created synthetic fixture; redistribution permitted under Apache-2.0.",
+        "spdx": "Apache-2.0"
+      },
+      "safety_review": {
+        "actionable_harm": false,
+        "limitations": "Fixtures exercise trace shape and review labels only; they are not detection efficacy evidence.",
+        "result": "harmless-abstract-content",
+        "status": "completed"
+      },
+      "sha256": "e932f8137c97e2f4d4c70f2c41686004b91037141b9ceccd2cb279ac480ef4f1",
+      "version": "1.0.0"
+    },
+    {
+      "byte_count": 167,
+      "classes": [
+        "malformed"
+      ],
+      "expectations": {
+        "normative_conformance": false,
+        "parse_status": "partial",
+        "raw_authority": "exact-bytes",
+        "record_count": 2,
+        "semantic_assertions": [
+          "Retain valid neighbors and malformed middle-line bytes independently."
+        ]
+      },
+      "format": "jsonl",
+      "id": "FIX-MALFORMED-JSONL-001",
+      "media_type": "application/x-ndjson",
+      "path": "fixtures/research-corpus/malformed.jsonl",
+      "privacy_review": {
+        "customer_data": false,
+        "live_credentials": false,
+        "personal_data": false,
+        "result": "safe-synthetic",
+        "reviewed_at": "2026-08-21",
+        "reviewer_role": "corpus author safety self-review; independent review pending",
+        "status": "completed"
+      },
+      "provenance": {
+        "customer_or_production_data": false,
+        "generator": "scripts/generate_corpus.py",
+        "generator_version": "1.0.0",
+        "kind": "project-created-synthetic",
+        "recipe": "malformed_jsonl",
+        "seed": "5d5b3dd66e26c8e446eea3f49569f1c3f517e02095d51747476a9ed730d524f7",
+        "source_dependencies": [
+          "RES-STUDY-TRACE-LANDSCAPE-001",
+          "RES-STUDY-ABUSE-MISUSE-001",
+          "RES-STUDY-STRIDE-001",
+          "RES-STUDY-DATA-INVENTORY-001"
+        ]
+      },
+      "provider": null,
+      "redistribution_license": {
+        "copyright": "Testament contributors",
+        "notice": "Project-created synthetic fixture; redistribution permitted under Apache-2.0.",
+        "spdx": "Apache-2.0"
+      },
+      "safety_review": {
+        "actionable_harm": false,
+        "limitations": "Fixtures exercise trace shape and review labels only; they are not detection efficacy evidence.",
+        "result": "harmless-abstract-content",
+        "status": "completed"
+      },
+      "sha256": "9975f72a0587cf014bb45a303bfe0792c2bea4d83e9df85e8771b119261143e7",
+      "version": "1.0.0"
+    },
+    {
+      "byte_count": 264,
+      "classes": [
+        "authorized-twin"
+      ],
+      "expectations": {
+        "normative_conformance": false,
+        "parse_status": "complete",
+        "raw_authority": "exact-bytes",
+        "record_count": 1,
+        "semantic_assertions": [
+          "Keep authorization and defensive purpose available to human review."
+        ]
+      },
+      "format": "json",
+      "id": "FIX-AUTHORIZED-TWIN-001",
+      "media_type": "application/json",
+      "path": "fixtures/research-corpus/authorized-security-twin.json",
+      "privacy_review": {
+        "customer_data": false,
+        "live_credentials": false,
+        "personal_data": false,
+        "result": "safe-synthetic",
+        "reviewed_at": "2026-08-21",
+        "reviewer_role": "corpus author safety self-review; independent review pending",
+        "status": "completed"
+      },
+      "provenance": {
+        "customer_or_production_data": false,
+        "generator": "scripts/generate_corpus.py",
+        "generator_version": "1.0.0",
+        "kind": "project-created-synthetic",
+        "recipe": "authorized_twin",
+        "seed": "b13f0e7d7639a2b4cc7f873f8a8424868a6413d0a10366182901906b8817d197",
+        "source_dependencies": [
+          "RES-STUDY-TRACE-LANDSCAPE-001",
+          "RES-STUDY-ABUSE-MISUSE-001",
+          "RES-STUDY-STRIDE-001",
+          "RES-STUDY-DATA-INVENTORY-001"
+        ]
+      },
+      "provider": null,
+      "redistribution_license": {
+        "copyright": "Testament contributors",
+        "notice": "Project-created synthetic fixture; redistribution permitted under Apache-2.0.",
+        "spdx": "Apache-2.0"
+      },
+      "safety_review": {
+        "actionable_harm": false,
+        "limitations": "Fixtures exercise trace shape and review labels only; they are not detection efficacy evidence.",
+        "result": "harmless-abstract-content",
+        "status": "completed"
+      },
+      "sha256": "9c4449a486c77c9cc2b9e55d38d67aeb0a5e62048b50433727c168f9bebd88ad",
+      "version": "1.0.0"
+    },
+    {
+      "byte_count": 1826,
+      "classes": [
+        "abuse"
+      ],
+      "expectations": {
+        "normative_conformance": false,
+        "parse_status": "complete",
+        "raw_authority": "exact-bytes",
+        "record_count": 9,
+        "semantic_assertions": [
+          "Treat labels as synthetic review signals, not findings or policy decisions."
+        ]
+      },
+      "format": "jsonl",
+      "id": "FIX-ABUSE-SIGNALS-001",
+      "media_type": "application/x-ndjson",
+      "path": "fixtures/research-corpus/abuse-signals.jsonl",
+      "privacy_review": {
+        "customer_data": false,
+        "live_credentials": false,
+        "personal_data": false,
+        "result": "safe-synthetic",
+        "reviewed_at": "2026-08-21",
+        "reviewer_role": "corpus author safety self-review; independent review pending",
+        "status": "completed"
+      },
+      "provenance": {
+        "customer_or_production_data": false,
+        "generator": "scripts/generate_corpus.py",
+        "generator_version": "1.0.0",
+        "kind": "project-created-synthetic",
+        "recipe": "abuse_signals",
+        "seed": "85ce63cb4e8cfc71b0fe48a277dcee4dfc6c6dc6031cbf7376ace0f910a52842",
+        "source_dependencies": [
+          "RES-STUDY-TRACE-LANDSCAPE-001",
+          "RES-STUDY-ABUSE-MISUSE-001",
+          "RES-STUDY-STRIDE-001",
+          "RES-STUDY-DATA-INVENTORY-001"
+        ]
+      },
+      "provider": null,
+      "redistribution_license": {
+        "copyright": "Testament contributors",
+        "notice": "Project-created synthetic fixture; redistribution permitted under Apache-2.0.",
+        "spdx": "Apache-2.0"
+      },
+      "safety_review": {
+        "actionable_harm": false,
+        "limitations": "Fixtures exercise trace shape and review labels only; they are not detection efficacy evidence.",
+        "result": "harmless-abstract-content",
+        "status": "completed"
+      },
+      "sha256": "1408ea5ab39de85940a48ccee55c972716dfd9b8134a97b53929cf1eb46a4ed9",
+      "version": "1.0.0"
+    }
+  ],
+  "generated_at": "2026-08-21",
+  "generator": {
+    "canonicalization": "Generator-defined UTF-8 bytes; JSON objects use sorted compact keys and one LF.",
+    "path": "scripts/generate_corpus.py",
+    "root_seed": "testament-synthetic-trace-corpus-v1",
+    "runtime": "Python 3 standard library",
+    "seed_derivation": "SHA-256(root_seed + ':' + fixture_id)",
+    "version": "1.0.0"
+  },
+  "license_policy": {
+    "allowed_spdx": [
+      "Apache-2.0"
+    ],
+    "default": "Apache-2.0",
+    "third_party_content": false
+  },
+  "limitations": [
+    "Provider-shaped fixtures are project-created approximations, not provider certification vectors.",
+    "Abuse labels are harmless abstractions and do not demonstrate detector accuracy.",
+    "The corpus is informative research until a separate immutable promotion decision approves selected bytes."
+  ],
+  "safety_policy": {
+    "actionable_harm_forbidden": true,
+    "customer_data_forbidden": true,
+    "live_credentials_forbidden": true,
+    "pii_forbidden": true,
+    "production_data_forbidden": true,
+    "synthetic_only": true
+  },
+  "schema_version": "1.0.0",
+  "status": "informative-research",
+  "validation_ids": [
+    "VAL-READY-012",
+    "VAL-READY-013"
+  ],
+  "version": "1.0.0"
+}

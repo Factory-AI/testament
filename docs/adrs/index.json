@@ -1,0 +1,58 @@
+{
+  "schema_version": "1.0.0",
+  "record_type": "adr",
+  "statuses": [
+    "proposed",
+    "in-review",
+    "accepted",
+    "rejected",
+    "withdrawn",
+    "superseded"
+  ],
+  "records": [
+    {
+      "id": "ADR-0001",
+      "title": "Mutable decision log",
+      "path": "docs/adrs/0001-mutable-decision-log.md",
+      "status": "superseded",
+      "record_status": "accepted",
+      "version": "1.0.0",
+      "decision_date": "2026-08-21",
+      "deciders": [
+        "enoreyes"
+      ],
+      "reviewers": [],
+      "bootstrap_exception": true,
+      "bootstrap_scope": "foundation-process",
+      "bootstrap_rationale": "The public repository had one active maintainer and needed a decision-log rule before appointing more maintainers.",
+      "bootstrap_expiry": "2026-09-30",
+      "supersedes": null,
+      "superseded_by": "ADR-0002",
+      "record_supersedes": null,
+      "record_superseded_by": null,
+      "sha256": "646b1af1722ddeaffd5f8b9de0b48bb03c775baf6481c6803280d2adc3a0114b"
+    },
+    {
+      "id": "ADR-0002",
+      "title": "Immutable indexed decision log",
+      "path": "docs/adrs/0002-immutable-decision-log.md",
+      "status": "accepted",
+      "record_status": "accepted",
+      "version": "1.0.0",
+      "decision_date": "2026-08-21",
+      "deciders": [
+        "enoreyes"
+      ],
+      "reviewers": [],
+      "bootstrap_exception": true,
+      "bootstrap_scope": "foundation-process",
+      "bootstrap_rationale": "The public repository had one active maintainer; the exception is explicit and does not count as independent review.",
+      "bootstrap_expiry": "2026-09-30",
+      "supersedes": "ADR-0001",
+      "superseded_by": null,
+      "record_supersedes": "ADR-0001",
+      "record_superseded_by": null,
+      "sha256": "2608edeae1a98c18a31ab0c12b8b809b641efbebf38e60ca11f3026485cad1fc"
+    }
+  ]
+}

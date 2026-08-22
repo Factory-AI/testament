@@ -1,0 +1,132 @@
+{
+  "schema_version": "1.0.0",
+  "feature_id": "governance-security-and-contribution-lifecycles",
+  "validation_ids": [
+    "VAL-READY-004",
+    "VAL-READY-005"
+  ],
+  "accepted_dependency_commits": [
+    "7c468336954921d2bb319bac3f52a7dc46d9ed4c",
+    "6d5d243333e843c67eb83361d1d536b2b27ed5cc"
+  ],
+  "maintainers": [
+    {
+      "name": "Eno Reyes",
+      "github": "enoreyes",
+      "status": "active",
+      "since": "2026-08-21",
+      "roles": [
+        "lead",
+        "standards",
+        "release",
+        "security"
+      ]
+    }
+  ],
+  "private_vulnerability_reporting": {
+    "repository": "Factory-AI/testament",
+    "enabled": true,
+    "evidence_kind": "manual_remote_observation",
+    "verified_at": "2026-08-21",
+    "verification_command": "gh api repos/Factory-AI/testament/private-vulnerability-reporting",
+    "report_url": "https://github.com/Factory-AI/testament/security/advisories",
+    "observed_response": {
+      "enabled": true
+    }
+  },
+  "sections": {
+    "maintainer_authority": {
+      "document": "GOVERNANCE.md",
+      "owner": "lead maintainer",
+      "machine_check": "make verify-governance",
+      "manual_observation": "A newcomer can identify every active maintainer and role."
+    },
+    "decision_process": {
+      "document": "GOVERNANCE.md",
+      "owner": "lead maintainer",
+      "machine_check": "make verify-governance",
+      "manual_observation": "A newcomer can calculate quorum and locate a recorded decision."
+    },
+    "appeal_process": {
+      "document": "GOVERNANCE.md",
+      "owner": "lead maintainer",
+      "machine_check": "make verify-governance",
+      "manual_observation": "A newcomer can file a public appeal without rewriting history."
+    },
+    "release_authority": {
+      "document": "GOVERNANCE.md",
+      "owner": "release maintainer",
+      "machine_check": "make verify-governance",
+      "manual_observation": "A newcomer can identify who may authorize a release and its prerequisites."
+    },
+    "maintenance_cadence": {
+      "document": "GOVERNANCE.md",
+      "owner": "lead maintainer",
+      "machine_check": "make verify-governance",
+      "manual_observation": "A newcomer can identify weekly, biweekly, and quarterly maintenance obligations."
+    },
+    "security_reporting": {
+      "document": "SECURITY.md",
+      "owner": "security maintainer",
+      "machine_check": "make verify-governance",
+      "manual_observation": "An anonymous reader can reach the private reporting form and response policy."
+    },
+    "contribution_process": {
+      "document": "CONTRIBUTING.md",
+      "owner": "lead maintainer",
+      "machine_check": "make test-gate",
+      "manual_observation": "A clean-clone contributor can sign, branch, test, document, and request review."
+    },
+    "rfc_lifecycle": {
+      "document": "docs/rfcs/README.md",
+      "owner": "standards maintainer",
+      "machine_check": "make verify-governance",
+      "manual_observation": "A contributor can create, review, decide, and supersede an RFC."
+    },
+    "adr_lifecycle": {
+      "document": "docs/adrs/README.md",
+      "owner": "standards maintainer",
+      "machine_check": "make verify-governance",
+      "manual_observation": "A contributor can create, review, decide, and supersede an ADR."
+    }
+  },
+  "sources": [
+    "SRC-GOV-001",
+    "SRC-GOV-002",
+    "SRC-GOV-003",
+    "SRC-GOV-004",
+    "SRC-GOV-005"
+  ],
+  "evidence_plan": [
+    {
+      "criterion_id": "VAL-READY-004",
+      "deliverables": [
+        "GOVERNANCE.md",
+        "MAINTAINERS.md",
+        "SECURITY.md"
+      ],
+      "machine_check": "make verify-governance",
+      "reviewer": "non-author maintainer when one is available",
+      "manual_observation": "Inspect the public repository and private reporting route.",
+      "limitations": [
+        "The repository currently has one active maintainer.",
+        "Response times are targets, not guaranteed remediation deadlines."
+      ]
+    },
+    {
+      "criterion_id": "VAL-READY-005",
+      "deliverables": [
+        "CONTRIBUTING.md",
+        "docs/rfcs/index.json",
+        "docs/adrs/index.json"
+      ],
+      "machine_check": "make verify-governance",
+      "reviewer": "non-author maintainer when one is available",
+      "manual_observation": "Follow the guide from an anonymous clean clone.",
+      "limitations": [
+        "Remote pull-request policy enforcement belongs to a later feature.",
+        "The examples were decided during single-maintainer bootstrap and do not claim independent consensus."
+      ]
+    }
+  ]
+}

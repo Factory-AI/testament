@@ -1,0 +1,81 @@
+{
+  "schema_version": "1.0.0",
+  "feature_id": "deterministic-agent-ready-repository",
+  "human_explanation": "docs/workflows.md",
+  "contracts": [
+    {
+      "id": "architecture",
+      "version": "1.0.0",
+      "machine_path": "policy/architecture.json",
+      "human_path": "CHARTER.md"
+    },
+    {
+      "id": "claims-evidence",
+      "version": "1.0.0",
+      "machine_path": "policy/claims-ledger.json",
+      "human_path": "docs/claims-policy.md"
+    },
+    {
+      "id": "services",
+      "version": "1.0.0",
+      "machine_path": "compose.yaml",
+      "human_path": "docs/workflows.md#development"
+    },
+    {
+      "id": "commands",
+      "version": "1.0.0",
+      "machine_path": "Makefile",
+      "human_path": "docs/workflows.md#workflow-index"
+    },
+    {
+      "id": "toolchain",
+      "version": "1.0.0",
+      "machine_path": "policy/toolchain.json",
+      "human_path": "docs/workflows.md#setup"
+    },
+    {
+      "id": "schemas",
+      "version": "2020-12",
+      "machine_path": "schemas/repository-contracts.schema.json",
+      "human_path": "docs/workflows.md#contracts-and-generation"
+    },
+    {
+      "id": "conformance",
+      "version": "0.1.0-draft",
+      "machine_path": "policy/normative-sources.json",
+      "human_path": "docs/standards-status.md"
+    },
+    {
+      "id": "readiness",
+      "version": "1.0.0",
+      "machine_path": "policy/readiness.json",
+      "human_path": "docs/agent-guide.md"
+    },
+    {
+      "id": "remote-workflows",
+      "version": "1.0.0",
+      "machine_path": "policy/remote-workflows.json",
+      "human_path": "docs/remote-workflows.md"
+    }
+  ],
+  "commands": [
+    {"id": "setup", "entry_point": "make setup"},
+    {"id": "development", "entry_point": "make dev"},
+    {"id": "validation", "entry_point": "make test-gate"},
+    {"id": "schema-generation", "entry_point": "make generate"},
+    {"id": "migration", "entry_point": "make migrate"},
+    {"id": "build", "entry_point": "make build"},
+    {"id": "release", "entry_point": "make release"},
+    {"id": "rollback", "entry_point": "make rollback"},
+    {"id": "doctor-recovery", "entry_point": "make doctor"},
+    {"id": "incident-response", "entry_point": "make incident"},
+    {"id": "readiness", "entry_point": "make agent-ready"},
+    {"id": "conformance", "entry_point": "make conformance"}
+  ],
+  "generated": {
+    "source": "policy/repository-contracts.json",
+    "generator": "python3 scripts/verify_readiness.py --root . --write-index",
+    "output": "generated/contract-index.json",
+    "drift_check": "make verify-readiness"
+  }
+}

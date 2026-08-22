@@ -1,0 +1,120 @@
+{
+  "schema_version": "1.0.0",
+  "feature_id": "storage-analysis-prototypes-and-evaluation-plan",
+  "validation_ids": ["VAL-READY-014"],
+  "version": "1.0.0",
+  "prepared_at": "2026-08-21",
+  "environment": {
+    "toolchain_policy": "policy/toolchain.json",
+    "repository_setup": "make setup",
+    "postgres_service": "postgres",
+    "postgres_major": 17,
+    "postgres_port": 5440,
+    "postgres_lifecycle": "mission services.yaml start, healthcheck, and stop commands only",
+    "machine_class": "developer-workstation-12cpu-18gib",
+    "concurrency": 1,
+    "network": "not required; analyzer isolation records that plain subprocesses do not prove network denial"
+  },
+  "measurement_order": [
+    "commit this plan and harness",
+    "record the plan commit without changing budgets or tolerances",
+    "run local cases",
+    "start and healthcheck PostgreSQL through services.yaml",
+    "run PostgreSQL cases",
+    "stop PostgreSQL through services.yaml",
+    "verify and review raw results"
+  ],
+  "tolerance_history": [],
+  "cases": [
+    {
+      "id": "giant-stream",
+      "inputs": ["fixtures/research-corpus/giant.json", "65536-byte read blocks"],
+      "sample_count": 3,
+      "budgets": {"max_elapsed_ms": 10000, "max_process_rss_bytes": 536870912},
+      "tolerances": {"digest_mismatch_count": 0, "unbounded_read_count": 0},
+      "comparison_method": "Compare incremental SHA-256 and byte count with an independent whole-file SHA-256.",
+      "acceptance_rule": "All samples use 65536-byte bounded reads, preserve byte count, match the independent digest, and remain within both resource budgets.",
+      "limitations": ["The committed 2 MiB synthetic fixture is a bounded proof, not a 1 GiB release-load result."]
+    },
+    {
+      "id": "exact-byte",
+      "inputs": ["malformed JSON", "malformed JSONL", "provider stream", "empty", "invalid UTF-8 and CRLF", "all byte values"],
+      "sample_count": 3,
+      "budgets": {"max_elapsed_ms": 10000, "max_process_rss_bytes": 536870912},
+      "tolerances": {"byte_mismatch_count": 0},
+      "comparison_method": "Write each source byte sequence to a new file and compare the exact readback bytes and aggregate SHA-256.",
+      "acceptance_rule": "Every one of at least six byte classes round-trips exactly in every sample within both resource budgets.",
+      "limitations": ["This prototype tests filesystem custody, not HTTP transfer framing."]
+    },
+    {
+      "id": "compression-encryption",
+      "inputs": ["fixtures/research-corpus/giant.json", "Go standard-library zlib", "Go crypto/aes AES-256-GCM"],
+      "sample_count": 3,
+      "budgets": {"max_elapsed_ms": 10000, "max_process_rss_bytes": 536870912},
+      "tolerances": {"integrity_false_accepts": 0, "round_trip_mismatches": 0},
+      "comparison_method": "Instrument compression output before AES-GCM, decrypt then decompress, compare source digest, and mutate the authentication tag.",
+      "acceptance_rule": "Every sample proves compression precedes AEAD, exact readback succeeds, a one-bit ciphertext mutation fails, and both resource budgets hold.",
+      "limitations": ["The disposable deterministic nonce is safe only for this one-shot prototype and must not be copied into production."]
+    },
+    {
+      "id": "postgres-storage",
+      "inputs": ["200 synthetic ciphertext rows", "two monthly range partitions", "one partition-prunable query"],
+      "sample_count": 3,
+      "budgets": {"max_elapsed_ms": 15000, "max_process_rss_bytes": 536870912},
+      "tolerances": {"row_count_delta": 0, "unexpected_plaintext_columns": 0},
+      "comparison_method": "Create disposable PostgreSQL 17 partitions, insert bytea-only synthetic ciphertext, compare row/partition counts and inspect pruning and schema columns.",
+      "acceptance_rule": "All samples observe PostgreSQL 17 on port 5440, 200 rows, two partitions, no content plaintext column, pruning evidence, and both resource budgets.",
+      "limitations": ["The row count is a research proof, not production sizing guidance."]
+    },
+    {
+      "id": "blind-index",
+      "inputs": ["one synthetic normalized value", "two organizations", "two fields", "two search-root generations"],
+      "sample_count": 3,
+      "budgets": {"max_elapsed_ms": 10000, "max_process_rss_bytes": 536870912},
+      "tolerances": {"cross_scope_token_collisions": 0},
+      "comparison_method": "Compare HMAC-SHA-256 equality tokens within and across organization, field, and generation scope.",
+      "acceptance_rule": "Same-scope equality matches; organization, field, and generation changes produce different fixed-length tokens within both resource budgets.",
+      "limitations": ["Equality and frequency leakage within a scope remains and is explicitly recorded."]
+    },
+    {
+      "id": "key-rotation",
+      "inputs": ["one synthetic payload DEK", "old and new synthetic wrapping roots", "one immutable payload ciphertext"],
+      "sample_count": 3,
+      "budgets": {"max_elapsed_ms": 10000, "max_process_rss_bytes": 536870912},
+      "tolerances": {"payload_ciphertext_changes": 0, "source_digest_changes": 0},
+      "comparison_method": "Wrap one DEK under two AES-GCM roots and compare wrapped material, payload ciphertext digest, source digest, and checkpoint.",
+      "acceptance_rule": "Wrapped material changes while payload ciphertext and source identity remain unchanged, and every sample stays within both resource budgets.",
+      "limitations": ["No cloud KMS call is made; provider conformance remains later work."]
+    },
+    {
+      "id": "decision-durability",
+      "inputs": ["one committed decision/audit/receipt transaction", "one injected rollback after decision and audit writes"],
+      "sample_count": 3,
+      "budgets": {"max_elapsed_ms": 15000, "max_process_rss_bytes": 536870912},
+      "tolerances": {"orphan_receipts": 0, "faulted_rows": 0},
+      "comparison_method": "Use one PostgreSQL transaction for committed state and roll back the injected fault before receipt creation, then compare table counts.",
+      "acceptance_rule": "Every sample has exactly one committed decision, audit, and receipt, no faulted row, PostgreSQL 17 on 5440, and both resource budgets.",
+      "limitations": ["Process-death and fsync fault injection remain production-stage durability tests."]
+    },
+    {
+      "id": "analyzer-isolation",
+      "inputs": ["Python child process", "sanitized environment", "temporary working directory", "CPU/address-space/file-descriptor/deadline bounds"],
+      "sample_count": 3,
+      "budgets": {"max_elapsed_ms": 10000, "max_process_rss_bytes": 536870912},
+      "tolerances": {"ambient_secret_variables": 0, "deadline_overruns": 0},
+      "comparison_method": "Inspect child-visible environment, directory, descriptor limit, output size, and timeout while explicitly testing whether network denial is proven.",
+      "acceptance_rule": "Resource and ambient-state bounds hold, but acceptance requires the honest conclusion that a plain subprocess does not prove network denial.",
+      "limitations": ["This negative result rejects plain subprocess isolation as the complete hostile-extension boundary."]
+    },
+    {
+      "id": "offline-replay",
+      "inputs": ["three ordered synthetic events", "two identical recorded replays", "one late event and superseding replay"],
+      "sample_count": 3,
+      "budgets": {"max_elapsed_ms": 15000, "max_process_rss_bytes": 536870912},
+      "tolerances": {"recorded_replay_digest_delta": 0, "lost_history_rows": 0},
+      "comparison_method": "Digest ordered immutable snapshots in PostgreSQL, repeat the pinned snapshot, add a late event, and append a superseding run.",
+      "acceptance_rule": "Recorded replay digests match, late replay differs, all three runs remain, PostgreSQL 17 on 5440, and both resource budgets hold.",
+      "limitations": ["Tenant fairness and crash recovery need larger production-stage fault tests."]
+    }
+  ]
+}

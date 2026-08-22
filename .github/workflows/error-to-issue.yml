@@ -1,0 +1,32 @@
+name: Error to issue
+
+on:
+  workflow_run:
+    workflows: [Quality]
+    types: [completed]
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  reconcile:
+    name: Error to issue / reconcile
+    if: >-
+      ${{
+        github.event.workflow_run.conclusion != 'success' ||
+        github.event.workflow_run.head_branch == 'main'
+      }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - name: Check out trusted default branch
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - name: Open, update, or verified-close one owned issue
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPOSITORY: ${{ github.repository }}
+          EVIDENCE_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.event.workflow_run.id }}
+          MAINTENANCE_STATE: ${{ github.event.workflow_run.conclusion == 'success' && 'close' || 'open' }}
+          VERIFIED_RECOVERY: ${{ github.event.workflow_run.conclusion == 'success' && 'true' || 'false' }}
+        run: python3 scripts/maintenance_issues.py runtime-error

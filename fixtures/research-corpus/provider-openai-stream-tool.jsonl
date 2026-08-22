@@ -1,0 +1,3 @@
+{"response":{"id":"resp_synthetic_abc24fe91af2","model":"example-model"},"sequence_number":0,"type":"response.created"}
+{"item":{"arguments":"{\"city\":\"Exampleville\"}","id":"call_synthetic_abc24fe91af2","name":"lookup_weather","type":"function_call"},"sequence_number":1,"type":"response.output_item.added"}
+{"response":{"id":"resp_synthetic_abc24fe91af2","output_text":"The synthetic forecast is mild.","status":"completed"},"sequence_number":2,"type":"response.completed"}

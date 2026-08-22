@@ -1,0 +1,9 @@
+# Testament currently has one active maintainer. This file records ownership;
+# it does not grant repository access or appoint another maintainer.
+* @enoreyes
+/.github/ @enoreyes
+/SECURITY.md @enoreyes
+/GOVERNANCE.md @enoreyes
+/policy/ @enoreyes
+/schemas/ @enoreyes
+/.github/CODEOWNERS @enoreyes

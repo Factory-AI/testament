@@ -1,0 +1,70 @@
+{
+  "contracts": [
+    {
+      "human_path": "CHARTER.md",
+      "id": "architecture",
+      "machine_path": "policy/architecture.json",
+      "machine_sha256": "b704e5e4437d75a6b6e6eecbc15a9b4ed3a17d9fa3ad5714ec358d51c7c5a24b",
+      "version": "1.0.0"
+    },
+    {
+      "human_path": "docs/claims-policy.md",
+      "id": "claims-evidence",
+      "machine_path": "policy/claims-ledger.json",
+      "machine_sha256": "a2d3e2e71c688205cd86a3065065f2305d6b2364d55b89a299f725a5a8e32af1",
+      "version": "1.0.0"
+    },
+    {
+      "human_path": "docs/workflows.md#workflow-index",
+      "id": "commands",
+      "machine_path": "Makefile",
+      "machine_sha256": "2670010820924988d6c5adc91940d484d29dcfef07eab5fc9dfdcc89460f072b",
+      "version": "1.0.0"
+    },
+    {
+      "human_path": "docs/standards-status.md",
+      "id": "conformance",
+      "machine_path": "policy/normative-sources.json",
+      "machine_sha256": "047c1681767a6bd491c6664e8a2f8c94f734e3826059a5427e58d203a42649b7",
+      "version": "0.1.0-draft"
+    },
+    {
+      "human_path": "docs/agent-guide.md",
+      "id": "readiness",
+      "machine_path": "policy/readiness.json",
+      "machine_sha256": "72a285dde006d1e840c18810ada90622b9c2782847ba55e308f9468ce33aa350",
+      "version": "1.0.0"
+    },
+    {
+      "human_path": "docs/remote-workflows.md",
+      "id": "remote-workflows",
+      "machine_path": "policy/remote-workflows.json",
+      "machine_sha256": "8f2bec6dea13b55c15187a8d31ae2241c24ebd6775681232bee905003b7153bc",
+      "version": "1.0.0"
+    },
+    {
+      "human_path": "docs/workflows.md#contracts-and-generation",
+      "id": "schemas",
+      "machine_path": "schemas/repository-contracts.schema.json",
+      "machine_sha256": "9489b35400ae9440c5d0e63d2849adba4298561b888fcc5076f5c6b3f758986c",
+      "version": "2020-12"
+    },
+    {
+      "human_path": "docs/workflows.md#development",
+      "id": "services",
+      "machine_path": "compose.yaml",
+      "machine_sha256": "f5700128ff50326825645e236483afb4b6418789ec4961114d7156c422567c87",
+      "version": "1.0.0"
+    },
+    {
+      "human_path": "docs/workflows.md#setup",
+      "id": "toolchain",
+      "machine_path": "policy/toolchain.json",
+      "machine_sha256": "913bb3898f121f66a1eabde3fc3ad60186548d97f2daba6051205dc21b3c52b5",
+      "version": "1.0.0"
+    }
+  ],
+  "schema_version": "1.0.0",
+  "source": "policy/repository-contracts.json",
+  "source_sha256": "fc446ed22796878673892831366db4a2a31647290d6c866220aa610cdc5ed4d1"
+}

@@ -1,0 +1,1124 @@
+{
+  "clean_clone": true,
+  "clean_clone_evidence": {
+    "complete_history": true,
+    "independent_object_store": true,
+    "worktree_clean_before_measurement": true
+  },
+  "clone_method": "git clone --no-local from the candidate object database into an empty temporary directory",
+  "feature_id": "reproducible-prototype-completion",
+  "plan_commit": "cfdf43bb49f3802137dc0ae887314ab7a8a01f58",
+  "plan_sha256": "5e12d9e04c0852c87c7b86a3e832e61f72e5e136af0792b29d4c7c3811432d76",
+  "results": [
+    {
+      "baseline_result_path": "docs/research/benchmarks/analyzer-isolation.json",
+      "comparison": {
+        "baseline_conclusion": "pass",
+        "matches": true,
+        "method": "Compare plan-bound fields, declared sample count, and acceptance-rule conclusion; timing and randomized cryptographic observations are not required to be byte-identical.",
+        "plan_fields_match": true,
+        "rerun_conclusion": "pass",
+        "sample_count_matches": true
+      },
+      "prototype_id": "analyzer-isolation",
+      "raw_result": {
+        "acceptance_rule": "Resource and ambient-state bounds hold, but acceptance requires the honest conclusion that a plain subprocess does not prove network denial.",
+        "benchmark_id": "analyzer-isolation-benchmark",
+        "budgets": {
+          "max_elapsed_ms": 10000,
+          "max_process_rss_bytes": 536870912
+        },
+        "comparison_method": "Inspect child-visible environment, directory, descriptor limit, output size, and timeout while explicitly testing whether network denial is proven.",
+        "conclusion": "pass",
+        "environment": {
+          "architecture": "arm64",
+          "cpu_count": 12,
+          "docker": "Docker version 28.5.1, build e180ab8",
+          "go": "go version go1.26.4 darwin/arm64",
+          "machine_class": "developer-workstation-12cpu-18gib",
+          "memory_bytes": 19327352832,
+          "os": "macOS-26.6.1-arm64-arm-64bit-Mach-O",
+          "postgres": {
+            "healthcheck": "pg_isready -p 5440",
+            "lifecycle_manifest": "services.yaml",
+            "major": 17,
+            "port": 5440,
+            "service": "postgres"
+          },
+          "python": "3.14.7",
+          "tested_commit": "69109a20ad1045cd2432a71a9fa216ffdc676458"
+        },
+        "feature_id": "storage-analysis-prototypes-and-evaluation-plan",
+        "inputs": [
+          "Python child process",
+          "sanitized environment",
+          "temporary working directory",
+          "CPU/address-space/file-descriptor/deadline bounds"
+        ],
+        "limitations": [
+          "This negative result rejects plain subprocess isolation as the complete hostile-extension boundary."
+        ],
+        "plan_commit": "cfdf43bb49f3802137dc0ae887314ab7a8a01f58",
+        "plan_sha256": "5e12d9e04c0852c87c7b86a3e832e61f72e5e136af0792b29d4c7c3811432d76",
+        "prototype_id": "analyzer-isolation",
+        "sample_count": 3,
+        "samples": [
+          {
+            "elapsed_ms": 2175.525,
+            "observation": {
+              "address_space_limit_bytes": 549755813888,
+              "address_space_limit_enforced": true,
+              "allowed_environment_variables": [
+                "LC_CTYPE",
+                "PATH",
+                "__CF_USER_TEXT_ENCODING"
+              ],
+              "conclusion": "POSIX subprocess limits bound CPU, address space, descriptors, environment, working directory, time, and output, but do not prove network denial; plain subprocess isolation is rejected as a hostile multi-tenant isolation boundary.",
+              "cpu_limit_seconds": 1,
+              "deadline_limit_enforced": true,
+              "deadline_seconds": 2,
+              "file_descriptor_limit": 16,
+              "hostile_multi_tenant_isolation_proven": false,
+              "isolated_working_directory": true,
+              "network_denial_proven": false,
+              "output_bytes": 201,
+              "output_limit_bytes": 4096,
+              "output_limit_enforced": true,
+              "output_probe_bytes": 4096,
+              "sanitized_environment": true,
+              "unexpected_environment_variables": [],
+              "visible_environment_variables": [
+                "LC_CTYPE",
+                "PATH",
+                "__CF_USER_TEXT_ENCODING"
+              ]
+            },
+            "process_max_rss_bytes": 29360128
+          },
+          {
+            "elapsed_ms": 2142.898,
+            "observation": {
+              "address_space_limit_bytes": 549755813888,
+              "address_space_limit_enforced": true,
+              "allowed_environment_variables": [
+                "LC_CTYPE",
+                "PATH",
+                "__CF_USER_TEXT_ENCODING"
+              ],
+              "conclusion": "POSIX subprocess limits bound CPU, address space, descriptors, environment, working directory, time, and output, but do not prove network denial; plain subprocess isolation is rejected as a hostile multi-tenant isolation boundary.",
+              "cpu_limit_seconds": 1,
+              "deadline_limit_enforced": true,
+              "deadline_seconds": 2,
+              "file_descriptor_limit": 16,
+              "hostile_multi_tenant_isolation_proven": false,
+              "isolated_working_directory": true,
+              "network_denial_proven": false,
+              "output_bytes": 201,
+              "output_limit_bytes": 4096,
+              "output_limit_enforced": true,
+              "output_probe_bytes": 4096,
+              "sanitized_environment": true,
+              "unexpected_environment_variables": [],
+              "visible_environment_variables": [
+                "LC_CTYPE",
+                "PATH",
+                "__CF_USER_TEXT_ENCODING"
+              ]
+            },
+            "process_max_rss_bytes": 29360128
+          },
+          {
+            "elapsed_ms": 2186.899,
+            "observation": {
+              "address_space_limit_bytes": 549755813888,
+              "address_space_limit_enforced": true,
+              "allowed_environment_variables": [
+                "LC_CTYPE",
+                "PATH",
+                "__CF_USER_TEXT_ENCODING"
+              ],
+              "conclusion": "POSIX subprocess limits bound CPU, address space, descriptors, environment, working directory, time, and output, but do not prove network denial; plain subprocess isolation is rejected as a hostile multi-tenant isolation boundary.",
+              "cpu_limit_seconds": 1,
+              "deadline_limit_enforced": true,
+              "deadline_seconds": 2,
+              "file_descriptor_limit": 16,
+              "hostile_multi_tenant_isolation_proven": false,
+              "isolated_working_directory": true,
+              "network_denial_proven": false,
+              "output_bytes": 201,
+              "output_limit_bytes": 4096,
+              "output_limit_enforced": true,
+              "output_probe_bytes": 4096,
+              "sanitized_environment": true,
+              "unexpected_environment_variables": [],
+              "visible_environment_variables": [
+                "LC_CTYPE",
+                "PATH",
+                "__CF_USER_TEXT_ENCODING"
+              ]
+            },
+            "process_max_rss_bytes": 29360128
+          }
+        ],
+        "schema_version": "1.0.0",
+        "tolerance_history": [],
+        "tolerances": {
+          "ambient_secret_variables": 0,
+          "deadline_overruns": 0
+        },
+        "validation_id": "VAL-READY-014",
+        "version": "1.0.0"
+      }
+    },
+    {
+      "baseline_result_path": "docs/research/benchmarks/blind-index.json",
+      "comparison": {
+        "baseline_conclusion": "pass",
+        "matches": true,
+        "method": "Compare plan-bound fields, declared sample count, and acceptance-rule conclusion; timing and randomized cryptographic observations are not required to be byte-identical.",
+        "plan_fields_match": true,
+        "rerun_conclusion": "pass",
+        "sample_count_matches": true
+      },
+      "prototype_id": "blind-index",
+      "raw_result": {
+        "acceptance_rule": "Same-scope equality matches; organization, field, and generation changes produce different fixed-length tokens within both resource budgets.",
+        "benchmark_id": "blind-index-benchmark",
+        "budgets": {
+          "max_elapsed_ms": 10000,
+          "max_process_rss_bytes": 536870912
+        },
+        "comparison_method": "Compare HMAC-SHA-256 equality tokens within and across organization, field, and generation scope.",
+        "conclusion": "pass",
+        "environment": {
+          "architecture": "arm64",
+          "cpu_count": 12,
+          "docker": "Docker version 28.5.1, build e180ab8",
+          "go": "go version go1.26.4 darwin/arm64",
+          "machine_class": "developer-workstation-12cpu-18gib",
+          "memory_bytes": 19327352832,
+          "os": "macOS-26.6.1-arm64-arm-64bit-Mach-O",
+          "postgres": {
+            "healthcheck": "pg_isready -p 5440",
+            "lifecycle_manifest": "services.yaml",
+            "major": 17,
+            "port": 5440,
+            "service": "postgres"
+          },
+          "python": "3.14.7",
+          "tested_commit": "69109a20ad1045cd2432a71a9fa216ffdc676458"
+        },
+        "feature_id": "storage-analysis-prototypes-and-evaluation-plan",
+        "inputs": [
+          "one synthetic normalized value",
+          "two organizations",
+          "two fields",
+          "two search-root generations"
+        ],
+        "limitations": [
+          "Equality and frequency leakage within a scope remains and is explicitly recorded."
+        ],
+        "plan_commit": "cfdf43bb49f3802137dc0ae887314ab7a8a01f58",
+        "plan_sha256": "5e12d9e04c0852c87c7b86a3e832e61f72e5e136af0792b29d4c7c3811432d76",
+        "prototype_id": "blind-index",
+        "sample_count": 3,
+        "samples": [
+          {
+            "elapsed_ms": 0.076,
+            "observation": {
+              "cross_field_separation": true,
+              "cross_org_separation": true,
+              "documented_leakage": "equality and frequency within one org/field/generation",
+              "rotation_changes_token": true,
+              "same_scope_equality": true,
+              "token_bytes": 32
+            },
+            "process_max_rss_bytes": 29327360
+          },
+          {
+            "elapsed_ms": 0.016,
+            "observation": {
+              "cross_field_separation": true,
+              "cross_org_separation": true,
+              "documented_leakage": "equality and frequency within one org/field/generation",
+              "rotation_changes_token": true,
+              "same_scope_equality": true,
+              "token_bytes": 32
+            },
+            "process_max_rss_bytes": 29327360
+          },
+          {
+            "elapsed_ms": 0.015,
+            "observation": {
+              "cross_field_separation": true,
+              "cross_org_separation": true,
+              "documented_leakage": "equality and frequency within one org/field/generation",
+              "rotation_changes_token": true,
+              "same_scope_equality": true,
+              "token_bytes": 32
+            },
+            "process_max_rss_bytes": 29327360
+          }
+        ],
+        "schema_version": "1.0.0",
+        "tolerance_history": [],
+        "tolerances": {
+          "cross_scope_token_collisions": 0
+        },
+        "validation_id": "VAL-READY-014",
+        "version": "1.0.0"
+      }
+    },
+    {
+      "baseline_result_path": "docs/research/benchmarks/compression-encryption.json",
+      "comparison": {
+        "baseline_conclusion": "pass",
+        "matches": true,
+        "method": "Compare plan-bound fields, declared sample count, and acceptance-rule conclusion; timing and randomized cryptographic observations are not required to be byte-identical.",
+        "plan_fields_match": true,
+        "rerun_conclusion": "pass",
+        "sample_count_matches": true
+      },
+      "prototype_id": "compression-encryption",
+      "raw_result": {
+        "acceptance_rule": "Every sample proves compression precedes AEAD, exact readback succeeds, a one-bit ciphertext mutation fails, and both resource budgets hold.",
+        "benchmark_id": "compression-encryption-benchmark",
+        "budgets": {
+          "max_elapsed_ms": 10000,
+          "max_process_rss_bytes": 536870912
+        },
+        "comparison_method": "Instrument compression output before AES-GCM, decrypt then decompress, compare source digest, and mutate the authentication tag.",
+        "conclusion": "pass",
+        "environment": {
+          "architecture": "arm64",
+          "cpu_count": 12,
+          "docker": "Docker version 28.5.1, build e180ab8",
+          "go": "go version go1.26.4 darwin/arm64",
+          "machine_class": "developer-workstation-12cpu-18gib",
+          "memory_bytes": 19327352832,
+          "os": "macOS-26.6.1-arm64-arm-64bit-Mach-O",
+          "postgres": {
+            "healthcheck": "pg_isready -p 5440",
+            "lifecycle_manifest": "services.yaml",
+            "major": 17,
+            "port": 5440,
+            "service": "postgres"
+          },
+          "python": "3.14.7",
+          "tested_commit": "69109a20ad1045cd2432a71a9fa216ffdc676458"
+        },
+        "feature_id": "storage-analysis-prototypes-and-evaluation-plan",
+        "inputs": [
+          "fixtures/research-corpus/giant.json",
+          "Go standard-library zlib",
+          "Go crypto/aes AES-256-GCM"
+        ],
+        "limitations": [
+          "The disposable deterministic nonce is safe only for this one-shot prototype and must not be copied into production."
+        ],
+        "plan_commit": "cfdf43bb49f3802137dc0ae887314ab7a8a01f58",
+        "plan_sha256": "5e12d9e04c0852c87c7b86a3e832e61f72e5e136af0792b29d4c7c3811432d76",
+        "prototype_id": "compression-encryption",
+        "sample_count": 3,
+        "samples": [
+          {
+            "elapsed_ms": 1034.477,
+            "observation": {
+              "ciphertext_bytes": 578230,
+              "ciphertext_sha256": "c27e80085c0a863a7435bbbdf2cffffd63066397f66b79a5024d4bbd669a6d74",
+              "compressed_bytes": 578214,
+              "compressed_sha256": "309c2198f2de8e260b797bdc1d84b4a0c9f680faaf64816e8c3a015acbeda27c",
+              "compression_before_aead": true,
+              "payload_ciphertext_sha256": "e933577bc6b771612926ad045b79ca2b5b34203c941dda79e17639a48aaf96fd",
+              "payload_unchanged": true,
+              "plaintext_bytes": 1100055,
+              "plaintext_sha256": "11b87e08e5f3a9c025819a0230cb8f4543187c58eea9edeae40f95a29282bee2",
+              "rewrap_changed": true,
+              "round_trip_exact": true,
+              "tamper_rejected": true
+            },
+            "process_max_rss_bytes": 29229056
+          },
+          {
+            "elapsed_ms": 272.617,
+            "observation": {
+              "ciphertext_bytes": 578230,
+              "ciphertext_sha256": "c27e80085c0a863a7435bbbdf2cffffd63066397f66b79a5024d4bbd669a6d74",
+              "compressed_bytes": 578214,
+              "compressed_sha256": "309c2198f2de8e260b797bdc1d84b4a0c9f680faaf64816e8c3a015acbeda27c",
+              "compression_before_aead": true,
+              "payload_ciphertext_sha256": "e933577bc6b771612926ad045b79ca2b5b34203c941dda79e17639a48aaf96fd",
+              "payload_unchanged": true,
+              "plaintext_bytes": 1100055,
+              "plaintext_sha256": "11b87e08e5f3a9c025819a0230cb8f4543187c58eea9edeae40f95a29282bee2",
+              "rewrap_changed": true,
+              "round_trip_exact": true,
+              "tamper_rejected": true
+            },
+            "process_max_rss_bytes": 29245440
+          },
+          {
+            "elapsed_ms": 118.677,
+            "observation": {
+              "ciphertext_bytes": 578230,
+              "ciphertext_sha256": "c27e80085c0a863a7435bbbdf2cffffd63066397f66b79a5024d4bbd669a6d74",
+              "compressed_bytes": 578214,
+              "compressed_sha256": "309c2198f2de8e260b797bdc1d84b4a0c9f680faaf64816e8c3a015acbeda27c",
+              "compression_before_aead": true,
+              "payload_ciphertext_sha256": "e933577bc6b771612926ad045b79ca2b5b34203c941dda79e17639a48aaf96fd",
+              "payload_unchanged": true,
+              "plaintext_bytes": 1100055,
+              "plaintext_sha256": "11b87e08e5f3a9c025819a0230cb8f4543187c58eea9edeae40f95a29282bee2",
+              "rewrap_changed": true,
+              "round_trip_exact": true,
+              "tamper_rejected": true
+            },
+            "process_max_rss_bytes": 29245440
+          }
+        ],
+        "schema_version": "1.0.0",
+        "tolerance_history": [],
+        "tolerances": {
+          "integrity_false_accepts": 0,
+          "round_trip_mismatches": 0
+        },
+        "validation_id": "VAL-READY-014",
+        "version": "1.0.0"
+      }
+    },
+    {
+      "baseline_result_path": "docs/research/benchmarks/decision-durability.json",
+      "comparison": {
+        "baseline_conclusion": "pass",
+        "matches": true,
+        "method": "Compare plan-bound fields, declared sample count, and acceptance-rule conclusion; timing and randomized cryptographic observations are not required to be byte-identical.",
+        "plan_fields_match": true,
+        "rerun_conclusion": "pass",
+        "sample_count_matches": true
+      },
+      "prototype_id": "decision-durability",
+      "raw_result": {
+        "acceptance_rule": "Every sample has exactly one committed decision, audit, and receipt, no faulted row, PostgreSQL 17 on 5440, and both resource budgets.",
+        "benchmark_id": "decision-durability-benchmark",
+        "budgets": {
+          "max_elapsed_ms": 15000,
+          "max_process_rss_bytes": 536870912
+        },
+        "comparison_method": "Use one PostgreSQL transaction for committed state and roll back the injected fault before receipt creation, then compare table counts.",
+        "conclusion": "pass",
+        "environment": {
+          "architecture": "arm64",
+          "cpu_count": 12,
+          "docker": "Docker version 28.5.1, build e180ab8",
+          "go": "go version go1.26.4 darwin/arm64",
+          "machine_class": "developer-workstation-12cpu-18gib",
+          "memory_bytes": 19327352832,
+          "os": "macOS-26.6.1-arm64-arm-64bit-Mach-O",
+          "postgres": {
+            "healthcheck": "pg_isready -p 5440",
+            "lifecycle_manifest": "services.yaml",
+            "major": 17,
+            "port": 5440,
+            "service": "postgres"
+          },
+          "python": "3.14.7",
+          "tested_commit": "69109a20ad1045cd2432a71a9fa216ffdc676458"
+        },
+        "feature_id": "storage-analysis-prototypes-and-evaluation-plan",
+        "inputs": [
+          "one committed decision/audit/receipt transaction",
+          "one injected rollback after decision and audit writes"
+        ],
+        "limitations": [
+          "Process-death and fsync fault injection remain production-stage durability tests."
+        ],
+        "plan_commit": "cfdf43bb49f3802137dc0ae887314ab7a8a01f58",
+        "plan_sha256": "5e12d9e04c0852c87c7b86a3e832e61f72e5e136af0792b29d4c7c3811432d76",
+        "prototype_id": "decision-durability",
+        "sample_count": 3,
+        "samples": [
+          {
+            "elapsed_ms": 272.003,
+            "observation": {
+              "audits": 1,
+              "decisions": 1,
+              "faulted_audits": 0,
+              "faulted_decisions": 0,
+              "faulted_receipts": 0,
+              "faulted_rows": 0,
+              "orphan_audits": 0,
+              "orphan_receipts": 0,
+              "port": 5440,
+              "postgres_version": "17.11 (Debian 17.11-1.pgdg12+2)",
+              "receipts": 1
+            },
+            "process_max_rss_bytes": 29360128
+          },
+          {
+            "elapsed_ms": 276.681,
+            "observation": {
+              "audits": 1,
+              "decisions": 1,
+              "faulted_audits": 0,
+              "faulted_decisions": 0,
+              "faulted_receipts": 0,
+              "faulted_rows": 0,
+              "orphan_audits": 0,
+              "orphan_receipts": 0,
+              "port": 5440,
+              "postgres_version": "17.11 (Debian 17.11-1.pgdg12+2)",
+              "receipts": 1
+            },
+            "process_max_rss_bytes": 29360128
+          },
+          {
+            "elapsed_ms": 254.384,
+            "observation": {
+              "audits": 1,
+              "decisions": 1,
+              "faulted_audits": 0,
+              "faulted_decisions": 0,
+              "faulted_receipts": 0,
+              "faulted_rows": 0,
+              "orphan_audits": 0,
+              "orphan_receipts": 0,
+              "port": 5440,
+              "postgres_version": "17.11 (Debian 17.11-1.pgdg12+2)",
+              "receipts": 1
+            },
+            "process_max_rss_bytes": 29360128
+          }
+        ],
+        "schema_version": "1.0.0",
+        "tolerance_history": [],
+        "tolerances": {
+          "faulted_rows": 0,
+          "orphan_receipts": 0
+        },
+        "validation_id": "VAL-READY-014",
+        "version": "1.0.0"
+      }
+    },
+    {
+      "baseline_result_path": "docs/research/benchmarks/exact-byte.json",
+      "comparison": {
+        "baseline_conclusion": "pass",
+        "matches": true,
+        "method": "Compare plan-bound fields, declared sample count, and acceptance-rule conclusion; timing and randomized cryptographic observations are not required to be byte-identical.",
+        "plan_fields_match": true,
+        "rerun_conclusion": "pass",
+        "sample_count_matches": true
+      },
+      "prototype_id": "exact-byte",
+      "raw_result": {
+        "acceptance_rule": "Every one of at least six byte classes round-trips exactly in every sample within both resource budgets.",
+        "benchmark_id": "exact-byte-benchmark",
+        "budgets": {
+          "max_elapsed_ms": 10000,
+          "max_process_rss_bytes": 536870912
+        },
+        "comparison_method": "Write each source byte sequence to a new file and compare the exact readback bytes and aggregate SHA-256.",
+        "conclusion": "pass",
+        "environment": {
+          "architecture": "arm64",
+          "cpu_count": 12,
+          "docker": "Docker version 28.5.1, build e180ab8",
+          "go": "go version go1.26.4 darwin/arm64",
+          "machine_class": "developer-workstation-12cpu-18gib",
+          "memory_bytes": 19327352832,
+          "os": "macOS-26.6.1-arm64-arm-64bit-Mach-O",
+          "postgres": {
+            "healthcheck": "pg_isready -p 5440",
+            "lifecycle_manifest": "services.yaml",
+            "major": 17,
+            "port": 5440,
+            "service": "postgres"
+          },
+          "python": "3.14.7",
+          "tested_commit": "69109a20ad1045cd2432a71a9fa216ffdc676458"
+        },
+        "feature_id": "storage-analysis-prototypes-and-evaluation-plan",
+        "inputs": [
+          "malformed JSON",
+          "malformed JSONL",
+          "provider stream",
+          "empty",
+          "invalid UTF-8 and CRLF",
+          "all byte values"
+        ],
+        "limitations": [
+          "This prototype tests filesystem custody, not HTTP transfer framing."
+        ],
+        "plan_commit": "cfdf43bb49f3802137dc0ae887314ab7a8a01f58",
+        "plan_sha256": "5e12d9e04c0852c87c7b86a3e832e61f72e5e136af0792b29d4c7c3811432d76",
+        "prototype_id": "exact-byte",
+        "sample_count": 3,
+        "samples": [
+          {
+            "elapsed_ms": 3.923,
+            "observation": {
+              "aggregate_sha256": "bb25c711d6ba39ad50b1dc084ebb37427dbc97dbbe9d16beb1b4cf04ca142de9",
+              "all_exact": true,
+              "classes": 6
+            },
+            "process_max_rss_bytes": 29229056
+          },
+          {
+            "elapsed_ms": 1.541,
+            "observation": {
+              "aggregate_sha256": "bb25c711d6ba39ad50b1dc084ebb37427dbc97dbbe9d16beb1b4cf04ca142de9",
+              "all_exact": true,
+              "classes": 6
+            },
+            "process_max_rss_bytes": 29229056
+          },
+          {
+            "elapsed_ms": 1.157,
+            "observation": {
+              "aggregate_sha256": "bb25c711d6ba39ad50b1dc084ebb37427dbc97dbbe9d16beb1b4cf04ca142de9",
+              "all_exact": true,
+              "classes": 6
+            },
+            "process_max_rss_bytes": 29229056
+          }
+        ],
+        "schema_version": "1.0.0",
+        "tolerance_history": [],
+        "tolerances": {
+          "byte_mismatch_count": 0
+        },
+        "validation_id": "VAL-READY-014",
+        "version": "1.0.0"
+      }
+    },
+    {
+      "baseline_result_path": "docs/research/benchmarks/giant-stream.json",
+      "comparison": {
+        "baseline_conclusion": "pass",
+        "matches": true,
+        "method": "Compare plan-bound fields, declared sample count, and acceptance-rule conclusion; timing and randomized cryptographic observations are not required to be byte-identical.",
+        "plan_fields_match": true,
+        "rerun_conclusion": "pass",
+        "sample_count_matches": true
+      },
+      "prototype_id": "giant-stream",
+      "raw_result": {
+        "acceptance_rule": "All samples use 65536-byte bounded reads, preserve byte count, match the independent digest, and remain within both resource budgets.",
+        "benchmark_id": "giant-stream-benchmark",
+        "budgets": {
+          "max_elapsed_ms": 10000,
+          "max_process_rss_bytes": 536870912
+        },
+        "comparison_method": "Compare incremental SHA-256 and byte count with an independent whole-file SHA-256.",
+        "conclusion": "pass",
+        "environment": {
+          "architecture": "arm64",
+          "cpu_count": 12,
+          "docker": "Docker version 28.5.1, build e180ab8",
+          "go": "go version go1.26.4 darwin/arm64",
+          "machine_class": "developer-workstation-12cpu-18gib",
+          "memory_bytes": 19327352832,
+          "os": "macOS-26.6.1-arm64-arm-64bit-Mach-O",
+          "postgres": {
+            "healthcheck": "pg_isready -p 5440",
+            "lifecycle_manifest": "services.yaml",
+            "major": 17,
+            "port": 5440,
+            "service": "postgres"
+          },
+          "python": "3.14.7",
+          "tested_commit": "69109a20ad1045cd2432a71a9fa216ffdc676458"
+        },
+        "feature_id": "storage-analysis-prototypes-and-evaluation-plan",
+        "inputs": [
+          "fixtures/research-corpus/giant.json",
+          "65536-byte read blocks"
+        ],
+        "limitations": [
+          "The committed 2 MiB synthetic fixture is a bounded proof, not a 1 GiB release-load result."
+        ],
+        "plan_commit": "cfdf43bb49f3802137dc0ae887314ab7a8a01f58",
+        "plan_sha256": "5e12d9e04c0852c87c7b86a3e832e61f72e5e136af0792b29d4c7c3811432d76",
+        "prototype_id": "giant-stream",
+        "sample_count": 3,
+        "samples": [
+          {
+            "elapsed_ms": 1.584,
+            "observation": {
+              "bounded_chunk_bytes": 65536,
+              "bytes": 1100055,
+              "chunks": 17,
+              "exact_digest": true,
+              "sha256": "11b87e08e5f3a9c025819a0230cb8f4543187c58eea9edeae40f95a29282bee2"
+            },
+            "process_max_rss_bytes": 29229056
+          },
+          {
+            "elapsed_ms": 3.399,
+            "observation": {
+              "bounded_chunk_bytes": 65536,
+              "bytes": 1100055,
+              "chunks": 17,
+              "exact_digest": true,
+              "sha256": "11b87e08e5f3a9c025819a0230cb8f4543187c58eea9edeae40f95a29282bee2"
+            },
+            "process_max_rss_bytes": 29229056
+          },
+          {
+            "elapsed_ms": 1.807,
+            "observation": {
+              "bounded_chunk_bytes": 65536,
+              "bytes": 1100055,
+              "chunks": 17,
+              "exact_digest": true,
+              "sha256": "11b87e08e5f3a9c025819a0230cb8f4543187c58eea9edeae40f95a29282bee2"
+            },
+            "process_max_rss_bytes": 29229056
+          }
+        ],
+        "schema_version": "1.0.0",
+        "tolerance_history": [],
+        "tolerances": {
+          "digest_mismatch_count": 0,
+          "unbounded_read_count": 0
+        },
+        "validation_id": "VAL-READY-014",
+        "version": "1.0.0"
+      }
+    },
+    {
+      "baseline_result_path": "docs/research/benchmarks/key-rotation.json",
+      "comparison": {
+        "baseline_conclusion": "pass",
+        "matches": true,
+        "method": "Compare plan-bound fields, declared sample count, and acceptance-rule conclusion; timing and randomized cryptographic observations are not required to be byte-identical.",
+        "plan_fields_match": true,
+        "rerun_conclusion": "pass",
+        "sample_count_matches": true
+      },
+      "prototype_id": "key-rotation",
+      "raw_result": {
+        "acceptance_rule": "Wrapped material changes while payload ciphertext and source identity remain unchanged, and every sample stays within both resource budgets.",
+        "benchmark_id": "key-rotation-benchmark",
+        "budgets": {
+          "max_elapsed_ms": 10000,
+          "max_process_rss_bytes": 536870912
+        },
+        "comparison_method": "Wrap one DEK under two AES-GCM roots and compare wrapped material, payload ciphertext digest, source digest, and checkpoint.",
+        "conclusion": "pass",
+        "environment": {
+          "architecture": "arm64",
+          "cpu_count": 12,
+          "docker": "Docker version 28.5.1, build e180ab8",
+          "go": "go version go1.26.4 darwin/arm64",
+          "machine_class": "developer-workstation-12cpu-18gib",
+          "memory_bytes": 19327352832,
+          "os": "macOS-26.6.1-arm64-arm-64bit-Mach-O",
+          "postgres": {
+            "healthcheck": "pg_isready -p 5440",
+            "lifecycle_manifest": "services.yaml",
+            "major": 17,
+            "port": 5440,
+            "service": "postgres"
+          },
+          "python": "3.14.7",
+          "tested_commit": "69109a20ad1045cd2432a71a9fa216ffdc676458"
+        },
+        "feature_id": "storage-analysis-prototypes-and-evaluation-plan",
+        "inputs": [
+          "one synthetic payload DEK",
+          "old and new synthetic wrapping roots",
+          "one immutable payload ciphertext"
+        ],
+        "limitations": [
+          "No cloud KMS call is made; provider conformance remains later work."
+        ],
+        "plan_commit": "cfdf43bb49f3802137dc0ae887314ab7a8a01f58",
+        "plan_sha256": "5e12d9e04c0852c87c7b86a3e832e61f72e5e136af0792b29d4c7c3811432d76",
+        "prototype_id": "key-rotation",
+        "sample_count": 3,
+        "samples": [
+          {
+            "elapsed_ms": 115.457,
+            "observation": {
+              "generations": [
+                1,
+                2
+              ],
+              "payload_ciphertext_sha256": "e933577bc6b771612926ad045b79ca2b5b34203c941dda79e17639a48aaf96fd",
+              "payload_ciphertext_unchanged": true,
+              "resume_checkpoint": 1,
+              "rewrap_changed": true,
+              "source_sha256": "11b87e08e5f3a9c025819a0230cb8f4543187c58eea9edeae40f95a29282bee2"
+            },
+            "process_max_rss_bytes": 29360128
+          },
+          {
+            "elapsed_ms": 114.812,
+            "observation": {
+              "generations": [
+                1,
+                2
+              ],
+              "payload_ciphertext_sha256": "e933577bc6b771612926ad045b79ca2b5b34203c941dda79e17639a48aaf96fd",
+              "payload_ciphertext_unchanged": true,
+              "resume_checkpoint": 1,
+              "rewrap_changed": true,
+              "source_sha256": "11b87e08e5f3a9c025819a0230cb8f4543187c58eea9edeae40f95a29282bee2"
+            },
+            "process_max_rss_bytes": 29360128
+          },
+          {
+            "elapsed_ms": 119.131,
+            "observation": {
+              "generations": [
+                1,
+                2
+              ],
+              "payload_ciphertext_sha256": "e933577bc6b771612926ad045b79ca2b5b34203c941dda79e17639a48aaf96fd",
+              "payload_ciphertext_unchanged": true,
+              "resume_checkpoint": 1,
+              "rewrap_changed": true,
+              "source_sha256": "11b87e08e5f3a9c025819a0230cb8f4543187c58eea9edeae40f95a29282bee2"
+            },
+            "process_max_rss_bytes": 29360128
+          }
+        ],
+        "schema_version": "1.0.0",
+        "tolerance_history": [],
+        "tolerances": {
+          "payload_ciphertext_changes": 0,
+          "source_digest_changes": 0
+        },
+        "validation_id": "VAL-READY-014",
+        "version": "1.0.0"
+      }
+    },
+    {
+      "baseline_result_path": "docs/research/benchmarks/offline-replay.json",
+      "comparison": {
+        "baseline_conclusion": "pass",
+        "matches": true,
+        "method": "Compare plan-bound fields, declared sample count, and acceptance-rule conclusion; timing and randomized cryptographic observations are not required to be byte-identical.",
+        "plan_fields_match": true,
+        "rerun_conclusion": "pass",
+        "sample_count_matches": true
+      },
+      "prototype_id": "offline-replay",
+      "raw_result": {
+        "acceptance_rule": "Recorded replay digests match, late replay differs, all three runs remain, PostgreSQL 17 on 5440, and both resource budgets hold.",
+        "benchmark_id": "offline-replay-benchmark",
+        "budgets": {
+          "max_elapsed_ms": 15000,
+          "max_process_rss_bytes": 536870912
+        },
+        "comparison_method": "Digest ordered immutable snapshots in PostgreSQL, repeat the pinned snapshot, add a late event, and append a superseding run.",
+        "conclusion": "pass",
+        "environment": {
+          "architecture": "arm64",
+          "cpu_count": 12,
+          "docker": "Docker version 28.5.1, build e180ab8",
+          "go": "go version go1.26.4 darwin/arm64",
+          "machine_class": "developer-workstation-12cpu-18gib",
+          "memory_bytes": 19327352832,
+          "os": "macOS-26.6.1-arm64-arm-64bit-Mach-O",
+          "postgres": {
+            "healthcheck": "pg_isready -p 5440",
+            "lifecycle_manifest": "services.yaml",
+            "major": 17,
+            "port": 5440,
+            "service": "postgres"
+          },
+          "python": "3.14.7",
+          "tested_commit": "69109a20ad1045cd2432a71a9fa216ffdc676458"
+        },
+        "feature_id": "storage-analysis-prototypes-and-evaluation-plan",
+        "inputs": [
+          "three ordered synthetic events",
+          "two identical recorded replays",
+          "one late event and superseding replay"
+        ],
+        "limitations": [
+          "Tenant fairness and crash recovery need larger production-stage fault tests."
+        ],
+        "plan_commit": "cfdf43bb49f3802137dc0ae887314ab7a8a01f58",
+        "plan_sha256": "5e12d9e04c0852c87c7b86a3e832e61f72e5e136af0792b29d4c7c3811432d76",
+        "prototype_id": "offline-replay",
+        "sample_count": 3,
+        "samples": [
+          {
+            "elapsed_ms": 319.026,
+            "observation": {
+              "history_preserved": true,
+              "late_revision": {
+                "digest": "c4d31be3e11e03eebafdebc87ca271ba",
+                "id": 3,
+                "includes_late_event": true,
+                "supersedes": 2,
+                "watermark": 3
+              },
+              "late_revision_changed": true,
+              "pinned_replay_digests": [
+                "2ab3dc3809c96bbbc1a504cd2299b607",
+                "2ab3dc3809c96bbbc1a504cd2299b607"
+              ],
+              "port": 5440,
+              "postgres_version": "17.11 (Debian 17.11-1.pgdg12+2)",
+              "recorded_replay_equal": true,
+              "run_history": [
+                {
+                  "digest": "2ab3dc3809c96bbbc1a504cd2299b607",
+                  "id": 1,
+                  "supersedes": null,
+                  "watermark": 3
+                },
+                {
+                  "digest": "2ab3dc3809c96bbbc1a504cd2299b607",
+                  "id": 2,
+                  "supersedes": 1,
+                  "watermark": 3
+                },
+                {
+                  "digest": "c4d31be3e11e03eebafdebc87ca271ba",
+                  "id": 3,
+                  "supersedes": 2,
+                  "watermark": 3
+                }
+              ],
+              "runs": 3
+            },
+            "process_max_rss_bytes": 29360128
+          },
+          {
+            "elapsed_ms": 260.506,
+            "observation": {
+              "history_preserved": true,
+              "late_revision": {
+                "digest": "c4d31be3e11e03eebafdebc87ca271ba",
+                "id": 3,
+                "includes_late_event": true,
+                "supersedes": 2,
+                "watermark": 3
+              },
+              "late_revision_changed": true,
+              "pinned_replay_digests": [
+                "2ab3dc3809c96bbbc1a504cd2299b607",
+                "2ab3dc3809c96bbbc1a504cd2299b607"
+              ],
+              "port": 5440,
+              "postgres_version": "17.11 (Debian 17.11-1.pgdg12+2)",
+              "recorded_replay_equal": true,
+              "run_history": [
+                {
+                  "digest": "2ab3dc3809c96bbbc1a504cd2299b607",
+                  "id": 1,
+                  "supersedes": null,
+                  "watermark": 3
+                },
+                {
+                  "digest": "2ab3dc3809c96bbbc1a504cd2299b607",
+                  "id": 2,
+                  "supersedes": 1,
+                  "watermark": 3
+                },
+                {
+                  "digest": "c4d31be3e11e03eebafdebc87ca271ba",
+                  "id": 3,
+                  "supersedes": 2,
+                  "watermark": 3
+                }
+              ],
+              "runs": 3
+            },
+            "process_max_rss_bytes": 29360128
+          },
+          {
+            "elapsed_ms": 272.819,
+            "observation": {
+              "history_preserved": true,
+              "late_revision": {
+                "digest": "c4d31be3e11e03eebafdebc87ca271ba",
+                "id": 3,
+                "includes_late_event": true,
+                "supersedes": 2,
+                "watermark": 3
+              },
+              "late_revision_changed": true,
+              "pinned_replay_digests": [
+                "2ab3dc3809c96bbbc1a504cd2299b607",
+                "2ab3dc3809c96bbbc1a504cd2299b607"
+              ],
+              "port": 5440,
+              "postgres_version": "17.11 (Debian 17.11-1.pgdg12+2)",
+              "recorded_replay_equal": true,
+              "run_history": [
+                {
+                  "digest": "2ab3dc3809c96bbbc1a504cd2299b607",
+                  "id": 1,
+                  "supersedes": null,
+                  "watermark": 3
+                },
+                {
+                  "digest": "2ab3dc3809c96bbbc1a504cd2299b607",
+                  "id": 2,
+                  "supersedes": 1,
+                  "watermark": 3
+                },
+                {
+                  "digest": "c4d31be3e11e03eebafdebc87ca271ba",
+                  "id": 3,
+                  "supersedes": 2,
+                  "watermark": 3
+                }
+              ],
+              "runs": 3
+            },
+            "process_max_rss_bytes": 29376512
+          }
+        ],
+        "schema_version": "1.0.0",
+        "tolerance_history": [],
+        "tolerances": {
+          "lost_history_rows": 0,
+          "recorded_replay_digest_delta": 0
+        },
+        "validation_id": "VAL-READY-014",
+        "version": "1.0.0"
+      }
+    },
+    {
+      "baseline_result_path": "docs/research/benchmarks/postgres-storage.json",
+      "comparison": {
+        "baseline_conclusion": "pass",
+        "matches": true,
+        "method": "Compare plan-bound fields, declared sample count, and acceptance-rule conclusion; timing and randomized cryptographic observations are not required to be byte-identical.",
+        "plan_fields_match": true,
+        "rerun_conclusion": "pass",
+        "sample_count_matches": true
+      },
+      "prototype_id": "postgres-storage",
+      "raw_result": {
+        "acceptance_rule": "All samples observe PostgreSQL 17 on port 5440, 200 rows, two partitions, no content plaintext column, pruning evidence, and both resource budgets.",
+        "benchmark_id": "postgres-storage-benchmark",
+        "budgets": {
+          "max_elapsed_ms": 15000,
+          "max_process_rss_bytes": 536870912
+        },
+        "comparison_method": "Create disposable PostgreSQL 17 partitions, insert bytea-only synthetic ciphertext, compare row/partition counts and inspect pruning and schema columns.",
+        "conclusion": "pass",
+        "environment": {
+          "architecture": "arm64",
+          "cpu_count": 12,
+          "docker": "Docker version 28.5.1, build e180ab8",
+          "go": "go version go1.26.4 darwin/arm64",
+          "machine_class": "developer-workstation-12cpu-18gib",
+          "memory_bytes": 19327352832,
+          "os": "macOS-26.6.1-arm64-arm-64bit-Mach-O",
+          "postgres": {
+            "healthcheck": "pg_isready -p 5440",
+            "lifecycle_manifest": "services.yaml",
+            "major": 17,
+            "port": 5440,
+            "service": "postgres"
+          },
+          "python": "3.14.7",
+          "tested_commit": "69109a20ad1045cd2432a71a9fa216ffdc676458"
+        },
+        "feature_id": "storage-analysis-prototypes-and-evaluation-plan",
+        "inputs": [
+          "200 synthetic ciphertext rows",
+          "two monthly range partitions",
+          "one partition-prunable query"
+        ],
+        "limitations": [
+          "The row count is a research proof, not production sizing guidance."
+        ],
+        "plan_commit": "cfdf43bb49f3802137dc0ae887314ab7a8a01f58",
+        "plan_sha256": "5e12d9e04c0852c87c7b86a3e832e61f72e5e136af0792b29d4c7c3811432d76",
+        "prototype_id": "postgres-storage",
+        "sample_count": 3,
+        "samples": [
+          {
+            "elapsed_ms": 331.805,
+            "observation": {
+              "ciphertext_nonempty_rows": 200,
+              "ciphertext_only_columns": true,
+              "content_column": "ciphertext",
+              "content_column_type": "bytea",
+              "executed_partition": "chunks_2026_08",
+              "explain_lines": [
+                "Seq Scan on chunks_2026_08 chunks",
+                "  Filter: (received_date = '2026-08-21'::date)"
+              ],
+              "forbidden_plaintext_columns": 0,
+              "partition_pruning": true,
+              "partitions": 2,
+              "port": 5440,
+              "postgres_version": "17.11 (Debian 17.11-1.pgdg12+2)",
+              "pruned_partition": "chunks_2026_09",
+              "rows": 200
+            },
+            "process_max_rss_bytes": 29294592
+          },
+          {
+            "elapsed_ms": 268.148,
+            "observation": {
+              "ciphertext_nonempty_rows": 200,
+              "ciphertext_only_columns": true,
+              "content_column": "ciphertext",
+              "content_column_type": "bytea",
+              "executed_partition": "chunks_2026_08",
+              "explain_lines": [
+                "Seq Scan on chunks_2026_08 chunks",
+                "  Filter: (received_date = '2026-08-21'::date)"
+              ],
+              "forbidden_plaintext_columns": 0,
+              "partition_pruning": true,
+              "partitions": 2,
+              "port": 5440,
+              "postgres_version": "17.11 (Debian 17.11-1.pgdg12+2)",
+              "pruned_partition": "chunks_2026_09",
+              "rows": 200
+            },
+            "process_max_rss_bytes": 29327360
+          },
+          {
+            "elapsed_ms": 258.512,
+            "observation": {
+              "ciphertext_nonempty_rows": 200,
+              "ciphertext_only_columns": true,
+              "content_column": "ciphertext",
+              "content_column_type": "bytea",
+              "executed_partition": "chunks_2026_08",
+              "explain_lines": [
+                "Seq Scan on chunks_2026_08 chunks",
+                "  Filter: (received_date = '2026-08-21'::date)"
+              ],
+              "forbidden_plaintext_columns": 0,
+              "partition_pruning": true,
+              "partitions": 2,
+              "port": 5440,
+              "postgres_version": "17.11 (Debian 17.11-1.pgdg12+2)",
+              "pruned_partition": "chunks_2026_09",
+              "rows": 200
+            },
+            "process_max_rss_bytes": 29327360
+          }
+        ],
+        "schema_version": "1.0.0",
+        "tolerance_history": [],
+        "tolerances": {
+          "row_count_delta": 0,
+          "unexpected_plaintext_columns": 0
+        },
+        "validation_id": "VAL-READY-014",
+        "version": "1.0.0"
+      }
+    }
+  ],
+  "sample_count": 27,
+  "schema_version": "1.0.0",
+  "source_commit": "69109a20ad1045cd2432a71a9fa216ffdc676458",
+  "status": "pass",
+  "validation_id": "VAL-READY-014"
+}

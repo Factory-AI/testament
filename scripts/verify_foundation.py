@@ -9,8 +9,10 @@ import fnmatch
 import hashlib
 import json
 import re
+import shlex
 import sys
 from pathlib import Path
+import tomllib
 from typing import Any
 
 
@@ -33,7 +35,14 @@ REQUIRED_PUBLIC_DOCUMENTS = {
     "NOTICE",
 }
 APACHE_LICENSE_SHA256 = "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4"
-DEPENDENCY_FILES = {"Cargo.toml", "go.mod", "package.json", "requirements.txt"}
+DEPENDENCY_FILES = ("Cargo.toml", "go.mod", "package.json", "requirements.txt")
+PACKAGE_DEPENDENCY_GROUPS = (
+    "dependencies",
+    "devDependencies",
+    "optionalDependencies",
+    "peerDependencies",
+)
+CARGO_DEPENDENCY_GROUPS = ("dependencies", "dev-dependencies", "build-dependencies")
 REQUIRED_SCAN_PATHS = {
     "README.md",
     "CHARTER.md",
@@ -129,6 +138,233 @@ def require_list(
         )
     )
     return []
+
+
+def dependency_record(manifest: str, dependency_id: str, version: str) -> tuple[str, str, str]:
+    if not dependency_id or not version:
+        raise ValueError("dependency identifiers and versions must be non-empty")
+    return manifest, dependency_id, version
+
+
+def cargo_version(value: Any) -> str:
+    if isinstance(value, str) and value:
+        return value
+    if not isinstance(value, dict):
+        raise ValueError("Cargo dependency declarations must be strings or tables")
+    version = value.get("version")
+    if isinstance(version, str) and version:
+        return version
+    path = value.get("path")
+    if isinstance(path, str) and path:
+        return f"path:{path}"
+    git = value.get("git")
+    if isinstance(git, str) and git:
+        revision = next(
+            (
+                value[field]
+                for field in ("rev", "tag", "branch")
+                if isinstance(value.get(field), str) and value[field]
+            ),
+            "",
+        )
+        return f"git:{git}{f'#{revision}' if revision else ''}"
+    raise ValueError("Cargo dependency tables must declare version, path, or git")
+
+
+def cargo_dependency(
+    path: Path,
+    dependency_id: str,
+    value: Any,
+    workspace_dependencies: dict[str, Any],
+) -> tuple[str, str, str]:
+    if not isinstance(dependency_id, str) or not dependency_id:
+        raise ValueError("Cargo dependency identifiers must be non-empty strings")
+    if isinstance(value, dict) and value.get("workspace") is True:
+        try:
+            value = workspace_dependencies[dependency_id]
+        except KeyError as error:
+            raise ValueError(
+                f"Cargo workspace dependency {dependency_id} is not declared"
+            ) from error
+    package_id = (
+        value.get("package", dependency_id)
+        if isinstance(value, dict)
+        else dependency_id
+    )
+    if not isinstance(package_id, str) or not package_id:
+        raise ValueError("Cargo package identifiers must be non-empty strings")
+    return dependency_record(path.name, package_id, cargo_version(value))
+
+
+def cargo_dependencies(path: Path) -> list[tuple[str, str, str]]:
+    with path.open("rb") as handle:
+        document = tomllib.load(handle)
+    records: list[tuple[str, str, str]] = []
+    workspace = document.get("workspace")
+    if workspace is not None and not isinstance(workspace, dict):
+        raise ValueError("Cargo workspace must be a table")
+    workspace_dependencies = (
+        workspace.get("dependencies", {}) if isinstance(workspace, dict) else {}
+    )
+    if not isinstance(workspace_dependencies, dict):
+        raise ValueError("Cargo workspace dependencies must be a table")
+
+    def collect(container: Any) -> None:
+        if container is None:
+            return
+        if not isinstance(container, dict):
+            raise ValueError("Cargo dependency group must be a table")
+        for group in CARGO_DEPENDENCY_GROUPS:
+            dependencies = container.get(group)
+            if dependencies is None:
+                continue
+            if not isinstance(dependencies, dict):
+                raise ValueError(f"Cargo {group} must be a table")
+            records.extend(
+                cargo_dependency(
+                    path,
+                    dependency_id,
+                    value,
+                    workspace_dependencies,
+                )
+                for dependency_id, value in dependencies.items()
+            )
+
+    collect(document)
+    if workspace is not None:
+        collect(workspace)
+    targets = document.get("target")
+    if targets is not None:
+        if not isinstance(targets, dict):
+            raise ValueError("Cargo target must be a table")
+        for target in targets.values():
+            collect(target)
+    return records
+
+
+def go_dependencies(path: Path) -> list[tuple[str, str, str]]:
+    records: list[tuple[str, str, str]] = []
+    in_require_block = False
+    for line_number, raw_line in enumerate(
+        path.read_text(encoding="utf-8").splitlines(), start=1
+    ):
+        line = raw_line.split("//", 1)[0].strip()
+        if not line:
+            continue
+        if in_require_block:
+            if line == ")":
+                in_require_block = False
+                continue
+            tokens = shlex.split(line)
+        elif line == "require (":
+            in_require_block = True
+            continue
+        elif line.startswith("require "):
+            tokens = shlex.split(line[len("require ") :])
+        else:
+            continue
+        if len(tokens) != 2:
+            raise ValueError(f"invalid go.mod require declaration on line {line_number}")
+        records.append(dependency_record(path.name, tokens[0], tokens[1]))
+    if in_require_block:
+        raise ValueError("unterminated go.mod require block")
+    return records
+
+
+def package_dependencies(path: Path) -> list[tuple[str, str, str]]:
+    document = json.loads(path.read_text(encoding="utf-8"))
+    if not isinstance(document, dict):
+        raise ValueError("package.json root must be an object")
+    records: list[tuple[str, str, str]] = []
+    for group in PACKAGE_DEPENDENCY_GROUPS:
+        dependencies = document.get(group)
+        if dependencies is None:
+            continue
+        if not isinstance(dependencies, dict):
+            raise ValueError(f"package.json {group} must be an object")
+        for dependency_id, version in dependencies.items():
+            if not isinstance(dependency_id, str) or not isinstance(version, str):
+                raise ValueError(f"package.json {group} entries must be string pairs")
+            records.append(dependency_record(path.name, dependency_id, version))
+    return records
+
+
+def requirement_dependencies(path: Path) -> list[tuple[str, str, str]]:
+    records: list[tuple[str, str, str]] = []
+    for line_number, raw_line in enumerate(
+        path.read_text(encoding="utf-8").splitlines(), start=1
+    ):
+        line = re.split(r"\s+#", raw_line, maxsplit=1)[0].strip()
+        if not line or line.startswith("#"):
+            continue
+        if line.startswith("-"):
+            raise ValueError(
+                f"unsupported requirements.txt directive on line {line_number}"
+            )
+        declaration = line.split(";", 1)[0].strip()
+        match = re.fullmatch(
+            r"([A-Za-z0-9][A-Za-z0-9_.-]*)(?:\[[^\]]+\])?\s*(.*)",
+            declaration,
+        )
+        if not match:
+            raise ValueError(
+                f"invalid requirements.txt declaration on line {line_number}"
+            )
+        dependency_id, version = match.groups()
+        version = version.strip()
+        if version.startswith("@"):
+            source = version[1:].strip()
+            if not source or any(character.isspace() for character in source):
+                raise ValueError(
+                    f"invalid requirements.txt direct reference on line {line_number}"
+                )
+            version = f"@ {source}"
+        elif version:
+            specifier = re.compile(
+                r"(?:===|~=|==|!=|<=|>=|<|>)"
+                r"\s*[A-Za-z0-9][A-Za-z0-9.*+!_-]*"
+            )
+            if not re.fullmatch(
+                rf"{specifier.pattern}(?:\s*,\s*{specifier.pattern})*",
+                version,
+            ):
+                raise ValueError(
+                    f"invalid requirements.txt version on line {line_number}"
+                )
+            version = re.sub(r"\s+", "", version)
+            if version.startswith("==") and "," not in version:
+                version = version[2:]
+        records.append(dependency_record(path.name, dependency_id, version or "*"))
+    return records
+
+
+def declared_dependencies(
+    root: Path, problems: list[dict[str, str]]
+) -> list[tuple[str, str, str]]:
+    parsers = {
+        "Cargo.toml": cargo_dependencies,
+        "go.mod": go_dependencies,
+        "package.json": package_dependencies,
+        "requirements.txt": requirement_dependencies,
+    }
+    records: list[tuple[str, str, str]] = []
+    for manifest in DEPENDENCY_FILES:
+        path = root / manifest
+        if not path.is_file():
+            continue
+        try:
+            records.extend(parsers[manifest](path))
+        except (OSError, UnicodeError, ValueError, json.JSONDecodeError, tomllib.TOMLDecodeError) as error:
+            problems.append(
+                issue(
+                    "VAL-READY-002",
+                    "invalid_dependency_manifest",
+                    manifest,
+                    str(error),
+                    f"repair {manifest} and rerun make verify-foundation",
+                )
+            )
+    return sorted(set(records))
 
 
 def validate_license(root: Path, problems: list[dict[str, str]]) -> None:
@@ -239,8 +475,9 @@ def validate_license(root: Path, problems: list[dict[str, str]]) -> None:
         "VAL-READY-002",
         problems,
     )
-    manifests = sorted(path.name for path in (root / name for name in DEPENDENCY_FILES) if path.is_file())
-    if manifests and not dependencies:
+    manifest_dependencies = declared_dependencies(root, problems)
+    manifests = sorted({record[0] for record in manifest_dependencies})
+    if manifest_dependencies and not dependencies:
         problems.append(
             issue(
                 "VAL-READY-002",
@@ -250,6 +487,7 @@ def validate_license(root: Path, problems: list[dict[str, str]]) -> None:
                 "inventory every direct and transitive dependency with its SPDX expression",
             )
         )
+    inventory_records: set[tuple[str, str, str]] = set()
     for dependency in dependencies:
         if not isinstance(dependency, dict):
             problems.append(
@@ -273,6 +511,17 @@ def validate_license(root: Path, problems: list[dict[str, str]]) -> None:
                         "complete the dependency inventory entry",
                     )
                 )
+        if all(
+            isinstance(dependency.get(field), str) and dependency[field]
+            for field in ("id", "version", "manifest")
+        ):
+            inventory_records.add(
+                (
+                    dependency["manifest"],
+                    dependency["id"],
+                    dependency["version"],
+                )
+            )
         license_expression = str(dependency.get("license", ""))
         for token in forbidden:
             if token.lower() in license_expression.lower():
@@ -285,6 +534,20 @@ def validate_license(root: Path, problems: list[dict[str, str]]) -> None:
                         "remove or replace the forbidden dependency",
                     )
                 )
+
+    for manifest, dependency_id, version in manifest_dependencies:
+        if (manifest, dependency_id, version) not in inventory_records:
+            problems.append(
+                issue(
+                    "VAL-READY-002",
+                    "missing_dependency_inventory_entry",
+                    manifest,
+                    f"Dependency {dependency_id}@{version} declared in {manifest} "
+                    "is missing from the licensing inventory",
+                    "add the dependency with its exact manifest, version, usage, "
+                    "and SPDX license to policy/artifact-licensing.json",
+                )
+            )
 
 
 def scan_files(root: Path, patterns: list[str]) -> list[Path]:

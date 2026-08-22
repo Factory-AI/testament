@@ -49,24 +49,24 @@
     },
     {
       "id": "generated",
-      "paths": ["gen/**", "**/*.generated.*"],
+      "paths": ["gen/**", "generated/**", "**/*.generated.*"],
       "license": "Apache-2.0 unless the generator or source requires compatible attribution",
       "notice_required": true,
-      "current_status": "none"
+      "current_status": "generated Apache-2.0 repository contract index"
     },
     {
       "id": "documentation",
-      "paths": ["README.md", "CHARTER.md", "TERMINOLOGY.md", "docs/**"],
+      "paths": ["README.md", "CHARTER.md", "TERMINOLOGY.md", "docs/**", "policy/**", "schemas/**"],
       "license": "Apache-2.0",
       "notice_required": true,
-      "current_status": "project documentation"
+      "current_status": "project documentation and machine-readable research contracts"
     },
     {
       "id": "fixtures",
       "paths": ["fixtures/**", "testdata/**"],
       "license": "Apache-2.0 for project-created fixtures; otherwise explicit compatible redistribution terms",
       "notice_required": true,
-      "current_status": "none"
+      "current_status": "project-created synthetic research corpus, with per-fixture provenance and Apache-2.0 redistribution metadata"
     },
     {
       "id": "fonts",

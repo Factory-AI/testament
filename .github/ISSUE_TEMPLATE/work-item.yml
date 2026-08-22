@@ -1,0 +1,100 @@
+name: Structured work item
+description: Propose bounded Testament work with actionable validation evidence.
+title: "[work]: "
+labels:
+  - triage
+body:
+  - type: markdown
+    attributes:
+      value: Security vulnerabilities belong in private vulnerability reporting.
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+      description: What observable problem or unmet contract exists?
+    validations:
+      required: true
+  - type: textarea
+    id: scope
+    attributes:
+      label: Scope
+      description: What exact repository surface is in scope?
+    validations:
+      required: true
+  - type: textarea
+    id: non_goals
+    attributes:
+      label: Non-goals
+      description: What must this work not change?
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance
+      description: List objective completion conditions.
+    validations:
+      required: true
+  - type: textarea
+    id: validation
+    attributes:
+      label: Validation
+      description: Name commands, stable criteria, and manual observations.
+    validations:
+      required: true
+  - type: textarea
+    id: dependencies
+    attributes:
+      label: Dependencies
+      description: List prerequisite issues, commits, contracts, or "None".
+    validations:
+      required: true
+  - type: textarea
+    id: risk
+    attributes:
+      label: Risk
+      description: Identify security, privacy, compatibility, and operational risk.
+    validations:
+      required: true
+  - type: textarea
+    id: rollout
+    attributes:
+      label: Rollout
+      description: Explain rollout, rollback, or why neither applies.
+    validations:
+      required: true
+  - type: textarea
+    id: observability
+    attributes:
+      label: Observability
+      description: State how success and failure become visible.
+    validations:
+      required: true
+  - type: textarea
+    id: documentation
+    attributes:
+      label: Documentation
+      description: List public documentation changes or explain why none apply.
+    validations:
+      required: true
+  - type: textarea
+    id: compatibility
+    attributes:
+      label: Compatibility
+      description: State contract/version impact or explain why none applies.
+    validations:
+      required: true
+  - type: textarea
+    id: generated_artifacts
+    attributes:
+      label: Generated artifacts
+      description: List generated outputs and source generators or explain why none apply.
+    validations:
+      required: true
+  - type: textarea
+    id: agent_authorship
+    attributes:
+      label: Agent authorship
+      description: Identify human, agent, and co-authorship roles.
+    validations:
+      required: true

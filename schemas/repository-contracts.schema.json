@@ -1,0 +1,90 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://testament.dev/schemas/repository-contracts/1.0.0",
+  "title": "Testament repository contract registry",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "feature_id",
+    "human_explanation",
+    "contracts",
+    "commands",
+    "generated"
+  ],
+  "properties": {
+    "schema_version": {"const": "1.0.0"},
+    "feature_id": {"const": "deterministic-agent-ready-repository"},
+    "human_explanation": {"type": "string"},
+    "contracts": {
+      "type": "array",
+      "minItems": 9,
+      "maxItems": 9,
+      "uniqueItems": true,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "version", "machine_path", "human_path"],
+        "properties": {
+          "id": {
+            "enum": [
+              "architecture",
+              "services",
+              "commands",
+              "toolchain",
+              "schemas",
+              "conformance",
+              "readiness",
+              "claims-evidence",
+              "remote-workflows"
+            ]
+          },
+          "version": {"type": "string"},
+          "machine_path": {"type": "string"},
+          "human_path": {"type": "string"}
+        }
+      }
+    },
+    "commands": {
+      "type": "array",
+      "minItems": 12,
+      "maxItems": 12,
+      "uniqueItems": true,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "entry_point"],
+        "properties": {
+          "id": {
+            "enum": [
+              "setup",
+              "development",
+              "validation",
+              "schema-generation",
+              "migration",
+              "build",
+              "release",
+              "rollback",
+              "doctor-recovery",
+              "incident-response",
+              "readiness",
+              "conformance"
+            ]
+          },
+          "entry_point": {"type": "string", "pattern": "^make "}
+        }
+      }
+    },
+    "generated": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["source", "generator", "output", "drift_check"],
+      "properties": {
+        "source": {"type": "string"},
+        "generator": {"type": "string"},
+        "output": {"type": "string"},
+        "drift_check": {"type": "string"}
+      }
+    }
+  }
+}

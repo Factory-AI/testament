@@ -1,0 +1,44 @@
+name: Maintenance
+
+on:
+  schedule:
+    - cron: '11 5 * * 1'
+  workflow_dispatch:
+    inputs:
+      record:
+        description: Maintenance record to reconcile
+        required: true
+        type: choice
+        options:
+          - all
+          - trademark-review
+          - single-maintainer-bootstrap
+          - documentation-freshness
+        default: all
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  reconcile:
+    name: Maintenance / reconcile
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - name: Check out trusted default branch
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - name: Reconcile owned deduplicated records
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPOSITORY: ${{ github.repository }}
+          EVIDENCE_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          RECORD: ${{ inputs.record || 'all' }}
+        run: |
+          if [ "$RECORD" = "all" ]; then
+            python3 scripts/maintenance_issues.py trademark-review
+            python3 scripts/maintenance_issues.py single-maintainer-bootstrap
+            python3 scripts/maintenance_issues.py documentation-freshness
+          else
+            python3 scripts/maintenance_issues.py "$RECORD"
+          fi

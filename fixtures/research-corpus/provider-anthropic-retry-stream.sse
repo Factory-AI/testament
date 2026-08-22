@@ -1,0 +1,9 @@
+event: message_start
+data: {"message":{"id":"msg_synthetic_8bd2a54b7631"},"type":"message_start"}
+
+event: content_block_delta
+data: {"delta":{"text":"Synthetic hello.","type":"text_delta"},"index":0,"type":"content_block_delta"}
+
+event: message_stop
+data: {"retry":{"attempt":2,"retry_of":"attempt_synthetic_8bd2a54b7631"},"type":"message_stop"}
+

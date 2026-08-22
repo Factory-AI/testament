@@ -1,0 +1,2 @@
+{"arrival_ordinal":2,"event_id":"bedrock_synthetic_ab202964b8c9_002","event_time":"2026-01-01T00:00:01Z","lineage_status":"missing","output":{"message":{"content":[{"text":"Second."}],"role":"assistant"}},"parent_event_id":null,"provider":"bedrock"}
+{"arrival_ordinal":1,"event_id":"bedrock_synthetic_ab202964b8c9_001","event_time":"2026-01-01T00:00:00Z","late":true,"output":{"message":{"content":[{"text":"First."}],"role":"assistant"}},"provider":"bedrock"}

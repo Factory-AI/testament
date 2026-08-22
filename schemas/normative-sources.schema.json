@@ -1,0 +1,162 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/Factory-AI/testament/schemas/normative-sources.schema.json",
+  "title": "Testament normative source inventory",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "feature_id",
+    "validation_id",
+    "version",
+    "sources",
+    "conformance_inputs",
+    "informative_boundaries",
+    "fixture_promotion",
+    "rendered_index"
+  ],
+  "properties": {
+    "schema_version": {"const": "1.0.0"},
+    "feature_id": {"const": "claims-ledger-and-normative-boundaries"},
+    "validation_id": {"const": "VAL-READY-017"},
+    "version": {"type": "string", "pattern": "^\\d+\\.\\d+\\.\\d+$"},
+    "sources": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"$ref": "#/$defs/source"}
+    },
+    "conformance_inputs": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"$ref": "#/$defs/conformanceInput"}
+    },
+    "informative_boundaries": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"$ref": "#/$defs/informativeBoundary"}
+    },
+    "fixture_promotion": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "research_manifest",
+        "required_decision_type",
+        "current_promotions"
+      ],
+      "properties": {
+        "research_manifest": {
+          "const": "docs/research/corpus/manifest.json"
+        },
+        "required_decision_type": {
+          "const": "immutable-reviewed-fixture-promotion"
+        },
+        "current_promotions": {
+          "type": "array",
+          "items": {"type": "string", "minLength": 1}
+        }
+      }
+    },
+    "rendered_index": {"const": "docs/standards-status.md"}
+  },
+  "$defs": {
+    "supersession": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["supersedes", "superseded_by"],
+      "properties": {
+        "supersedes": {"type": ["string", "null"]},
+        "superseded_by": {"type": ["string", "null"]}
+      }
+    },
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "rfc_id",
+        "path",
+        "title",
+        "version",
+        "status",
+        "sha256",
+        "normative_sections",
+        "informative_sections",
+        "rendered_status",
+        "eligible_for_certification",
+        "supersession"
+      ],
+      "properties": {
+        "id": {"type": "string", "pattern": "^NORM-RFC-\\d{4}$"},
+        "rfc_id": {"type": "string", "pattern": "^RFC-\\d{4}$"},
+        "path": {"type": "string", "minLength": 1},
+        "title": {"type": "string", "minLength": 1},
+        "version": {"type": "string", "pattern": "^\\d+\\.\\d+\\.\\d+$"},
+        "status": {
+          "enum": [
+            "proposed",
+            "in-review",
+            "accepted",
+            "rejected",
+            "withdrawn",
+            "superseded"
+          ]
+        },
+        "sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "normative_sections": {
+          "type": "array",
+          "minItems": 1,
+          "items": {"type": "string", "minLength": 1}
+        },
+        "informative_sections": {
+          "type": "array",
+          "minItems": 1,
+          "items": {"type": "string", "minLength": 1}
+        },
+        "rendered_status": {"type": "string", "minLength": 1},
+        "eligible_for_certification": {"type": "boolean"},
+        "supersession": {"$ref": "#/$defs/supersession"}
+      }
+    },
+    "conformanceInput": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "source_id",
+        "path",
+        "section",
+        "version",
+        "rendered_status"
+      ],
+      "properties": {
+        "id": {"type": "string", "pattern": "^CONF-RFC-\\d{4}$"},
+        "source_id": {"type": "string", "pattern": "^NORM-RFC-\\d{4}$"},
+        "path": {"type": "string", "minLength": 1},
+        "section": {"type": "string", "minLength": 1},
+        "version": {"type": "string", "pattern": "^\\d+\\.\\d+\\.\\d+$"},
+        "rendered_status": {"type": "string", "minLength": 1}
+      }
+    },
+    "informativeBoundary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["class", "path_pattern", "conformance_allowed", "reason"],
+      "properties": {
+        "class": {
+          "enum": [
+            "research",
+            "rationale-and-examples",
+            "prototype",
+            "unpromoted-fixture"
+          ]
+        },
+        "path_pattern": {"type": "string", "minLength": 1},
+        "conformance_allowed": {"const": false},
+        "reason": {"type": "string", "minLength": 1}
+      }
+    }
+  }
+}

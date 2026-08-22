@@ -1,0 +1,105 @@
+{
+  "acceptance_rule": "Every sample proves compression precedes AEAD, exact readback succeeds, a one-bit ciphertext mutation fails, and both resource budgets hold.",
+  "benchmark_id": "compression-encryption-benchmark",
+  "budgets": {
+    "max_elapsed_ms": 10000,
+    "max_process_rss_bytes": 536870912
+  },
+  "comparison_method": "Instrument compression output before AES-GCM, decrypt then decompress, compare source digest, and mutate the authentication tag.",
+  "conclusion": "pass",
+  "environment": {
+    "architecture": "arm64",
+    "cpu_count": 12,
+    "docker": "Docker version 28.5.1, build e180ab8",
+    "go": "go version go1.26.4 darwin/arm64",
+    "machine_class": "developer-workstation-12cpu-18gib",
+    "memory_bytes": 19327352832,
+    "os": "macOS-26.6.1-arm64-arm-64bit-Mach-O",
+    "python": "3.14.7",
+    "tested_commit": "f700faa23e518268a10bae89663a26677e65c61c"
+  },
+  "feature_id": "storage-analysis-prototypes-and-evaluation-plan",
+  "inputs": [
+    "fixtures/research-corpus/giant.json",
+    "Go standard-library zlib",
+    "Go crypto/aes AES-256-GCM"
+  ],
+  "limitations": [
+    "The disposable deterministic nonce is safe only for this one-shot prototype and must not be copied into production."
+  ],
+  "plan_commit": "cfdf43bb49f3802137dc0ae887314ab7a8a01f58",
+  "plan_commit_reconciliation": {
+    "canonical_plan_commit": "cfdf43bb49f3802137dc0ae887314ab7a8a01f58",
+    "historical_invalid_identifier": "cfdf43b1d85024ad5475f5c2afe41978f9fc2a01",
+    "preserved_samples_sha256": "9c07de2b62daca97a48181b4f02c667f4cd19cc2b43fccb8d25deb8835f2acc1",
+    "reason": "The historical identifier was a transcription error and never resolved to a Git object. This metadata correction binds the existing raw observations to the canonical precommit plan without changing any sample.",
+    "reconciled_at": "2026-08-22"
+  },
+  "plan_sha256": "5e12d9e04c0852c87c7b86a3e832e61f72e5e136af0792b29d4c7c3811432d76",
+  "prototype_id": "compression-encryption",
+  "sample_count": 3,
+  "samples": [
+    {
+      "elapsed_ms": 228.886,
+      "observation": {
+        "ciphertext_bytes": 578230,
+        "ciphertext_sha256": "c27e80085c0a863a7435bbbdf2cffffd63066397f66b79a5024d4bbd669a6d74",
+        "compressed_bytes": 578214,
+        "compressed_sha256": "309c2198f2de8e260b797bdc1d84b4a0c9f680faaf64816e8c3a015acbeda27c",
+        "compression_before_aead": true,
+        "payload_ciphertext_sha256": "e933577bc6b771612926ad045b79ca2b5b34203c941dda79e17639a48aaf96fd",
+        "payload_unchanged": true,
+        "plaintext_bytes": 1100055,
+        "plaintext_sha256": "11b87e08e5f3a9c025819a0230cb8f4543187c58eea9edeae40f95a29282bee2",
+        "rewrap_changed": true,
+        "round_trip_exact": true,
+        "tamper_rejected": true
+      },
+      "process_max_rss_bytes": 28360704
+    },
+    {
+      "elapsed_ms": 126.041,
+      "observation": {
+        "ciphertext_bytes": 578230,
+        "ciphertext_sha256": "c27e80085c0a863a7435bbbdf2cffffd63066397f66b79a5024d4bbd669a6d74",
+        "compressed_bytes": 578214,
+        "compressed_sha256": "309c2198f2de8e260b797bdc1d84b4a0c9f680faaf64816e8c3a015acbeda27c",
+        "compression_before_aead": true,
+        "payload_ciphertext_sha256": "e933577bc6b771612926ad045b79ca2b5b34203c941dda79e17639a48aaf96fd",
+        "payload_unchanged": true,
+        "plaintext_bytes": 1100055,
+        "plaintext_sha256": "11b87e08e5f3a9c025819a0230cb8f4543187c58eea9edeae40f95a29282bee2",
+        "rewrap_changed": true,
+        "round_trip_exact": true,
+        "tamper_rejected": true
+      },
+      "process_max_rss_bytes": 28360704
+    },
+    {
+      "elapsed_ms": 121.576,
+      "observation": {
+        "ciphertext_bytes": 578230,
+        "ciphertext_sha256": "c27e80085c0a863a7435bbbdf2cffffd63066397f66b79a5024d4bbd669a6d74",
+        "compressed_bytes": 578214,
+        "compressed_sha256": "309c2198f2de8e260b797bdc1d84b4a0c9f680faaf64816e8c3a015acbeda27c",
+        "compression_before_aead": true,
+        "payload_ciphertext_sha256": "e933577bc6b771612926ad045b79ca2b5b34203c941dda79e17639a48aaf96fd",
+        "payload_unchanged": true,
+        "plaintext_bytes": 1100055,
+        "plaintext_sha256": "11b87e08e5f3a9c025819a0230cb8f4543187c58eea9edeae40f95a29282bee2",
+        "rewrap_changed": true,
+        "round_trip_exact": true,
+        "tamper_rejected": true
+      },
+      "process_max_rss_bytes": 28360704
+    }
+  ],
+  "schema_version": "1.0.0",
+  "tolerance_history": [],
+  "tolerances": {
+    "integrity_false_accepts": 0,
+    "round_trip_mismatches": 0
+  },
+  "validation_id": "VAL-READY-014",
+  "version": "1.0.0"
+}

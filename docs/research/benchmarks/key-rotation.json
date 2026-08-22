@@ -1,0 +1,96 @@
+{
+  "acceptance_rule": "Wrapped material changes while payload ciphertext and source identity remain unchanged, and every sample stays within both resource budgets.",
+  "benchmark_id": "key-rotation-benchmark",
+  "budgets": {
+    "max_elapsed_ms": 10000,
+    "max_process_rss_bytes": 536870912
+  },
+  "comparison_method": "Wrap one DEK under two AES-GCM roots and compare wrapped material, payload ciphertext digest, source digest, and checkpoint.",
+  "conclusion": "pass",
+  "environment": {
+    "architecture": "arm64",
+    "cpu_count": 12,
+    "docker": "Docker version 28.5.1, build e180ab8",
+    "go": "go version go1.26.4 darwin/arm64",
+    "machine_class": "developer-workstation-12cpu-18gib",
+    "memory_bytes": 19327352832,
+    "os": "macOS-26.6.1-arm64-arm-64bit-Mach-O",
+    "python": "3.14.7",
+    "tested_commit": "f700faa23e518268a10bae89663a26677e65c61c"
+  },
+  "feature_id": "storage-analysis-prototypes-and-evaluation-plan",
+  "inputs": [
+    "one synthetic payload DEK",
+    "old and new synthetic wrapping roots",
+    "one immutable payload ciphertext"
+  ],
+  "limitations": [
+    "No cloud KMS call is made; provider conformance remains later work."
+  ],
+  "plan_commit": "cfdf43bb49f3802137dc0ae887314ab7a8a01f58",
+  "plan_commit_reconciliation": {
+    "canonical_plan_commit": "cfdf43bb49f3802137dc0ae887314ab7a8a01f58",
+    "historical_invalid_identifier": "cfdf43b1d85024ad5475f5c2afe41978f9fc2a01",
+    "preserved_samples_sha256": "5302784737c8bd31812851fab428de5194e8cc9b95b628cdb89c81a38a6bc577",
+    "reason": "The historical identifier was a transcription error and never resolved to a Git object. This metadata correction binds the existing raw observations to the canonical precommit plan without changing any sample.",
+    "reconciled_at": "2026-08-22"
+  },
+  "plan_sha256": "5e12d9e04c0852c87c7b86a3e832e61f72e5e136af0792b29d4c7c3811432d76",
+  "prototype_id": "key-rotation",
+  "sample_count": 3,
+  "samples": [
+    {
+      "elapsed_ms": 142.627,
+      "observation": {
+        "generations": [
+          1,
+          2
+        ],
+        "payload_ciphertext_sha256": "e933577bc6b771612926ad045b79ca2b5b34203c941dda79e17639a48aaf96fd",
+        "payload_ciphertext_unchanged": true,
+        "resume_checkpoint": 1,
+        "rewrap_changed": true,
+        "source_sha256": "11b87e08e5f3a9c025819a0230cb8f4543187c58eea9edeae40f95a29282bee2"
+      },
+      "process_max_rss_bytes": 28409856
+    },
+    {
+      "elapsed_ms": 158.744,
+      "observation": {
+        "generations": [
+          1,
+          2
+        ],
+        "payload_ciphertext_sha256": "e933577bc6b771612926ad045b79ca2b5b34203c941dda79e17639a48aaf96fd",
+        "payload_ciphertext_unchanged": true,
+        "resume_checkpoint": 1,
+        "rewrap_changed": true,
+        "source_sha256": "11b87e08e5f3a9c025819a0230cb8f4543187c58eea9edeae40f95a29282bee2"
+      },
+      "process_max_rss_bytes": 28426240
+    },
+    {
+      "elapsed_ms": 184.621,
+      "observation": {
+        "generations": [
+          1,
+          2
+        ],
+        "payload_ciphertext_sha256": "e933577bc6b771612926ad045b79ca2b5b34203c941dda79e17639a48aaf96fd",
+        "payload_ciphertext_unchanged": true,
+        "resume_checkpoint": 1,
+        "rewrap_changed": true,
+        "source_sha256": "11b87e08e5f3a9c025819a0230cb8f4543187c58eea9edeae40f95a29282bee2"
+      },
+      "process_max_rss_bytes": 28475392
+    }
+  ],
+  "schema_version": "1.0.0",
+  "tolerance_history": [],
+  "tolerances": {
+    "payload_ciphertext_changes": 0,
+    "source_digest_changes": 0
+  },
+  "validation_id": "VAL-READY-014",
+  "version": "1.0.0"
+}

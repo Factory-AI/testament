@@ -1,0 +1,560 @@
+{
+  "schema_version": "1.0.0",
+  "deliverable_id": "RES-STUDY-ABUSE-MISUSE-001",
+  "validation_id": "VAL-READY-009",
+  "status": "informative-draft",
+  "researched_at": "2026-08-21",
+  "methodology": [
+    "Separate online signals available during one interaction, nearline signals available after short aggregation, and offline signals requiring longitudinal or external evidence.",
+    "Treat signals as review leads, not findings. Every risk includes a plausible authorized-use twin and a false-positive path.",
+    "Prefer public primary guidance from standards bodies, government agencies, protocol publishers, and service providers. Avoid operational detail that would enable abuse."
+  ],
+  "timing_definitions": {
+    "online": "Available in the current request, response, tool call, session state, or authenticated runtime context and fast enough to inform a bounded real-time decision.",
+    "nearline": "Available after minutes to hours of aggregation, enrichment, sandboxing, or cross-session comparison; it may inform containment or queued review but not the already completed interaction.",
+    "offline": "Available through days-to-months longitudinal analysis, case investigation, external reports, evaluation, or adjudication."
+  },
+  "risks": [
+    {
+      "id": "cyber",
+      "name": "Cyber abuse",
+      "harm": "Model or agent use may support unauthorized access, malware activity, vulnerability exploitation, or disruptive operations.",
+      "signals": {
+        "online": [
+          "Requests combine exploit intent with live-target context, credential material, or execution-capable tool calls.",
+          "Tool results show unexpected privilege changes, outbound connections, or writes outside an authorized test boundary."
+        ],
+        "nearline": [
+          "A short-window sequence progresses from reconnaissance to exploit adaptation to persistence across sessions or tools.",
+          "Repeated attempts target many unrelated hosts or bypass earlier safeguards."
+        ],
+        "offline": [
+          "Case correlation links activity to confirmed incidents, abuse reports, malware telemetry, or violated authorization boundaries.",
+          "Longitudinal review finds coordinated infrastructure or recurring exploit chains."
+        ]
+      },
+      "authorized_use_twins": [
+        "A documented penetration test, capture-the-flag exercise, defensive reverse engineering, vulnerability reproduction, or incident-response investigation can produce the same technical vocabulary and tool sequence."
+      ],
+      "false_positive_factors": [
+        "Code snippets and security terms do not establish malicious intent; scope, ownership, authorization, target, and execution context matter."
+      ],
+      "reviewer_path": {
+        "triage_role": "Security-abuse analyst trained to distinguish defensive testing from unauthorized operations",
+        "escalation_role": "Incident-response lead or product security owner with authority over the affected boundary",
+        "evidence_requirements": [
+          "Preserve the request/tool/result sequence, actor and tenant context, target indicators, stated authorization, detector version, and contradictory evidence."
+        ],
+        "appeal_route": "A separate reviewer rechecks scope and authorization; restoration or continued restriction records reasons and corrective evidence."
+      },
+      "limitations": [
+        "Intent is rarely observable from one prompt, and sensitive incident context may be unavailable to the analyzer."
+      ],
+      "unresolved_questions": [
+        "How can organizations attest test authorization without exposing sensitive network scope to an external analyzer?"
+      ],
+      "sources": [
+        {
+          "id": "ABUSE-SRC-CYBER-001",
+          "publisher": "National Institute of Standards and Technology",
+          "title": "Adversarial Machine Learning: A Taxonomy and Terminology of Attacks and Mitigations",
+          "version_or_date": "NIST AI 100-2 E2025, March 2025",
+          "source_url": "https://csrc.nist.gov/pubs/ai/100/2/e2025/final",
+          "accessed_at": "2026-08-21",
+          "claim_supported": "Security analysis needs explicit attack life-cycle, capability, knowledge, and objective distinctions rather than a keyword-only label."
+        },
+        {
+          "id": "ABUSE-SRC-CYBER-002",
+          "publisher": "MITRE",
+          "title": "MITRE ATT&CK",
+          "version_or_date": "Current knowledge base, accessed 2026-08-21",
+          "source_url": "https://attack.mitre.org/",
+          "accessed_at": "2026-08-21",
+          "claim_supported": "Cyber behavior can be organized as tactics and techniques across an observed sequence, supporting staged rather than single-event review."
+        }
+      ]
+    },
+    {
+      "id": "cbrn",
+      "name": "Chemical, biological, radiological, and nuclear misuse",
+      "harm": "Assistance could lower barriers to harmful acquisition, design, production, or deployment involving CBRN materials.",
+      "signals": {
+        "online": [
+          "The interaction seeks harmful optimization, scale, acquisition, concealment, or deployment and combines it with operational context.",
+          "Tool calls attempt to source restricted materials or validate hazardous procedures."
+        ],
+        "nearline": [
+          "Multiple individually ambiguous questions compose into an end-to-end harmful workflow.",
+          "The actor repeatedly reformulates requests to overcome safety boundaries or obtain missing operational steps."
+        ],
+        "offline": [
+          "Qualified subject-matter review assesses whether the sequence materially increases harmful capability beyond public high-level knowledge.",
+          "External threat intelligence or lawful reports provide context unavailable in the interaction."
+        ]
+      },
+      "authorized_use_twins": [
+        "Biosafety, emergency response, nonproliferation, public-health, academic, and industrial safety work can use the same entities and process terminology."
+      ],
+      "false_positive_factors": [
+        "Technical specificity can reflect legitimate expertise; classification requires purpose, capability uplift, safeguards, and authorization, not topic alone."
+      ],
+      "reviewer_path": {
+        "triage_role": "Specialist safety reviewer operating from minimized and compartmented evidence",
+        "escalation_role": "Qualified CBRN subject-matter expert plus accountable safety authority",
+        "evidence_requirements": [
+          "Preserve the minimum necessary sequence, model outputs, tool actions, capability-uplift rationale, authorized context, and uncertainty without redistributing hazardous detail."
+        ],
+        "appeal_route": "Independent specialist review checks lawful research or safety context and can narrow, reverse, or sustain the decision with a recorded basis."
+      },
+      "limitations": [
+        "General reviewers and language models can misjudge feasibility; handling detailed evidence can itself create safety and privacy risk."
+      ],
+      "unresolved_questions": [
+        "What redacted evidence is sufficient for accountable appeal without spreading sensitive operational information?"
+      ],
+      "sources": [
+        {
+          "id": "ABUSE-SRC-CBRN-001",
+          "publisher": "OpenAI",
+          "title": "Preparedness Framework",
+          "version_or_date": "Version 2, April 15, 2025",
+          "source_url": "https://openai.com/index/updating-our-preparedness-framework/",
+          "accessed_at": "2026-08-21",
+          "claim_supported": "The framework treats biological/chemical capability as a tracked severe-harm category and uses safeguards reports and review rather than topic matching alone."
+        },
+        {
+          "id": "ABUSE-SRC-CBRN-002",
+          "publisher": "Anthropic",
+          "title": "Responsible Scaling Policy",
+          "version_or_date": "Version 2.2, May 14, 2025",
+          "source_url": "https://www.anthropic.com/responsible-scaling-policy",
+          "accessed_at": "2026-08-21",
+          "claim_supported": "Anthropic separates capability thresholds, evaluations, safeguards, and governance for catastrophic biological and chemical risks."
+        }
+      ]
+    },
+    {
+      "id": "fraud",
+      "name": "Fraud and deception",
+      "harm": "Generated content or agent actions may facilitate impersonation, payment diversion, identity theft, scams, or deceptive transactions.",
+      "signals": {
+        "online": [
+          "Requests combine impersonation, urgency, secrecy, payment routing, identity artifacts, or evasion of verification.",
+          "Agent actions alter payee, recovery, identity, or messaging fields without expected authorization evidence."
+        ],
+        "nearline": [
+          "Templates or messages are sent at volume to unrelated recipients, or payment/recovery details change repeatedly.",
+          "A cluster shares scripts, infrastructure, beneficiary details, or synthetic identities."
+        ],
+        "offline": [
+          "Chargebacks, victim reports, verified impersonation, account investigations, or lawfully shared fraud intelligence corroborate harm.",
+          "Longitudinal analysis links campaigns, mule accounts, or repeated social-engineering patterns."
+        ]
+      },
+      "authorized_use_twins": [
+        "Fraud simulation, brand-protection exercises, customer-support drafting, debt collection under policy, and authorized marketing can include urgency, financial terms, and message templates."
+      ],
+      "false_positive_factors": [
+        "A payment request or persuasive tone alone is weak evidence; recipient consent, sender identity, transaction authority, and campaign context are needed."
+      ],
+      "reviewer_path": {
+        "triage_role": "Fraud operations analyst with access to transaction and identity context under least privilege",
+        "escalation_role": "Accountable fraud-risk or trust-and-safety lead",
+        "evidence_requirements": [
+          "Preserve content provenance, actor/account history, recipient and transaction context, authentication events, model/tool actions, and counterevidence."
+        ],
+        "appeal_route": "A reviewer independent of the initial decision examines identity and transaction evidence and records remediation, restriction, or reinstatement."
+      },
+      "limitations": [
+        "False reports, compromised reporters, delayed payment evidence, and privacy constraints can make adjudication incomplete."
+      ],
+      "unresolved_questions": [
+        "How should cross-service campaign evidence be shared without creating a new identity or financial surveillance dataset?"
+      ],
+      "sources": [
+        {
+          "id": "ABUSE-SRC-FRAUD-001",
+          "publisher": "Federal Trade Commission",
+          "title": "Impersonator scams: What you need to know",
+          "version_or_date": "Consumer guidance, accessed 2026-08-21",
+          "source_url": "https://consumer.ftc.gov/articles/impersonator-scams-what-you-need-know",
+          "accessed_at": "2026-08-21",
+          "claim_supported": "Impersonation scams commonly use unexpected contact, urgency, and payment demands, but the guidance relies on context rather than any single phrase."
+        },
+        {
+          "id": "ABUSE-SRC-FRAUD-002",
+          "publisher": "Federal Bureau of Investigation",
+          "title": "Business Email Compromise",
+          "version_or_date": "Scams and Safety guidance, accessed 2026-08-21",
+          "source_url": "https://www.fbi.gov/how-we-can-help-you/scams-and-safety/common-frauds-and-scams/business-email-compromise",
+          "accessed_at": "2026-08-21",
+          "claim_supported": "Business email compromise includes impersonation and fraudulent transfer requests, often involving account compromise or spoofing."
+        }
+      ]
+    },
+    {
+      "id": "compromised-accounts",
+      "name": "Compromised accounts",
+      "harm": "An unauthorized actor may use a legitimate account, credentials, API key, or session to access data, invoke tools, or conceal other abuse.",
+      "signals": {
+        "online": [
+          "Authentication risk changes abruptly, impossible or unusual travel appears, or a sensitive action lacks expected step-up verification.",
+          "Session behavior diverges sharply from the account's recent device, network, model, tool, or data-access pattern."
+        ],
+        "nearline": [
+          "Concurrent sessions, recovery changes, token creation, privilege changes, or rapid data access form an anomalous sequence.",
+          "A credential or infrastructure indicator appears across several accounts."
+        ],
+        "offline": [
+          "User reports, forensic review, identity-provider logs, secret-scanning findings, or incident evidence confirm or refute unauthorized use.",
+          "Post-incident analysis identifies the compromise window and affected actions."
+        ]
+      },
+      "authorized_use_twins": [
+        "Travel, VPN changes, new devices, automation, incident-response access, shared enterprise egress, and role changes can resemble account takeover."
+      ],
+      "false_positive_factors": [
+        "Behavioral baselines can encode accessibility, geography, work pattern, or organizational bias and should not establish compromise alone."
+      ],
+      "reviewer_path": {
+        "triage_role": "Identity and access analyst",
+        "escalation_role": "Security incident responder or tenant security administrator",
+        "evidence_requirements": [
+          "Preserve authentication/session events, credential lifecycle, sensitive actions, notification attempts, user response, and the detector baseline used."
+        ],
+        "appeal_route": "The verified account owner or tenant administrator can challenge the finding through a recovery channel separate from the suspected session."
+      },
+      "limitations": [
+        "Attackers may inherit normal devices or sessions, while legitimate users may have highly variable behavior."
+      ],
+      "unresolved_questions": [
+        "How much behavioral history is proportionate to retain for appeal and forensic review?"
+      ],
+      "sources": [
+        {
+          "id": "ABUSE-SRC-ACCOUNT-001",
+          "publisher": "National Institute of Standards and Technology",
+          "title": "Digital Identity Guidelines: Authentication and Authenticator Management",
+          "version_or_date": "NIST SP 800-63B-4, July 2025",
+          "source_url": "https://pages.nist.gov/800-63-4/sp800-63b.html",
+          "accessed_at": "2026-08-21",
+          "claim_supported": "Authentication assurance, session management, phishing resistance, recovery, and notification are distinct controls relevant to suspected compromise."
+        },
+        {
+          "id": "ABUSE-SRC-ACCOUNT-002",
+          "publisher": "Cybersecurity and Infrastructure Security Agency",
+          "title": "Implementing Phishing-Resistant MFA",
+          "version_or_date": "Fact sheet, accessed 2026-08-21",
+          "source_url": "https://www.cisa.gov/resources-tools/resources/implementing-phishing-resistant-mfa",
+          "accessed_at": "2026-08-21",
+          "claim_supported": "Phishing-resistant MFA reduces credential-phishing risk, supporting step-up and recovery controls rather than behavioral inference alone."
+        }
+      ]
+    },
+    {
+      "id": "model-extraction",
+      "name": "Model extraction",
+      "harm": "Systematic querying or artifact access may reconstruct model behavior, parameters, proprietary prompts, or other protected implementation details.",
+      "signals": {
+        "online": [
+          "A request probes boundaries, confidence, logits, hidden prompts, or highly structured input spaces beyond the normal product contract.",
+          "Tool actions attempt unauthorized model-file, weight, checkpoint, or serving-artifact access."
+        ],
+        "nearline": [
+          "High-volume adaptive queries cover a broad input space, repeat near decision boundaries, or coordinate across accounts.",
+          "Query patterns optimize information gain while varying identities or rate-limit domains."
+        ],
+        "offline": [
+          "Longitudinal analysis estimates extraction coverage and links accounts, infrastructure, copied artifacts, or a demonstrably similar surrogate.",
+          "Forensics confirm unauthorized artifact access or exfiltration."
+        ]
+      },
+      "authorized_use_twins": [
+        "Authorized red-team evaluation, interoperability testing, model benchmarking, distillation under license, research reproducibility, and regression testing can produce systematic query grids."
+      ],
+      "false_positive_factors": [
+        "Volume and repeated templates can reflect legitimate batch workloads; rights, product terms, research approval, and information-gain pattern matter."
+      ],
+      "reviewer_path": {
+        "triage_role": "Abuse analyst with model-serving and customer-contract context",
+        "escalation_role": "Model security owner and accountable legal or product authority",
+        "evidence_requirements": [
+          "Preserve query sequence features, account linkage basis, rate-limit context, artifact access logs, authorization or license terms, and similarity methodology."
+        ],
+        "appeal_route": "An independent reviewer verifies workload authorization and methodology before sustaining restrictions or restoring access."
+      },
+      "limitations": [
+        "Similarity does not prove extraction, and aggressive monitoring can penalize accessibility tools, researchers, or high-volume customers."
+      ],
+      "unresolved_questions": [
+        "Which extraction indicators remain meaningful when outputs are sampled and normal batch usage is highly diverse?"
+      ],
+      "sources": [
+        {
+          "id": "ABUSE-SRC-EXTRACTION-001",
+          "publisher": "MITRE",
+          "title": "Exfiltration via ML Inference API",
+          "version_or_date": "ATLAS technique AML.T0024, accessed 2026-08-21",
+          "source_url": "https://atlas.mitre.org/techniques/AML.T0024",
+          "accessed_at": "2026-08-21",
+          "claim_supported": "MITRE ATLAS documents repeated inference queries as one route to infer model information and lists monitoring and rate controls as mitigations."
+        },
+        {
+          "id": "ABUSE-SRC-EXTRACTION-002",
+          "publisher": "National Institute of Standards and Technology",
+          "title": "Adversarial Machine Learning: A Taxonomy and Terminology of Attacks and Mitigations",
+          "version_or_date": "NIST AI 100-2 E2025, March 2025",
+          "source_url": "https://csrc.nist.gov/pubs/ai/100/2/e2025/final",
+          "accessed_at": "2026-08-21",
+          "claim_supported": "NIST distinguishes model extraction and privacy attacks by attacker knowledge, capability, objective, and life-cycle stage."
+        }
+      ]
+    },
+    {
+      "id": "evasion",
+      "name": "Evasion and obfuscation",
+      "harm": "An actor may transform inputs, identities, or interaction sequences to avoid classifiers, policy checks, rate controls, or reviewer understanding.",
+      "signals": {
+        "online": [
+          "Input contains unusual encodings, homoglyphs, fragmentation, indirection, or instruction patterns that conflict with the stated benign task.",
+          "The actor immediately retries a blocked request with semantic-preserving transformations."
+        ],
+        "nearline": [
+          "Repeated paraphrases, language shifts, account changes, or staged partial requests converge on the same restricted outcome.",
+          "Different actors reuse a transformation template against the same control."
+        ],
+        "offline": [
+          "Evaluation against held-out transformations shows systematic detector blind spots.",
+          "Campaign review links successful bypasses to prior failed attempts and shared infrastructure."
+        ]
+      },
+      "authorized_use_twins": [
+        "Internationalization, accessibility, privacy-preserving text, data-cleaning, robustness testing, adversarial evaluation, and ordinary editing can produce unusual encoding or repeated paraphrases."
+      ],
+      "false_positive_factors": [
+        "Obfuscation-like form is not intent; meaning, outcome, prior decisions, accessibility, language, and authorized red-team context must be reviewed."
+      ],
+      "reviewer_path": {
+        "triage_role": "Trust-and-safety analyst with multilingual and accessibility escalation paths",
+        "escalation_role": "Detector owner or adversarial-evaluation lead",
+        "evidence_requirements": [
+          "Preserve original and normalized forms, transformation steps, prior related requests, model/control versions, language context, and authorized test records."
+        ],
+        "appeal_route": "A reviewer evaluates the unnormalized original and accessibility/language context, not only the detector's normalized representation."
+      },
+      "limitations": [
+        "Normalization can destroy evidence, change meaning, or disproportionately harm multilingual and disabled users."
+      ],
+      "unresolved_questions": [
+        "How should raw and normalized representations be retained and displayed without creating unsafe rendering paths?"
+      ],
+      "sources": [
+        {
+          "id": "ABUSE-SRC-EVASION-001",
+          "publisher": "National Institute of Standards and Technology",
+          "title": "Adversarial Machine Learning: A Taxonomy and Terminology of Attacks and Mitigations",
+          "version_or_date": "NIST AI 100-2 E2025, March 2025",
+          "source_url": "https://csrc.nist.gov/pubs/ai/100/2/e2025/final",
+          "accessed_at": "2026-08-21",
+          "claim_supported": "NIST defines evasion attacks and organizes them by stage, attacker goals, knowledge, capabilities, and mitigations."
+        }
+      ]
+    },
+    {
+      "id": "prompt-injection",
+      "name": "Prompt injection",
+      "harm": "Untrusted instructions in user or retrieved content may redirect an agent, disclose protected context, misuse tools, or override the application's intended control flow.",
+      "signals": {
+        "online": [
+          "Untrusted content contains instructions aimed at the model or tool layer and conflicts with the trusted task.",
+          "A tool request crosses the expected capability, data, recipient, or confirmation boundary after processing external content."
+        ],
+        "nearline": [
+          "Several retrieved items or messages compose into a hidden instruction chain followed by anomalous tool behavior.",
+          "A source, template, or payload repeatedly triggers similar control-flow divergence."
+        ],
+        "offline": [
+          "Replay in a sandbox reproduces the instruction-to-action path across pinned model, prompt, tool, and policy versions.",
+          "Incident analysis identifies data exposure or unauthorized action and the trust boundary that failed."
+        ]
+      },
+      "authorized_use_twins": [
+        "Security testing, prompt-injection evaluations, documents that discuss instructions, code examples, quoted conversations, and agent-development fixtures can contain the same phrases."
+      ],
+      "false_positive_factors": [
+        "Instruction-like text is common in legitimate documents; provenance, trust level, control-flow effect, tool authorization, and actual outcome are required."
+      ],
+      "reviewer_path": {
+        "triage_role": "Application security reviewer with agent/tool context",
+        "escalation_role": "Product security owner and affected data or tool owner",
+        "evidence_requirements": [
+          "Preserve trusted instructions, untrusted content provenance, retrieved context, model/tool calls, authorization decisions, outputs, and version digests."
+        ],
+        "appeal_route": "A separate reviewer replays a minimized case in a sandbox and distinguishes quoted or evaluative content from effective control-flow manipulation."
+      },
+      "limitations": [
+        "Prompt injection cannot be solved by a classifier alone; tool least privilege, isolation, confirmation, and output handling remain necessary."
+      ],
+      "unresolved_questions": [
+        "Which replay representation is safe and deterministic enough for appeals when models and external content change?"
+      ],
+      "sources": [
+        {
+          "id": "ABUSE-SRC-INJECTION-001",
+          "publisher": "Open Worldwide Application Security Project",
+          "title": "LLM01:2025 Prompt Injection",
+          "version_or_date": "OWASP Top 10 for LLM Applications 2025",
+          "source_url": "https://genai.owasp.org/llmrisk/llm01-prompt-injection/",
+          "accessed_at": "2026-08-21",
+          "claim_supported": "Prompt injection may be direct or indirect and requires layered mitigations including constrained behavior, least privilege, trust boundaries, and human approval for high-risk actions."
+        },
+        {
+          "id": "ABUSE-SRC-INJECTION-002",
+          "publisher": "National Institute of Standards and Technology",
+          "title": "Adversarial Machine Learning: A Taxonomy and Terminology of Attacks and Mitigations",
+          "version_or_date": "NIST AI 100-2 E2025, March 2025",
+          "source_url": "https://csrc.nist.gov/pubs/ai/100/2/e2025/final",
+          "accessed_at": "2026-08-21",
+          "claim_supported": "NIST's adversarial ML taxonomy includes prompt injection and distinguishes attack stages and capabilities."
+        }
+      ]
+    },
+    {
+      "id": "insider-risk",
+      "name": "Insider risk",
+      "harm": "A trusted user, contractor, administrator, or service identity may misuse legitimate access, intentionally or accidentally, causing disclosure, fraud, sabotage, or policy bypass.",
+      "signals": {
+        "online": [
+          "A privileged action exceeds the current role, ticket, change window, data purpose, or separation-of-duties requirement.",
+          "An agent attempts sensitive export or policy change without required confirmation or dual control."
+        ],
+        "nearline": [
+          "Access volume, destination, timing, privilege changes, or denied retries diverge from current duties and approved workflows.",
+          "Multiple weak indicators align across identity, endpoint, repository, and data systems."
+        ],
+        "offline": [
+          "A multidisciplinary investigation correlates access logs with approvals, role history, endpoint evidence, interviews, and actual impact.",
+          "Periodic access review identifies accumulated privilege, dormant accounts, or control gaps."
+        ]
+      },
+      "authorized_use_twins": [
+        "On-call response, migrations, audits, data-science work, e-discovery, support, role transitions, and emergency administration may produce unusual privileged access."
+      ],
+      "false_positive_factors": [
+        "Workforce monitoring can be intrusive and biased; unusual behavior alone must not be treated as malicious intent or an employment conclusion."
+      ],
+      "reviewer_path": {
+        "triage_role": "Least-privileged security analyst operating under documented insider-risk governance",
+        "escalation_role": "Multidisciplinary insider-risk lead with security, privacy, legal, human-resources, and business representation as applicable",
+        "evidence_requirements": [
+          "Preserve access and approval records, current job duties, change/incident context, detector rationale, exculpatory evidence, and access audit history."
+        ],
+        "appeal_route": "A documented employee or contractor review process separates technical containment from personnel adjudication and permits correction of role or context errors."
+      },
+      "limitations": [
+        "Monitoring itself can harm privacy, labor rights, psychological safety, and due process; access and retention must be tightly governed."
+      ],
+      "unresolved_questions": [
+        "Which signals are proportionate and lawful across jurisdictions and employment arrangements?"
+      ],
+      "sources": [
+        {
+          "id": "ABUSE-SRC-INSIDER-001",
+          "publisher": "Cybersecurity and Infrastructure Security Agency",
+          "title": "Insider Threat Mitigation Guide",
+          "version_or_date": "November 2020",
+          "source_url": "https://www.cisa.gov/resources-tools/resources/insider-threat-mitigation-guide",
+          "accessed_at": "2026-08-21",
+          "claim_supported": "CISA recommends a multidisciplinary, risk-based insider-threat program with defined stakeholders and privacy, civil-rights, and civil-liberties considerations."
+        }
+      ]
+    },
+    {
+      "id": "coordinated-actors",
+      "name": "Coordinated actors",
+      "harm": "Multiple accounts, services, agents, or operators may coordinate to scale abuse, evade per-account controls, manipulate discourse, or divide a harmful workflow.",
+      "signals": {
+        "online": [
+          "The current interaction shares a high-confidence infrastructure, artifact, beneficiary, or campaign identifier with an active reviewed case.",
+          "Several agents divide sequential tasks while passing distinctive state or outputs between them."
+        ],
+        "nearline": [
+          "Accounts synchronize content, timing, targets, tools, or recovery/payment details beyond plausible coincidence.",
+          "A campaign rotates accounts after controls while preserving scripts, infrastructure, or objectives."
+        ],
+        "offline": [
+          "Graph analysis and human investigation establish coordination using multiple independent indicators and external context.",
+          "Longitudinal review distinguishes a campaign from organic similarity, shared news, common software, or authorized teamwork."
+        ]
+      },
+      "authorized_use_twins": [
+        "Teams, classrooms, incident responders, open-source communities, marketing campaigns, load tests, and shared enterprise infrastructure naturally synchronize actions and content."
+      ],
+      "false_positive_factors": [
+        "Shared language, IP addresses, time zones, clients, or popular links are weak and can encode geography, organization, or community membership."
+      ],
+      "reviewer_path": {
+        "triage_role": "Campaign analyst trained in graph uncertainty and privacy-preserving investigation",
+        "escalation_role": "Accountable trust-and-safety lead with legal/privacy consultation for cross-account action",
+        "evidence_requirements": [
+          "Preserve edge definitions, confidence, time window, independent indicators, alternative explanations, account provenance, and campaign-level and account-level evidence."
+        ],
+        "appeal_route": "Each affected actor can challenge their linkage; an independent reviewer tests alternative explanations and can sever unsupported graph edges."
+      },
+      "limitations": [
+        "Graph methods amplify bad identifiers and can create guilt by association; campaign confidence must not erase individual review."
+      ],
+      "unresolved_questions": [
+        "How can coordination evidence be shared or appealed without disclosing other users' private data?"
+      ],
+      "sources": [
+        {
+          "id": "ABUSE-SRC-COORD-001",
+          "publisher": "Meta",
+          "title": "Threat Report on the Surveillance-for-Hire Industry",
+          "version_or_date": "December 2021",
+          "source_url": "https://about.fb.com/news/2021/12/taking-action-against-surveillance-for-hire/",
+          "accessed_at": "2026-08-21",
+          "claim_supported": "Meta describes coordinated multi-stage activity across reconnaissance, engagement, and exploitation and reports network-level investigation and enforcement."
+        },
+        {
+          "id": "ABUSE-SRC-COORD-002",
+          "publisher": "European Union",
+          "title": "Regulation (EU) 2022/2065, Digital Services Act",
+          "version_or_date": "October 19, 2022",
+          "source_url": "https://eur-lex.europa.eu/eli/reg/2022/2065/oj",
+          "accessed_at": "2026-08-21",
+          "claim_supported": "The DSA requires certain platforms to assess systemic risks while also providing statements of reasons and complaint mechanisms, illustrating the need to pair aggregate controls with individual recourse."
+        }
+      ]
+    }
+  ],
+  "cross_cutting_controls": {
+    "human_review": [
+      "Route consequential findings to a reviewer with domain expertise, authority, and access only to the minimum necessary evidence.",
+      "Show the original evidence, detector/model/policy versions, timing, provenance, uncertainty, alternative explanations, and authorized-use twin.",
+      "Separate detection from adjudication. A model, score, graph edge, or rule hit is not a final finding.",
+      "Use additional specialist review for CBRN, employment, legal, cross-account, or high-impact account actions."
+    ],
+    "appeals": [
+      "Provide notice and a useful reason unless doing so would create a documented safety, security, or legal risk.",
+      "Keep an appeal path available outside a suspected compromised session and assign a reviewer not responsible for the initial decision when feasible.",
+      "Allow correction of identity, authorization, role, accessibility, language, and campaign-linkage errors; record the evidence and reasons for reversal, narrowing, or affirmation.",
+      "Restore access or other state when appropriate, propagate corrections to dependent findings, and retain an auditable but proportionate record."
+    ],
+    "false_positives": [
+      "Measure error rates by domain, timing, detector version, language, accessibility context, account segment, and reviewer outcome rather than one aggregate precision number.",
+      "Use abstention or queued review when evidence is insufficient, and avoid irreversible online action based only on content similarity or behavioral anomaly.",
+      "Sample negatives and successful appeals to find silent bias, missing authorized-use context, and correlated detector failures.",
+      "Treat absence of an appeal as weak evidence because affected people may lack notice, access, time, or trust."
+    ]
+  },
+  "global_limitations": [
+    "These are research hypotheses for analyzers and review workflows, not enforcement policy or legal advice.",
+    "Most signals are dual use and context dependent. Authorized-use twins are expected, not exceptional.",
+    "Online decisions have the least context and highest urgency; nearline and offline review can reduce uncertainty but cannot recover evidence that was never retained.",
+    "Cross-service identity and campaign analysis can create privacy, sovereignty, and discrimination risks.",
+    "Attackers adapt to published controls, while reviewers and detectors can be deceived by poisoned context or prompt injection.",
+    "No system can provide perfect safety. Testament does not automatically enforce decisions."
+  ]
+}
