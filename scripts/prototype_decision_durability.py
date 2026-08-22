@@ -9,6 +9,7 @@ import os
 import selectors
 import signal
 import subprocess
+import sys
 import time
 import uuid
 from pathlib import Path
@@ -131,6 +132,36 @@ def accepted_observation(observation: Any) -> bool:
     marker = observation.get("readiness_marker")
     session_id = observation.get("fault_session_id")
     backend_pid = observation.get("fault_backend_pid")
+    control_pid = observation.get("control_backend_pid")
+    verification_pid = observation.get("verification_backend_pid")
+    backend_identity_matched = (
+        observation.get("observed_backend_pid") == backend_pid
+        and observation.get("observed_application_name") == session_id
+    )
+    transaction_active = (
+        observation.get("observed_xact_start_present") is True
+        and observation.get("observed_transaction_state") == "active"
+        and observation.get("observed_wait_event_type") == "Timeout"
+        and observation.get("observed_wait_event") == "PgSleep"
+    )
+    client_connection_lost = (
+        isinstance(observation.get("fault_client_exit_code"), int)
+        and observation["fault_client_exit_code"] != 0
+        and observation.get("termination_acknowledged") is True
+    )
+    verification_connection_fresh = (
+        isinstance(control_pid, int)
+        and control_pid > 0
+        and isinstance(verification_pid, int)
+        and verification_pid > 0
+        and len({backend_pid, control_pid, verification_pid}) == 3
+    )
+    automatic_rollback_verified = (
+        observation.get("backend_disappeared") is True
+        and observation.get("faulted_rows") == 0
+        and observation.get("orphan_audits") == 0
+        and observation.get("orphan_receipts") == 0
+    )
     return (
         observation.get("fault_type") == "postgresql-backend-termination"
         and isinstance(session_id, str)
@@ -140,16 +171,29 @@ def accepted_observation(observation: Any) -> bool:
         and isinstance(marker, str)
         and marker == f"TESTAMENT_FAULT_READY:{backend_pid}:{session_id}"
         and observation.get("readiness_observed") is True
-        and observation.get("transaction_active_before_injection") is True
-        and observation.get("backend_identity_matched") is True
+        and observation.get("backend_identity_matched")
+        is backend_identity_matched
+        and backend_identity_matched
+        and observation.get("transaction_active_before_injection")
+        is transaction_active
+        and transaction_active
+        and observation.get("termination_target_backend_pid") == backend_pid
+        and observation.get("termination_target_session_id") == session_id
+        and isinstance(control_pid, int)
+        and control_pid > 0
+        and control_pid != backend_pid
         and observation.get("termination_acknowledged") is True
         and observation.get("explicit_rollback_issued") is False
-        and observation.get("client_connection_lost") is True
-        and isinstance(observation.get("fault_client_exit_code"), int)
-        and observation["fault_client_exit_code"] != 0
+        and observation.get("client_connection_lost")
+        is client_connection_lost
+        and client_connection_lost
         and observation.get("backend_disappeared") is True
-        and observation.get("verification_connection_fresh") is True
-        and observation.get("automatic_rollback_verified") is True
+        and observation.get("verification_connection_fresh")
+        is verification_connection_fresh
+        and verification_connection_fresh
+        and observation.get("automatic_rollback_verified")
+        is automatic_rollback_verified
+        and automatic_rollback_verified
         and observation.get("decisions") == 1
         and observation.get("audits") == 1
         and observation.get("receipts") == 1
@@ -168,9 +212,8 @@ def run(root: Path) -> dict[str, Any]:
     session_id = f"testament-fault-{uuid.uuid4().hex[:16]}"
     fault_id = f"faulted-{uuid.uuid4().hex[:16]}"
     fault_process: subprocess.Popen[str] | None = None
-    _run_sql(root, SETUP_SQL)
     try:
-        version = _run_sql(root, "SHOW server_version;").stdout.strip()
+        _run_sql(root, SETUP_SQL)
         fault_process = subprocess.Popen(
             _psql_command(
                 "-v",
@@ -232,6 +275,7 @@ WHERE pid = {backend_pid};
 SELECT json_build_object(
   'control_backend_pid', pg_backend_pid(),
   'target_backend_pid', {backend_pid},
+  'target_session_id', '{session_id}',
   'acknowledged', pg_terminate_backend({backend_pid}))
 WHERE EXISTS (
   SELECT 1 FROM pg_stat_activity
@@ -244,11 +288,7 @@ WHERE EXISTS (
         fault_stdout, fault_stderr = fault_process.communicate(timeout=5)
         client_connection_lost = (
             fault_process.returncode != 0
-            and (
-                "server closed the connection unexpectedly" in fault_stderr
-                or "terminating connection" in fault_stderr
-                or "connection to server was lost" in fault_stderr
-            )
+            and termination.get("acknowledged") is True
         )
         verification = _one_json(
             _run_sql(
@@ -267,6 +307,7 @@ END
 $block$;
 SELECT json_build_object(
   'verification_backend_pid', pg_backend_pid(),
+  'postgres_version', current_setting('server_version'),
   'backend_disappeared', NOT EXISTS (
     SELECT 1 FROM pg_stat_activity WHERE pid = {backend_pid}),
   'decisions', (SELECT count(*) FROM prototype_decision.decisions),
@@ -306,8 +347,22 @@ SELECT json_build_object(
             ),
             "readiness_marker": marker,
             "readiness_observed": True,
+            "observed_backend_pid": preinject.get("backend_pid"),
+            "observed_application_name": preinject.get("application_name"),
+            "observed_xact_start_present": preinject.get(
+                "transaction_active"
+            ),
+            "observed_transaction_state": preinject.get("state"),
+            "observed_wait_event_type": preinject.get("wait_event_type"),
+            "observed_wait_event": preinject.get("wait_event"),
             "transaction_active_before_injection": transaction_active,
             "backend_identity_matched": backend_identity_matched,
+            "termination_target_backend_pid": termination.get(
+                "target_backend_pid"
+            ),
+            "termination_target_session_id": termination.get(
+                "target_session_id"
+            ),
             "termination_acknowledged": termination.get("acknowledged") is True,
             "explicit_rollback_issued": False,
             "client_connection_lost": client_connection_lost,
@@ -331,15 +386,23 @@ SELECT json_build_object(
             "faulted_rows": faulted_rows,
             "orphan_audits": verification.get("orphan_audits"),
             "orphan_receipts": verification.get("orphan_receipts"),
-            "postgres_version": version,
+            "postgres_version": verification.get("postgres_version"),
             "port": 5440,
         }
         observation["acceptance_recomputed"] = accepted_observation(observation)
         return observation
     finally:
+        active_error = sys.exception()
         if fault_process is not None:
             _stop_owned_process(fault_process)
-        _run_sql(root, CLEANUP_SQL)
+        try:
+            _run_sql(root, CLEANUP_SQL)
+        except Exception as cleanup_error:
+            if active_error is None:
+                raise
+            active_error.add_note(
+                f"decision-durability cleanup also failed: {cleanup_error}"
+            )
 
 
 def main() -> int:

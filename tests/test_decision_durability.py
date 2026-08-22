@@ -33,12 +33,26 @@ def passing_observation() -> dict[str, object]:
         "fault_type": "postgresql-backend-termination",
         "fault_session_id": "testament-fault-0123456789abcdef",
         "fault_backend_pid": 123,
+        "control_backend_pid": 124,
+        "verification_backend_pid": 125,
         "readiness_marker": (
             "TESTAMENT_FAULT_READY:123:testament-fault-0123456789abcdef"
         ),
         "readiness_observed": True,
+        "observed_backend_pid": 123,
+        "observed_application_name": (
+            "testament-fault-0123456789abcdef"
+        ),
+        "observed_xact_start_present": True,
+        "observed_transaction_state": "active",
+        "observed_wait_event_type": "Timeout",
+        "observed_wait_event": "PgSleep",
         "transaction_active_before_injection": True,
         "backend_identity_matched": True,
+        "termination_target_backend_pid": 123,
+        "termination_target_session_id": (
+            "testament-fault-0123456789abcdef"
+        ),
         "termination_acknowledged": True,
         "explicit_rollback_issued": False,
         "client_connection_lost": True,
@@ -57,6 +71,7 @@ def passing_observation() -> dict[str, object]:
         "orphan_receipts": 0,
         "postgres_version": "17.11",
         "port": 5440,
+        "acceptance_recomputed": True,
     }
 
 
@@ -100,7 +115,13 @@ class DecisionDurabilityEvidenceTest(unittest.TestCase):
                 transaction_active_before_injection=False
             ),
             "wrong backend": lambda value: value.update(
+                observed_backend_pid=999
+            ),
+            "false backend assertion": lambda value: value.update(
                 backend_identity_matched=False
+            ),
+            "wrong termination target": lambda value: value.update(
+                termination_target_backend_pid=999
             ),
             "failed termination": lambda value: value.update(
                 termination_acknowledged=False
@@ -115,6 +136,9 @@ class DecisionDurabilityEvidenceTest(unittest.TestCase):
                 backend_disappeared=False
             ),
             "reused verification connection": lambda value: value.update(
+                verification_backend_pid=value["fault_backend_pid"]
+            ),
+            "false freshness assertion": lambda value: value.update(
                 verification_connection_fresh=False
             ),
             "false rollback verification": lambda value: value.update(

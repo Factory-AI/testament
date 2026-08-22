@@ -541,6 +541,36 @@ def valid_v2_decision_durability_observation(observation: Any) -> bool:
     marker = observation.get("readiness_marker")
     session_id = observation.get("fault_session_id")
     backend_pid = observation.get("fault_backend_pid")
+    control_pid = observation.get("control_backend_pid")
+    verification_pid = observation.get("verification_backend_pid")
+    backend_identity_matched = (
+        observation.get("observed_backend_pid") == backend_pid
+        and observation.get("observed_application_name") == session_id
+    )
+    transaction_active = (
+        observation.get("observed_xact_start_present") is True
+        and observation.get("observed_transaction_state") == "active"
+        and observation.get("observed_wait_event_type") == "Timeout"
+        and observation.get("observed_wait_event") == "PgSleep"
+    )
+    client_connection_lost = (
+        isinstance(observation.get("fault_client_exit_code"), int)
+        and observation["fault_client_exit_code"] != 0
+        and observation.get("termination_acknowledged") is True
+    )
+    verification_connection_fresh = (
+        isinstance(control_pid, int)
+        and control_pid > 0
+        and isinstance(verification_pid, int)
+        and verification_pid > 0
+        and len({backend_pid, control_pid, verification_pid}) == 3
+    )
+    automatic_rollback_verified = (
+        observation.get("backend_disappeared") is True
+        and observation.get("faulted_rows") == 0
+        and observation.get("orphan_audits") == 0
+        and observation.get("orphan_receipts") == 0
+    )
     return (
         observation.get("fault_type") == "postgresql-backend-termination"
         and isinstance(session_id, str)
@@ -550,16 +580,29 @@ def valid_v2_decision_durability_observation(observation: Any) -> bool:
         and isinstance(marker, str)
         and marker == f"TESTAMENT_FAULT_READY:{backend_pid}:{session_id}"
         and observation.get("readiness_observed") is True
-        and observation.get("transaction_active_before_injection") is True
-        and observation.get("backend_identity_matched") is True
+        and observation.get("backend_identity_matched")
+        is backend_identity_matched
+        and backend_identity_matched
+        and observation.get("transaction_active_before_injection")
+        is transaction_active
+        and transaction_active
+        and observation.get("termination_target_backend_pid") == backend_pid
+        and observation.get("termination_target_session_id") == session_id
+        and isinstance(control_pid, int)
+        and control_pid > 0
+        and control_pid != backend_pid
         and observation.get("termination_acknowledged") is True
         and observation.get("explicit_rollback_issued") is False
-        and observation.get("client_connection_lost") is True
-        and isinstance(observation.get("fault_client_exit_code"), int)
-        and observation["fault_client_exit_code"] != 0
+        and observation.get("client_connection_lost")
+        is client_connection_lost
+        and client_connection_lost
         and observation.get("backend_disappeared") is True
-        and observation.get("verification_connection_fresh") is True
-        and observation.get("automatic_rollback_verified") is True
+        and observation.get("verification_connection_fresh")
+        is verification_connection_fresh
+        and verification_connection_fresh
+        and observation.get("automatic_rollback_verified")
+        is automatic_rollback_verified
+        and automatic_rollback_verified
         and observation.get("decisions") == 1
         and observation.get("audits") == 1
         and observation.get("receipts") == 1
@@ -571,7 +614,7 @@ def valid_v2_decision_durability_observation(observation: Any) -> bool:
         and observation.get("orphan_receipts") == 0
         and str(observation.get("postgres_version", "")).startswith("17.")
         and observation.get("port") == 5440
-        and observation.get("acceptance_recomputed", True) is True
+        and observation.get("acceptance_recomputed") is True
     )
 
 
