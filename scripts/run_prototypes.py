@@ -18,6 +18,7 @@ from pathlib import Path
 from typing import Any, Callable
 
 try:
+    import prototype_decision_durability
     from prototype_resources import (
         AccountingError,
         ServicesManifest,
@@ -27,6 +28,7 @@ try:
         valid_resource_sample,
     )
 except ModuleNotFoundError:
+    from scripts import prototype_decision_durability
     from scripts.prototype_resources import (
         AccountingError,
         ServicesManifest,
@@ -482,38 +484,6 @@ SELECT json_build_object(
  'explain_lines',(SELECT json_agg(line ORDER BY ordinal) FROM prototype_storage_plan));
 DROP SCHEMA prototype_storage CASCADE;
 """,
-        "decision-durability": r"""
-DROP SCHEMA IF EXISTS prototype_decision CASCADE;
-CREATE SCHEMA prototype_decision;
-CREATE TABLE prototype_decision.decisions(id text primary key);
-CREATE TABLE prototype_decision.audits(id text primary key references prototype_decision.decisions);
-CREATE TABLE prototype_decision.receipts(id text primary key references prototype_decision.decisions);
-BEGIN;
-INSERT INTO prototype_decision.decisions VALUES ('committed');
-INSERT INTO prototype_decision.audits VALUES ('committed');
-INSERT INTO prototype_decision.receipts VALUES ('committed');
-COMMIT;
-BEGIN;
-INSERT INTO prototype_decision.decisions VALUES ('faulted');
-INSERT INTO prototype_decision.audits VALUES ('faulted');
-ROLLBACK;
-SELECT json_build_object(
- 'decisions',(SELECT count(*) FROM prototype_decision.decisions),
- 'audits',(SELECT count(*) FROM prototype_decision.audits),
- 'receipts',(SELECT count(*) FROM prototype_decision.receipts),
- 'faulted_decisions',(SELECT count(*) FROM prototype_decision.decisions WHERE id='faulted'),
- 'faulted_audits',(SELECT count(*) FROM prototype_decision.audits WHERE id='faulted'),
- 'faulted_receipts',(SELECT count(*) FROM prototype_decision.receipts WHERE id='faulted'),
- 'faulted_rows',(
-   (SELECT count(*) FROM prototype_decision.decisions WHERE id='faulted') +
-   (SELECT count(*) FROM prototype_decision.audits WHERE id='faulted') +
-   (SELECT count(*) FROM prototype_decision.receipts WHERE id='faulted')),
- 'orphan_audits',(SELECT count(*) FROM prototype_decision.audits a
-   LEFT JOIN prototype_decision.decisions d USING(id) WHERE d.id IS NULL),
- 'orphan_receipts',(SELECT count(*) FROM prototype_decision.receipts r
-   LEFT JOIN prototype_decision.decisions d USING(id) WHERE d.id IS NULL));
-DROP SCHEMA prototype_decision CASCADE;
-""",
         "offline-replay": r"""
 DROP SCHEMA IF EXISTS prototype_replay CASCADE;
 CREATE SCHEMA prototype_replay;
@@ -616,6 +586,8 @@ def analyzer_isolation_accepted(observation: dict[str, Any]) -> bool:
 
 
 def worker_observation(root: Path, case: str) -> dict[str, Any]:
+    if case == "decision-durability":
+        return prototype_decision_durability.run(root)
     return postgres(root, case) if case in POSTGRES_CASES else LOCAL_RUNNERS[case](root)
 
 
@@ -718,12 +690,7 @@ def accepted(case: str, samples: list[dict[str, Any]], budgets: dict[str, Any]) 
         ),
         "blind-index": lambda o: o["same_scope_equality"] and o["cross_org_separation"] and o["cross_field_separation"] and o["rotation_changes_token"],
         "key-rotation": key_rotation_accepted,
-        "decision-durability": lambda o: (
-            o["decisions"] == o["audits"] == o["receipts"] == 1
-            and o["faulted_rows"] == 0
-            and o["orphan_audits"] == 0
-            and o["orphan_receipts"] == 0
-        ),
+        "decision-durability": prototype_decision_durability.accepted_observation,
         "analyzer-isolation": analyzer_isolation_accepted,
         "offline-replay": lambda o: (
             o["runs"] == 3
@@ -820,7 +787,11 @@ def main() -> int:
             "feature_id": (
                 "key-rotation-independent-ciphertext-evidence"
                 if case == "key-rotation"
-                else "prototype-v2-precommit-and-workload-resource-accounting"
+                else (
+                    "decision-durability-disconnect-fault-evidence"
+                    if case == "decision-durability"
+                    else "prototype-v2-precommit-and-workload-resource-accounting"
+                )
             ),
             "validation_id": "VAL-READY-014",
             "prototype_id": case,

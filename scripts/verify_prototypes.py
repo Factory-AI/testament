@@ -32,9 +32,15 @@ CANONICAL_PLAN_COMMIT = "cfdf43bb49f3802137dc0ae887314ab7a8a01f58"
 SUCCESSOR_PLAN_COMMIT = "0f3dce5b9418a50eb031ec3fd561282462533bd3"
 SUCCESSOR_PLAN_PATH = "docs/research/benchmarks/precommit-v2.json"
 V2_KEY_ROTATION_PATH = "docs/research/benchmarks/v2/key-rotation.json"
+V2_DECISION_DURABILITY_PATH = (
+    "docs/research/benchmarks/v2/decision-durability.json"
+)
 HISTORICAL_INVALID_PLAN_COMMIT = "cfdf43b1d85024ad5475f5c2afe41978f9fc2a01"
 V1_KEY_ROTATION_SHA256 = (
     "91a9fc76ba9852954024a925438510e7996fa471a7db94c699eedf0e88cfcc68"
+)
+V1_DECISION_DURABILITY_SHA256 = (
+    "39b0e7685e33a80081e74d21316d1f90af8f9f2af331da01817e845453d59651"
 )
 RECONCILED_CASES = {
     "giant-stream",
@@ -156,6 +162,7 @@ EVIDENCE_FILES = [
     "docs/research/benchmarks/precommit.json",
     SUCCESSOR_PLAN_PATH,
     V2_KEY_ROTATION_PATH,
+    V2_DECISION_DURABILITY_PATH,
     REPRODUCTION_PATH,
     "docs/research/analysis/evaluation-plan.md",
     "docs/research/corpus/manifest.json",
@@ -528,6 +535,119 @@ def valid_v2_key_rotation_result(
     )
 
 
+def valid_v2_decision_durability_observation(observation: Any) -> bool:
+    if not isinstance(observation, dict):
+        return False
+    marker = observation.get("readiness_marker")
+    session_id = observation.get("fault_session_id")
+    backend_pid = observation.get("fault_backend_pid")
+    return (
+        observation.get("fault_type") == "postgresql-backend-termination"
+        and isinstance(session_id, str)
+        and session_id.startswith("testament-fault-")
+        and isinstance(backend_pid, int)
+        and backend_pid > 0
+        and isinstance(marker, str)
+        and marker == f"TESTAMENT_FAULT_READY:{backend_pid}:{session_id}"
+        and observation.get("readiness_observed") is True
+        and observation.get("transaction_active_before_injection") is True
+        and observation.get("backend_identity_matched") is True
+        and observation.get("termination_acknowledged") is True
+        and observation.get("explicit_rollback_issued") is False
+        and observation.get("client_connection_lost") is True
+        and isinstance(observation.get("fault_client_exit_code"), int)
+        and observation["fault_client_exit_code"] != 0
+        and observation.get("backend_disappeared") is True
+        and observation.get("verification_connection_fresh") is True
+        and observation.get("automatic_rollback_verified") is True
+        and observation.get("decisions") == 1
+        and observation.get("audits") == 1
+        and observation.get("receipts") == 1
+        and observation.get("faulted_decisions") == 0
+        and observation.get("faulted_audits") == 0
+        and observation.get("faulted_receipts") == 0
+        and observation.get("faulted_rows") == 0
+        and observation.get("orphan_audits") == 0
+        and observation.get("orphan_receipts") == 0
+        and str(observation.get("postgres_version", "")).startswith("17.")
+        and observation.get("port") == 5440
+        and observation.get("acceptance_recomputed", True) is True
+    )
+
+
+def valid_v2_decision_durability_result(
+    result: Any,
+    successor_plan: dict[str, Any],
+) -> bool:
+    if not isinstance(result, dict):
+        return False
+    case_plan = next(
+        (
+            row
+            for row in successor_plan.get("cases", [])
+            if isinstance(row, dict)
+            and row.get("id") == "decision-durability"
+        ),
+        {},
+    )
+    budgets = case_plan.get("budgets")
+    samples = result.get("samples")
+    if (
+        not isinstance(budgets, dict)
+        or not isinstance(samples, list)
+        or not samples
+    ):
+        return False
+    samples_valid = all(
+        valid_v2_resource_sample(sample, budgets, "decision-durability")
+        and valid_v2_decision_durability_observation(
+            sample.get("observation")
+        )
+        for sample in samples
+        if isinstance(sample, dict)
+    ) and all(isinstance(sample, dict) for sample in samples)
+    expected_conclusion = "pass" if samples_valid else "fail"
+    tested_commit = result.get("environment", {}).get("tested_commit")
+    return (
+        result.get("schema_version") == "1.0.0"
+        and result.get("feature_id")
+        == "decision-durability-disconnect-fault-evidence"
+        and result.get("validation_id") == "VAL-READY-014"
+        and result.get("prototype_id") == "decision-durability"
+        and result.get("benchmark_id") == "decision-durability-benchmark"
+        and result.get("version") == "2.0.0"
+        and result.get("plan_commit") == SUCCESSOR_PLAN_COMMIT
+        and result.get("plan_sha256") == digest(successor_plan)
+        and all(
+            result.get(field) == case_plan.get(field)
+            for field in (
+                "inputs",
+                "sample_count",
+                "budgets",
+                "tolerances",
+                "comparison_method",
+                "acceptance_rule",
+                "limitations",
+            )
+        )
+        and result.get("tolerance_history")
+        == successor_plan.get("tolerance_history")
+        and result.get("sample_count") == 3
+        and len(samples) == result.get("sample_count")
+        and isinstance(tested_commit, str)
+        and len(tested_commit) == 40
+        and result.get("supersedes")
+        == {
+            "path": "docs/research/benchmarks/decision-durability.json",
+            "version": "1.0.0",
+            "sha256": V1_DECISION_DURABILITY_SHA256,
+            "status": "superseded-evidence",
+            "preserved": True,
+        }
+        and result.get("conclusion") == expected_conclusion == "pass"
+    )
+
+
 def issue(criterion: str, code: str, path: str, message: str) -> dict[str, str]:
     remediation = (
         "make verify-analyzer-evaluation"
@@ -698,20 +818,33 @@ def validate_claim_links(
         problems,
         "VAL-READY-014",
     )
+    v2_decision = load(
+        root,
+        V2_DECISION_DURABILITY_PATH,
+        problems,
+        "VAL-READY-014",
+    )
+    active_v2 = {
+        "key-rotation": (
+            V2_KEY_ROTATION_PATH,
+            v2_key_rotation,
+            V1_KEY_ROTATION_SHA256,
+        ),
+        "decision-durability": (
+            V2_DECISION_DURABILITY_PATH,
+            v2_decision,
+            V1_DECISION_DURABILITY_SHA256,
+        ),
+    }
     for case, row in by_case.items():
-        result = (
-            v2_key_rotation
-            if case == "key-rotation"
-            else results.get(case, {})
-        )
+        v2_record = active_v2.get(case)
+        result = v2_record[1] if v2_record else results.get(case, {})
         expected_result_path = (
-            V2_KEY_ROTATION_PATH
-            if case == "key-rotation"
-            else RESULT_PATH_BY_CASE[case]
+            v2_record[0] if v2_record else RESULT_PATH_BY_CASE[case]
         )
         expected_plan_commit = (
             SUCCESSOR_PLAN_COMMIT
-            if case == "key-rotation"
+            if v2_record
             else CANONICAL_PLAN_COMMIT
         )
         required_text = (
@@ -735,12 +868,12 @@ def validate_claim_links(
             or not (root / PROTOTYPE_PATHS[case]).is_file()
             or not (root / expected_result_path).is_file()
             or (
-                case == "key-rotation"
+                v2_record is not None
                 and row.get("supersedes_result")
                 != {
                     "path": RESULT_PATH_BY_CASE[case],
                     "version": "1.0.0",
-                    "sha256": V1_KEY_ROTATION_SHA256,
+                    "sha256": v2_record[2],
                     "status": "superseded-evidence",
                 }
             )
@@ -893,13 +1026,13 @@ def validate_manifest_agreement(
         for row in rows
         if isinstance(row, dict) and isinstance(row.get("id"), str)
     }
+    v2_paths = {
+        "key-rotation": V2_KEY_ROTATION_PATH,
+        "decision-durability": V2_DECISION_DURABILITY_PATH,
+    }
     for case in sorted(PROTOTYPES):
-        active_result_path = (
-            V2_KEY_ROTATION_PATH
-            if case == "key-rotation"
-            else RESULT_PATH_BY_CASE[case]
-        )
-        active_version = "2.0.0" if case == "key-rotation" else "1.0.0"
+        active_result_path = v2_paths.get(case, RESULT_PATH_BY_CASE[case])
+        active_version = "2.0.0" if case in v2_paths else "1.0.0"
         for kind, deliverable_id, artifact_path in (
             ("prototype", PROTOTYPE_DELIVERABLES[case], PROTOTYPE_PATHS[case]),
             ("benchmark", BENCHMARK_DELIVERABLES[case], active_result_path),
@@ -921,13 +1054,13 @@ def validate_manifest_agreement(
                 or artifact_path not in locators
                 or CLAIMS_PATH not in locators
                 or (
-                    case != "key-rotation"
+                    case not in v2_paths
                     and REPRODUCTION_PATH not in locators
                 )
                 or (
-                    case == "key-rotation"
+                    case in v2_paths
                     and (
-                        V2_KEY_ROTATION_PATH not in locators
+                        active_result_path not in locators
                         or RESULT_PATH_BY_CASE[case] not in locators
                         or SUCCESSOR_PLAN_PATH not in locators
                     )
@@ -1227,6 +1360,71 @@ def validate_prototype_evidence(root: Path) -> list[dict[str, str]]:
                 "invalid_v2_key_rotation_evidence",
                 V2_KEY_ROTATION_PATH,
                 "Version 2 key rotation requires three independently captured, recomputed, resource-bounded samples from a committed descendant of its precommit",
+            )
+        )
+    v1_decision_path = root / RESULT_PATH_BY_CASE["decision-durability"]
+    if (
+        not v1_decision_path.is_file()
+        or hashlib.sha256(v1_decision_path.read_bytes()).hexdigest()
+        != V1_DECISION_DURABILITY_SHA256
+    ):
+        problems.append(
+            issue(
+                "VAL-READY-014",
+                "modified_v1_decision_durability_evidence",
+                RESULT_PATH_BY_CASE["decision-durability"],
+                "Version 1 decision-durability evidence must remain byte-for-byte immutable",
+            )
+        )
+    successor_plan = load(
+        root,
+        SUCCESSOR_PLAN_PATH,
+        problems,
+        "VAL-READY-014",
+    )
+    v2_decision = load(
+        root,
+        V2_DECISION_DURABILITY_PATH,
+        problems,
+        "VAL-READY-014",
+    )
+    decision_tested_commit = v2_decision.get("environment", {}).get(
+        "tested_commit"
+    )
+    decision_commit_valid = (
+        isinstance(decision_tested_commit, str)
+        and len(decision_tested_commit) == 40
+        and git_object_exists(root, f"{decision_tested_commit}^{{commit}}")
+    )
+    if decision_commit_valid and (root / ".git").exists():
+        decision_commit_valid = (
+            subprocess.run(
+                [
+                    "git",
+                    "merge-base",
+                    "--is-ancestor",
+                    SUCCESSOR_PLAN_COMMIT,
+                    decision_tested_commit,
+                ],
+                cwd=root,
+                capture_output=True,
+                check=False,
+            ).returncode
+            == 0
+        )
+    if (
+        not valid_v2_decision_durability_result(
+            v2_decision,
+            successor_plan,
+        )
+        or not decision_commit_valid
+    ):
+        problems.append(
+            issue(
+                "VAL-READY-014",
+                "invalid_v2_decision_durability_evidence",
+                V2_DECISION_DURABILITY_PATH,
+                "Version 2 decision durability requires three exact-backend disconnect samples with recomputed rollback and resource evidence",
             )
         )
     cases = plan.get("cases", [])
