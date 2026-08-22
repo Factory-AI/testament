@@ -444,10 +444,16 @@ def validate(root: Path) -> list[dict[str, str]]:
                 problems.append(
                     issue(CRITERIA[0], "giant_fixture_too_small", relative, str(len(content)), "regenerate a fixture of at least 1,000,000 bytes")
                 )
-        for label, pattern in SECRET_PATTERNS.items():
+        for pattern in SECRET_PATTERNS.values():
             if pattern.search(content):
                 problems.append(
-                    issue(CRITERIA[0], "possible_secret_in_fixture", relative, label, "replace the content with an unmistakably synthetic non-secret value")
+                    issue(
+                        CRITERIA[0],
+                        "possible_secret_in_fixture",
+                        relative,
+                        "Sensitive pattern detected; fixture bytes and category withheld",
+                        "replace the content with an unmistakably synthetic non-secret value",
+                    )
                 )
         for label, pattern in PII_PATTERNS.items():
             if pattern.search(content):

@@ -173,9 +173,19 @@ class SyntheticCorpusTest(unittest.TestCase):
         fixture["byte_count"] = path.stat().st_size
         fixture["sha256"] = hashlib.sha256(path.read_bytes()).hexdigest()
         self.write_manifest(root, manifest)
-        codes = self.codes(root)
+        problems = VERIFY.validate(root)
+        codes = {problem["code"] for problem in problems}
         self.assertIn("possible_secret_in_fixture", codes)
         self.assertIn("possible_pii_in_fixture", codes)
+        secret_messages = {
+            problem["message"]
+            for problem in problems
+            if problem["code"] == "possible_secret_in_fixture"
+        }
+        self.assertEqual(
+            {"Sensitive pattern detected; fixture bytes and category withheld"},
+            secret_messages,
+        )
 
     def test_giant_json_and_jsonl_are_both_present(self) -> None:
         manifest = self.load_manifest(ROOT)
