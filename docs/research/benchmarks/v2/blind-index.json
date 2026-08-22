@@ -1,0 +1,126 @@
+{
+  "acceptance_rule": "Same-scope equality matches; organization, field, and generation changes produce different fixed-length tokens within both unchanged resource budgets.",
+  "benchmark_id": "blind-index-benchmark",
+  "budgets": {
+    "max_elapsed_ms": 10000,
+    "max_process_rss_bytes": 536870912
+  },
+  "comparison_method": "Compare HMAC-SHA-256 equality tokens within and across organization, field, and generation scope.",
+  "conclusion": "pass",
+  "environment": {
+    "architecture": "arm64",
+    "cpu_count": 12,
+    "docker": "Docker version 28.5.1, build e180ab8",
+    "go": "go version go1.26.4 darwin/arm64",
+    "machine_class": "developer-workstation-12cpu-18gib",
+    "memory_bytes": 19327352832,
+    "os": "macOS-26.6.1-arm64-arm-64bit-Mach-O",
+    "python": "3.14.7",
+    "tested_commit": "297e14b14a41582d914c33cda8ea61f1b92bca29"
+  },
+  "feature_id": "prototype-v2-clean-clone-reconciliation",
+  "inputs": [
+    "one synthetic normalized value",
+    "two organizations",
+    "two fields",
+    "two search-root generations"
+  ],
+  "limitations": [
+    "Equality and frequency leakage within a scope remains and is explicitly recorded."
+  ],
+  "plan_commit": "0f3dce5b9418a50eb031ec3fd561282462533bd3",
+  "plan_sha256": "dee0f3d2574b9bc9db319090a43f6fd7745bbb2594b12f0f871fe8a66c051896",
+  "prototype_id": "blind-index",
+  "sample_count": 3,
+  "samples": [
+    {
+      "elapsed_ms": 151.487,
+      "observation": {
+        "cross_field_separation": true,
+        "cross_org_separation": true,
+        "documented_leakage": "equality and frequency within one org/field/generation",
+        "rotation_changes_token": true,
+        "same_scope_equality": true,
+        "token_bytes": 32,
+        "worker_completed": true
+      },
+      "resource_accounting": {
+        "accounting_version": "2.0.0",
+        "budget_bytes": 536870912,
+        "descendants_included": true,
+        "hard_limit_bytes": 536870912,
+        "isolation": "fresh_process_group",
+        "metric": "aggregate_peak_resident_bytes",
+        "peak_rss_bytes": 26804224,
+        "scope": "worker_descendant_tree",
+        "source": "external_ps_process_table",
+        "target": "worker_pid:95677",
+        "within_budget": true
+      }
+    },
+    {
+      "elapsed_ms": 123.664,
+      "observation": {
+        "cross_field_separation": true,
+        "cross_org_separation": true,
+        "documented_leakage": "equality and frequency within one org/field/generation",
+        "rotation_changes_token": true,
+        "same_scope_equality": true,
+        "token_bytes": 32,
+        "worker_completed": true
+      },
+      "resource_accounting": {
+        "accounting_version": "2.0.0",
+        "budget_bytes": 536870912,
+        "descendants_included": true,
+        "hard_limit_bytes": 536870912,
+        "isolation": "fresh_process_group",
+        "metric": "aggregate_peak_resident_bytes",
+        "peak_rss_bytes": 28491776,
+        "scope": "worker_descendant_tree",
+        "source": "external_ps_process_table",
+        "target": "worker_pid:95681",
+        "within_budget": true
+      }
+    },
+    {
+      "elapsed_ms": 115.498,
+      "observation": {
+        "cross_field_separation": true,
+        "cross_org_separation": true,
+        "documented_leakage": "equality and frequency within one org/field/generation",
+        "rotation_changes_token": true,
+        "same_scope_equality": true,
+        "token_bytes": 32,
+        "worker_completed": true
+      },
+      "resource_accounting": {
+        "accounting_version": "2.0.0",
+        "budget_bytes": 536870912,
+        "descendants_included": true,
+        "hard_limit_bytes": 536870912,
+        "isolation": "fresh_process_group",
+        "metric": "aggregate_peak_resident_bytes",
+        "peak_rss_bytes": 32768,
+        "scope": "worker_descendant_tree",
+        "source": "external_ps_process_table",
+        "target": "worker_pid:95685",
+        "within_budget": true
+      }
+    }
+  ],
+  "schema_version": "1.0.0",
+  "supersedes": {
+    "path": "docs/research/benchmarks/blind-index.json",
+    "preserved": true,
+    "sha256": "8e7085c8d52b695cc55b4f12cb430b3e636c18bbefa702ff42cad4e45c49a4cf",
+    "status": "superseded-evidence",
+    "version": "1.0.0"
+  },
+  "tolerance_history": [],
+  "tolerances": {
+    "cross_scope_token_collisions": 0
+  },
+  "validation_id": "VAL-READY-014",
+  "version": "2.0.0"
+}

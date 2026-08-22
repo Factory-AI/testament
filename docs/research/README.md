@@ -75,9 +75,13 @@ published.
 The [prototype claim ledger](../../policy/prototype-claims.json) links exactly
 nine informative claims to their disposable prototype, precommitted plan,
 benchmark result, observation, inference, uncertainty, limitation, and pending
-review. The [clean-clone reproduction report](benchmarks/reproduction.json)
-contains all 27 rerun samples and comparisons. Neither file is a normative
-conformance input.
+review. The active
+[version 2 clean-clone reproduction report](benchmarks/v2/reproduction.json)
+contains all 27 rerun samples and comparisons from one committed successor
+candidate. The preserved
+[version 1 reproduction report](benchmarks/reproduction.json) remains
+queryable only as superseded evidence. Neither file is a normative conformance
+input.
 
 All results bind the canonical precommit plan at
 `cfdf43bb49f3802137dc0ae887314ab7a8a01f58`. Five early local result files
@@ -88,11 +92,18 @@ was rewritten.
 
 The [version 2 successor plan](benchmarks/precommit-v2.json), committed at
 `0f3dce5b9418a50eb031ec3fd561282462533bd3`, explicitly supersedes the
-canonical version 1 plan for future measurements. It precommits the F-001
+canonical version 1 plan for active measurements. It precommits the F-001
 workload accounting, F-002 independent key-rotation capture, and F-003
 backend-disconnect fault methods. It does not replace or rewrite the version 1
 plan, results, or reproduction report. All sample counts, elapsed budgets,
 tolerances, and the 536,870,912-byte RSS budgets remain unchanged.
+
+All nine active result files are under
+[`benchmarks/v2/`](benchmarks/v2/) and bind tested implementation commit
+`297e14b14a41582d914c33cda8ea61f1b92bca29`. Exactly three samples per
+prototype passed without changing a precommitted budget or tolerance. Every
+result preserves the matching version 1 path and SHA-256 as superseded
+evidence.
 
 Version 2 local samples run in fresh worker process groups. An observer outside
 the worker recursively sums resident bytes for the worker and descendants, so
@@ -151,7 +162,9 @@ python3 scripts/run_prototypes.py \
   --plan-commit 0f3dce5b9418a50eb031ec3fd561282462533bd3 \
   --postgres \
   --services-manifest <mission-services.yaml> \
-  --output-dir /tmp/testament-prototype-v2-results
+  --output-dir /tmp/testament-prototype-v2-results \
+  --report /tmp/testament-prototype-v2-results/reproduction.json \
+  --clean-clone
 ```
 
 The runner performs the PostgreSQL start, healthcheck, cgroup observation, and
@@ -159,8 +172,8 @@ stop sequence once per sample. Do not start PostgreSQL separately for a
 version 2 run.
 
 The [version 2 key-rotation result](benchmarks/v2/key-rotation.json) contains
-three resource-bounded samples from committed implementation
-`4455a87b4a0869eb6d4bd2a710e2aa9695edd1e5`. Each sample records two distinct
+three resource-bounded samples from the shared clean-clone candidate. Each
+sample records two distinct
 reads of separately persisted payload ciphertext, before rewrap and after the
 new wrapped DEK and checkpoint, plus capture identities, methods, ordinals,
 digests, byte counts, wrapped-DEK digests, generations, and checkpoint.
@@ -169,8 +182,8 @@ Acceptance is recomputed from those fields. The
 preserved and is retained only as superseded evidence.
 
 The [version 2 decision-durability result](benchmarks/v2/decision-durability.json)
-contains three resource-bounded PostgreSQL 17 samples from committed
-implementation `6d0eb1037e7acb33b72834908a74540b0474caa4`. In every sample,
+contains three resource-bounded PostgreSQL 17 samples from the shared
+clean-clone candidate. In every sample,
 a uniquely named fault session emitted an in-transaction readiness marker and
 blocked without explicit rollback. A separate control connection matched and
 terminated that exact backend. The client lost its connection and exited

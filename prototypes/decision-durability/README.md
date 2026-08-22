@@ -14,6 +14,9 @@ orphans, and automatic rollback.
 
 The active evidence is
 [`docs/research/benchmarks/v2/decision-durability.json`](../../docs/research/benchmarks/v2/decision-durability.json).
+It is one of the nine results produced from the shared
+[clean-clone rerun](../../docs/research/benchmarks/v2/reproduction.json) at
+the committed successor implementation.
 The immutable version 1 result at
 [`docs/research/benchmarks/decision-durability.json`](../../docs/research/benchmarks/decision-durability.json)
 is retained only as superseded evidence.

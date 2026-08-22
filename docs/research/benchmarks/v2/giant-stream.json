@@ -1,0 +1,122 @@
+{
+  "acceptance_rule": "All samples use 65536-byte bounded reads, preserve byte count, match the independent digest, and remain within both unchanged resource budgets.",
+  "benchmark_id": "giant-stream-benchmark",
+  "budgets": {
+    "max_elapsed_ms": 10000,
+    "max_process_rss_bytes": 536870912
+  },
+  "comparison_method": "Compare incremental SHA-256 and byte count with an independent whole-file SHA-256.",
+  "conclusion": "pass",
+  "environment": {
+    "architecture": "arm64",
+    "cpu_count": 12,
+    "docker": "Docker version 28.5.1, build e180ab8",
+    "go": "go version go1.26.4 darwin/arm64",
+    "machine_class": "developer-workstation-12cpu-18gib",
+    "memory_bytes": 19327352832,
+    "os": "macOS-26.6.1-arm64-arm-64bit-Mach-O",
+    "python": "3.14.7",
+    "tested_commit": "297e14b14a41582d914c33cda8ea61f1b92bca29"
+  },
+  "feature_id": "prototype-v2-clean-clone-reconciliation",
+  "inputs": [
+    "fixtures/research-corpus/giant.json",
+    "65536-byte read blocks"
+  ],
+  "limitations": [
+    "The committed 2 MiB synthetic fixture is a bounded proof, not a 1 GiB release-load result."
+  ],
+  "plan_commit": "0f3dce5b9418a50eb031ec3fd561282462533bd3",
+  "plan_sha256": "dee0f3d2574b9bc9db319090a43f6fd7745bbb2594b12f0f871fe8a66c051896",
+  "prototype_id": "giant-stream",
+  "sample_count": 3,
+  "samples": [
+    {
+      "elapsed_ms": 108.857,
+      "observation": {
+        "bounded_chunk_bytes": 65536,
+        "bytes": 1100055,
+        "chunks": 17,
+        "exact_digest": true,
+        "sha256": "11b87e08e5f3a9c025819a0230cb8f4543187c58eea9edeae40f95a29282bee2",
+        "worker_completed": true
+      },
+      "resource_accounting": {
+        "accounting_version": "2.0.0",
+        "budget_bytes": 536870912,
+        "descendants_included": true,
+        "hard_limit_bytes": 536870912,
+        "isolation": "fresh_process_group",
+        "metric": "aggregate_peak_resident_bytes",
+        "peak_rss_bytes": 28426240,
+        "scope": "worker_descendant_tree",
+        "source": "external_ps_process_table",
+        "target": "worker_pid:95477",
+        "within_budget": true
+      }
+    },
+    {
+      "elapsed_ms": 101.8,
+      "observation": {
+        "bounded_chunk_bytes": 65536,
+        "bytes": 1100055,
+        "chunks": 17,
+        "exact_digest": true,
+        "sha256": "11b87e08e5f3a9c025819a0230cb8f4543187c58eea9edeae40f95a29282bee2",
+        "worker_completed": true
+      },
+      "resource_accounting": {
+        "accounting_version": "2.0.0",
+        "budget_bytes": 536870912,
+        "descendants_included": true,
+        "hard_limit_bytes": 536870912,
+        "isolation": "fresh_process_group",
+        "metric": "aggregate_peak_resident_bytes",
+        "peak_rss_bytes": 28049408,
+        "scope": "worker_descendant_tree",
+        "source": "external_ps_process_table",
+        "target": "worker_pid:95481",
+        "within_budget": true
+      }
+    },
+    {
+      "elapsed_ms": 111.961,
+      "observation": {
+        "bounded_chunk_bytes": 65536,
+        "bytes": 1100055,
+        "chunks": 17,
+        "exact_digest": true,
+        "sha256": "11b87e08e5f3a9c025819a0230cb8f4543187c58eea9edeae40f95a29282bee2",
+        "worker_completed": true
+      },
+      "resource_accounting": {
+        "accounting_version": "2.0.0",
+        "budget_bytes": 536870912,
+        "descendants_included": true,
+        "hard_limit_bytes": 536870912,
+        "isolation": "fresh_process_group",
+        "metric": "aggregate_peak_resident_bytes",
+        "peak_rss_bytes": 32768,
+        "scope": "worker_descendant_tree",
+        "source": "external_ps_process_table",
+        "target": "worker_pid:95485",
+        "within_budget": true
+      }
+    }
+  ],
+  "schema_version": "1.0.0",
+  "supersedes": {
+    "path": "docs/research/benchmarks/giant-stream.json",
+    "preserved": true,
+    "sha256": "3f5890082d0eef097c29ad82f033ba73fc2b2fef70f90e79faa8595a252e4a48",
+    "status": "superseded-evidence",
+    "version": "1.0.0"
+  },
+  "tolerance_history": [],
+  "tolerances": {
+    "digest_mismatch_count": 0,
+    "unbounded_read_count": 0
+  },
+  "validation_id": "VAL-READY-014",
+  "version": "2.0.0"
+}

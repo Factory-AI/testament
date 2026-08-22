@@ -10,6 +10,9 @@ digests, generations `[1,2]`, and checkpoint `1`.
 
 The active evidence is
 [`docs/research/benchmarks/v2/key-rotation.json`](../../docs/research/benchmarks/v2/key-rotation.json).
+It is one of the nine results produced from the shared
+[clean-clone rerun](../../docs/research/benchmarks/v2/reproduction.json) at
+the committed successor implementation.
 The immutable version 1 result at
 [`docs/research/benchmarks/key-rotation.json`](../../docs/research/benchmarks/key-rotation.json)
 is retained only as superseded evidence. Version 2 does not make a cloud KMS

@@ -1,10 +1,10 @@
 {
   "schema_version": "1.0.0",
-  "feature_id": "reproducible-prototype-completion",
+  "feature_id": "prototype-v2-clean-clone-reconciliation",
   "validation_id": "VAL-READY-014",
   "status": "informative-in-review",
-  "version": "1.0.0",
-  "canonical_plan_commit": "cfdf43bb49f3802137dc0ae887314ab7a8a01f58",
+  "version": "2.0.0",
+  "canonical_plan_commit": "0f3dce5b9418a50eb031ec3fd561282462533bd3",
   "claims": [
     {
       "claim_id": "CLAIM-PROTOTYPE-GIANT-STREAM",
@@ -12,8 +12,8 @@
       "prototype_deliverable_id": "RES-PROTOTYPE-GIANT-STREAM-001",
       "benchmark_deliverable_id": "RES-BENCHMARK-GIANT-STREAM-001",
       "prototype_path": "prototypes/giant-stream/README.md",
-      "result_path": "docs/research/benchmarks/giant-stream.json",
-      "plan_commit": "cfdf43bb49f3802137dc0ae887314ab7a8a01f58",
+      "result_path": "docs/research/benchmarks/v2/giant-stream.json",
+      "plan_commit": "0f3dce5b9418a50eb031ec3fd561282462533bd3",
       "claim": "The disposable harness can hash the committed giant fixture with bounded 64 KiB reads and preserve its byte count and digest.",
       "observation": "Three samples used 64 KiB reads, processed 1,100,055 bytes in 17 chunks, and matched the independent SHA-256 within the precommitted budgets.",
       "inference": "The bounded read pattern is suitable for later streaming design work.",
@@ -21,7 +21,15 @@
       "limitations": "This is a 2 MiB-class synthetic research fixture and not release-load evidence.",
       "conclusion": "pass",
       "reviewer": "non-author deployment and performance reviewer",
-      "review_status": "pending"
+      "review_status": "pending",
+      "tested_implementation_commit": "297e14b14a41582d914c33cda8ea61f1b92bca29",
+      "clean_clone_report": "docs/research/benchmarks/v2/reproduction.json",
+      "supersedes_result": {
+        "path": "docs/research/benchmarks/giant-stream.json",
+        "version": "1.0.0",
+        "sha256": "3f5890082d0eef097c29ad82f033ba73fc2b2fef70f90e79faa8595a252e4a48",
+        "status": "superseded-evidence"
+      }
     },
     {
       "claim_id": "CLAIM-PROTOTYPE-EXACT-BYTE",
@@ -29,8 +37,8 @@
       "prototype_deliverable_id": "RES-PROTOTYPE-EXACT-BYTE-001",
       "benchmark_deliverable_id": "RES-BENCHMARK-EXACT-BYTE-001",
       "prototype_path": "prototypes/exact-byte/README.md",
-      "result_path": "docs/research/benchmarks/exact-byte.json",
-      "plan_commit": "cfdf43bb49f3802137dc0ae887314ab7a8a01f58",
+      "result_path": "docs/research/benchmarks/v2/exact-byte.json",
+      "plan_commit": "0f3dce5b9418a50eb031ec3fd561282462533bd3",
       "claim": "The disposable filesystem harness preserves all six committed byte classes exactly.",
       "observation": "Empty, binary, invalid UTF-8, CRLF, malformed, stream, and all-byte inputs round-tripped exactly in every sample.",
       "inference": "Exact-octet custody is feasible without parsing or normalizing the source.",
@@ -38,7 +46,15 @@
       "limitations": "Filesystem readback alone does not prove an ingest API contract.",
       "conclusion": "pass",
       "reviewer": "non-author interoperability reviewer",
-      "review_status": "pending"
+      "review_status": "pending",
+      "tested_implementation_commit": "297e14b14a41582d914c33cda8ea61f1b92bca29",
+      "clean_clone_report": "docs/research/benchmarks/v2/reproduction.json",
+      "supersedes_result": {
+        "path": "docs/research/benchmarks/exact-byte.json",
+        "version": "1.0.0",
+        "sha256": "9fe9ba8ded7a1a70daf0dc95d85536dd8684d2435efb04e8baffa98399fd3038",
+        "status": "superseded-evidence"
+      }
     },
     {
       "claim_id": "CLAIM-PROTOTYPE-COMPRESSION-ENCRYPTION",
@@ -46,8 +62,8 @@
       "prototype_deliverable_id": "RES-PROTOTYPE-COMPRESSION-ENCRYPTION-001",
       "benchmark_deliverable_id": "RES-BENCHMARK-COMPRESSION-ENCRYPTION-001",
       "prototype_path": "prototypes/compression-encryption/README.md",
-      "result_path": "docs/research/benchmarks/compression-encryption.json",
-      "plan_commit": "cfdf43bb49f3802137dc0ae887314ab7a8a01f58",
+      "result_path": "docs/research/benchmarks/v2/compression-encryption.json",
+      "plan_commit": "0f3dce5b9418a50eb031ec3fd561282462533bd3",
       "claim": "The disposable Go harness compresses before AES-256-GCM, reads back exact bytes, and rejects a one-bit ciphertext mutation.",
       "observation": "Every sample reported compression-before-AEAD, exact round trip, and tamper rejection within the fixed budgets.",
       "inference": "The operation order and authenticated readback are viable inputs to a later envelope specification.",
@@ -55,7 +71,15 @@
       "limitations": "The one-shot deterministic nonce is prototype-only and must not be copied into production.",
       "conclusion": "pass",
       "reviewer": "non-author security and performance reviewer",
-      "review_status": "pending"
+      "review_status": "pending",
+      "tested_implementation_commit": "297e14b14a41582d914c33cda8ea61f1b92bca29",
+      "clean_clone_report": "docs/research/benchmarks/v2/reproduction.json",
+      "supersedes_result": {
+        "path": "docs/research/benchmarks/compression-encryption.json",
+        "version": "1.0.0",
+        "sha256": "dcb1beb882e731044532adc59e095fee1dfe207f8fbe493407bfd16815dc3d51",
+        "status": "superseded-evidence"
+      }
     },
     {
       "claim_id": "CLAIM-PROTOTYPE-POSTGRES-STORAGE",
@@ -63,8 +87,8 @@
       "prototype_deliverable_id": "RES-PROTOTYPE-POSTGRES-STORAGE-001",
       "benchmark_deliverable_id": "RES-BENCHMARK-POSTGRES-STORAGE-001",
       "prototype_path": "prototypes/postgres-storage/README.md",
-      "result_path": "docs/research/benchmarks/postgres-storage.json",
-      "plan_commit": "cfdf43bb49f3802137dc0ae887314ab7a8a01f58",
+      "result_path": "docs/research/benchmarks/v2/postgres-storage.json",
+      "plan_commit": "0f3dce5b9418a50eb031ec3fd561282462533bd3",
       "claim": "PostgreSQL 17 can store the synthetic bytea-only rows in monthly range partitions and prune the unused partition for the pinned query.",
       "observation": "Three samples observed 200 rows, two partitions, no named plaintext content column, and an execution plan containing only the August partition.",
       "inference": "Range partitioning and ciphertext-only content columns are viable research inputs for later schema design.",
@@ -72,7 +96,15 @@
       "limitations": "Column inspection cannot prove every future SQL, WAL, backup, or logging path remains ciphertext-only.",
       "conclusion": "pass",
       "reviewer": "non-author deployment and performance reviewer",
-      "review_status": "pending"
+      "review_status": "pending",
+      "tested_implementation_commit": "297e14b14a41582d914c33cda8ea61f1b92bca29",
+      "clean_clone_report": "docs/research/benchmarks/v2/reproduction.json",
+      "supersedes_result": {
+        "path": "docs/research/benchmarks/postgres-storage.json",
+        "version": "1.0.0",
+        "sha256": "08ea0e80614ba19ed2ba35b723d350f91d34303a7de88d892e5b87a714ad6522",
+        "status": "superseded-evidence"
+      }
     },
     {
       "claim_id": "CLAIM-PROTOTYPE-BLIND-INDEX",
@@ -80,8 +112,8 @@
       "prototype_deliverable_id": "RES-PROTOTYPE-BLIND-INDEX-001",
       "benchmark_deliverable_id": "RES-BENCHMARK-BLIND-INDEX-001",
       "prototype_path": "prototypes/blind-index/README.md",
-      "result_path": "docs/research/benchmarks/blind-index.json",
-      "plan_commit": "cfdf43bb49f3802137dc0ae887314ab7a8a01f58",
+      "result_path": "docs/research/benchmarks/v2/blind-index.json",
+      "plan_commit": "0f3dce5b9418a50eb031ec3fd561282462533bd3",
       "claim": "The disposable HMAC harness gives stable same-scope equality and separates organization, field, and generation scopes.",
       "observation": "All samples matched within one scope and changed the fixed-length token across organization, field, and generation.",
       "inference": "Narrow organization- and field-scoped equality search is feasible.",
@@ -89,7 +121,15 @@
       "limitations": "Equality and frequency leakage remain within each organization, field, and generation.",
       "conclusion": "pass",
       "reviewer": "non-author security and performance reviewer",
-      "review_status": "pending"
+      "review_status": "pending",
+      "tested_implementation_commit": "297e14b14a41582d914c33cda8ea61f1b92bca29",
+      "clean_clone_report": "docs/research/benchmarks/v2/reproduction.json",
+      "supersedes_result": {
+        "path": "docs/research/benchmarks/blind-index.json",
+        "version": "1.0.0",
+        "sha256": "8e7085c8d52b695cc55b4f12cb430b3e636c18bbefa702ff42cad4e45c49a4cf",
+        "status": "superseded-evidence"
+      }
     },
     {
       "claim_id": "CLAIM-PROTOTYPE-KEY-ROTATION",
@@ -112,7 +152,9 @@
       "limitations": "Provider conformance and production rotation state machines remain future work.",
       "conclusion": "pass",
       "reviewer": "non-author security and performance reviewer",
-      "review_status": "pending"
+      "review_status": "pending",
+      "tested_implementation_commit": "297e14b14a41582d914c33cda8ea61f1b92bca29",
+      "clean_clone_report": "docs/research/benchmarks/v2/reproduction.json"
     },
     {
       "claim_id": "CLAIM-PROTOTYPE-DECISION-DURABILITY",
@@ -135,7 +177,9 @@
       "limitations": "This prototype demonstrates backend-disconnect rollback only, not end-to-end online decision durability.",
       "conclusion": "pass",
       "reviewer": "non-author security, deployment, and performance reviewer",
-      "review_status": "pending"
+      "review_status": "pending",
+      "tested_implementation_commit": "297e14b14a41582d914c33cda8ea61f1b92bca29",
+      "clean_clone_report": "docs/research/benchmarks/v2/reproduction.json"
     },
     {
       "claim_id": "CLAIM-PROTOTYPE-ANALYZER-ISOLATION",
@@ -143,8 +187,8 @@
       "prototype_deliverable_id": "RES-PROTOTYPE-ANALYZER-ISOLATION-001",
       "benchmark_deliverable_id": "RES-BENCHMARK-ANALYZER-ISOLATION-001",
       "prototype_path": "prototypes/analyzer-isolation/README.md",
-      "result_path": "docs/research/benchmarks/analyzer-isolation.json",
-      "plan_commit": "cfdf43bb49f3802137dc0ae887314ab7a8a01f58",
+      "result_path": "docs/research/benchmarks/v2/analyzer-isolation.json",
+      "plan_commit": "0f3dce5b9418a50eb031ec3fd561282462533bd3",
       "claim": "POSIX subprocess controls can bound the measured environment, directory, CPU, address space, descriptors, time, and output, but do not prove network denial.",
       "observation": "All samples enforced the precommitted ambient and resource bounds while explicitly recording that network denial and hostile multi-tenant isolation were not proven.",
       "inference": "A plain subprocess is insufficient as the complete hostile-extension isolation boundary.",
@@ -152,7 +196,15 @@
       "limitations": "No claim of hostile multi-tenant isolation or no-content-egress is made.",
       "conclusion": "pass",
       "reviewer": "non-author security and performance reviewer",
-      "review_status": "pending"
+      "review_status": "pending",
+      "tested_implementation_commit": "297e14b14a41582d914c33cda8ea61f1b92bca29",
+      "clean_clone_report": "docs/research/benchmarks/v2/reproduction.json",
+      "supersedes_result": {
+        "path": "docs/research/benchmarks/analyzer-isolation.json",
+        "version": "1.0.0",
+        "sha256": "40e815405dc429bd0bdc1954a4c618f397f41a8a847533a4bde900d64746e045",
+        "status": "superseded-evidence"
+      }
     },
     {
       "claim_id": "CLAIM-PROTOTYPE-OFFLINE-REPLAY",
@@ -160,8 +212,8 @@
       "prototype_deliverable_id": "RES-PROTOTYPE-OFFLINE-REPLAY-001",
       "benchmark_deliverable_id": "RES-BENCHMARK-OFFLINE-REPLAY-001",
       "prototype_path": "prototypes/offline-replay/README.md",
-      "result_path": "docs/research/benchmarks/offline-replay.json",
-      "plan_commit": "cfdf43bb49f3802137dc0ae887314ab7a8a01f58",
+      "result_path": "docs/research/benchmarks/v2/offline-replay.json",
+      "plan_commit": "0f3dce5b9418a50eb031ec3fd561282462533bd3",
       "claim": "Pinned PostgreSQL snapshots reproduce the same digest and a late event creates a distinct superseding run without deleting prior history.",
       "observation": "Each sample retained three linked runs, matched both pinned replay digests, and changed the late-event revision.",
       "inference": "Append-only replay and explicit late-event supersession are feasible design inputs.",
@@ -169,7 +221,15 @@
       "limitations": "Recorded equivalence here is limited to the synthetic ordered snapshot and digest method.",
       "conclusion": "pass",
       "reviewer": "non-author deployment and performance reviewer",
-      "review_status": "pending"
+      "review_status": "pending",
+      "tested_implementation_commit": "297e14b14a41582d914c33cda8ea61f1b92bca29",
+      "clean_clone_report": "docs/research/benchmarks/v2/reproduction.json",
+      "supersedes_result": {
+        "path": "docs/research/benchmarks/offline-replay.json",
+        "version": "1.0.0",
+        "sha256": "30ce5d01bf6e83ec56df07641609453e2d31f151c90a12b0df5f6acb0d018b08",
+        "status": "superseded-evidence"
+      }
     }
   ]
 }

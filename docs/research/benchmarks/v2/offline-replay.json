@@ -1,0 +1,227 @@
+{
+  "acceptance_rule": "Recorded replay digests match, late replay differs, all three runs remain, PostgreSQL 17 on 5440, and both unchanged resource budgets hold.",
+  "benchmark_id": "offline-replay-benchmark",
+  "budgets": {
+    "max_elapsed_ms": 15000,
+    "max_process_rss_bytes": 536870912
+  },
+  "comparison_method": "Digest ordered immutable snapshots in PostgreSQL, repeat the pinned snapshot, add a late event, and append a superseding run.",
+  "conclusion": "pass",
+  "environment": {
+    "architecture": "arm64",
+    "cpu_count": 12,
+    "docker": "Docker version 28.5.1, build e180ab8",
+    "go": "go version go1.26.4 darwin/arm64",
+    "machine_class": "developer-workstation-12cpu-18gib",
+    "memory_bytes": 19327352832,
+    "os": "macOS-26.6.1-arm64-arm-64bit-Mach-O",
+    "postgres": {
+      "healthcheck": "pg_isready -p 5440",
+      "lifecycle_manifest": "services.yaml",
+      "major": 17,
+      "port": 5440,
+      "resource_source": "Docker container statistics backed by the postgres container cgroup",
+      "service": "postgres"
+    },
+    "python": "3.14.7",
+    "tested_commit": "297e14b14a41582d914c33cda8ea61f1b92bca29"
+  },
+  "feature_id": "prototype-v2-clean-clone-reconciliation",
+  "inputs": [
+    "three ordered synthetic events",
+    "two identical recorded replays",
+    "one late event and superseding replay"
+  ],
+  "limitations": [
+    "Tenant fairness and crash recovery need larger production-stage fault tests."
+  ],
+  "plan_commit": "0f3dce5b9418a50eb031ec3fd561282462533bd3",
+  "plan_sha256": "dee0f3d2574b9bc9db319090a43f6fd7745bbb2594b12f0f871fe8a66c051896",
+  "prototype_id": "offline-replay",
+  "sample_count": 3,
+  "samples": [
+    {
+      "elapsed_ms": 6741.803,
+      "observation": {
+        "history_preserved": true,
+        "late_revision": {
+          "digest": "c4d31be3e11e03eebafdebc87ca271ba",
+          "id": 3,
+          "includes_late_event": true,
+          "supersedes": 2,
+          "watermark": 3
+        },
+        "late_revision_changed": true,
+        "pinned_replay_digests": [
+          "2ab3dc3809c96bbbc1a504cd2299b607",
+          "2ab3dc3809c96bbbc1a504cd2299b607"
+        ],
+        "port": 5440,
+        "postgres_version": "17.11 (Debian 17.11-1.pgdg12+2)",
+        "recorded_replay_equal": true,
+        "run_history": [
+          {
+            "digest": "2ab3dc3809c96bbbc1a504cd2299b607",
+            "id": 1,
+            "supersedes": null,
+            "watermark": 3
+          },
+          {
+            "digest": "2ab3dc3809c96bbbc1a504cd2299b607",
+            "id": 2,
+            "supersedes": 1,
+            "watermark": 3
+          },
+          {
+            "digest": "c4d31be3e11e03eebafdebc87ca271ba",
+            "id": 3,
+            "supersedes": 2,
+            "watermark": 3
+          }
+        ],
+        "runs": 3,
+        "worker_completed": true
+      },
+      "resource_accounting": {
+        "accounting_version": "2.0.0",
+        "budget_bytes": 536870912,
+        "descendants_included": true,
+        "hard_limit_bytes": 536870912,
+        "isolation": "fresh_service_lifecycle_and_worker_process_group",
+        "metric": "peak_container_cgroup_resident_bytes",
+        "peak_rss_bytes": 19073597,
+        "scope": "postgres_container_cgroup",
+        "source": "docker_stats_container_cgroup",
+        "target": "container_id:55018e47748de53906263f26bdc73ce75de2aee52929a24d8a1341126b9c1da8",
+        "within_budget": true
+      }
+    },
+    {
+      "elapsed_ms": 6833.898,
+      "observation": {
+        "history_preserved": true,
+        "late_revision": {
+          "digest": "c4d31be3e11e03eebafdebc87ca271ba",
+          "id": 3,
+          "includes_late_event": true,
+          "supersedes": 2,
+          "watermark": 3
+        },
+        "late_revision_changed": true,
+        "pinned_replay_digests": [
+          "2ab3dc3809c96bbbc1a504cd2299b607",
+          "2ab3dc3809c96bbbc1a504cd2299b607"
+        ],
+        "port": 5440,
+        "postgres_version": "17.11 (Debian 17.11-1.pgdg12+2)",
+        "recorded_replay_equal": true,
+        "run_history": [
+          {
+            "digest": "2ab3dc3809c96bbbc1a504cd2299b607",
+            "id": 1,
+            "supersedes": null,
+            "watermark": 3
+          },
+          {
+            "digest": "2ab3dc3809c96bbbc1a504cd2299b607",
+            "id": 2,
+            "supersedes": 1,
+            "watermark": 3
+          },
+          {
+            "digest": "c4d31be3e11e03eebafdebc87ca271ba",
+            "id": 3,
+            "supersedes": 2,
+            "watermark": 3
+          }
+        ],
+        "runs": 3,
+        "worker_completed": true
+      },
+      "resource_accounting": {
+        "accounting_version": "2.0.0",
+        "budget_bytes": 536870912,
+        "descendants_included": true,
+        "hard_limit_bytes": 536870912,
+        "isolation": "fresh_service_lifecycle_and_worker_process_group",
+        "metric": "peak_container_cgroup_resident_bytes",
+        "peak_rss_bytes": 19293798,
+        "scope": "postgres_container_cgroup",
+        "source": "docker_stats_container_cgroup",
+        "target": "container_id:55018e47748de53906263f26bdc73ce75de2aee52929a24d8a1341126b9c1da8",
+        "within_budget": true
+      }
+    },
+    {
+      "elapsed_ms": 6751.302,
+      "observation": {
+        "history_preserved": true,
+        "late_revision": {
+          "digest": "c4d31be3e11e03eebafdebc87ca271ba",
+          "id": 3,
+          "includes_late_event": true,
+          "supersedes": 2,
+          "watermark": 3
+        },
+        "late_revision_changed": true,
+        "pinned_replay_digests": [
+          "2ab3dc3809c96bbbc1a504cd2299b607",
+          "2ab3dc3809c96bbbc1a504cd2299b607"
+        ],
+        "port": 5440,
+        "postgres_version": "17.11 (Debian 17.11-1.pgdg12+2)",
+        "recorded_replay_equal": true,
+        "run_history": [
+          {
+            "digest": "2ab3dc3809c96bbbc1a504cd2299b607",
+            "id": 1,
+            "supersedes": null,
+            "watermark": 3
+          },
+          {
+            "digest": "2ab3dc3809c96bbbc1a504cd2299b607",
+            "id": 2,
+            "supersedes": 1,
+            "watermark": 3
+          },
+          {
+            "digest": "c4d31be3e11e03eebafdebc87ca271ba",
+            "id": 3,
+            "supersedes": 2,
+            "watermark": 3
+          }
+        ],
+        "runs": 3,
+        "worker_completed": true
+      },
+      "resource_accounting": {
+        "accounting_version": "2.0.0",
+        "budget_bytes": 536870912,
+        "descendants_included": true,
+        "hard_limit_bytes": 536870912,
+        "isolation": "fresh_service_lifecycle_and_worker_process_group",
+        "metric": "peak_container_cgroup_resident_bytes",
+        "peak_rss_bytes": 19451084,
+        "scope": "postgres_container_cgroup",
+        "source": "docker_stats_container_cgroup",
+        "target": "container_id:55018e47748de53906263f26bdc73ce75de2aee52929a24d8a1341126b9c1da8",
+        "within_budget": true
+      }
+    }
+  ],
+  "schema_version": "1.0.0",
+  "supersedes": {
+    "path": "docs/research/benchmarks/offline-replay.json",
+    "preserved": true,
+    "sha256": "30ce5d01bf6e83ec56df07641609453e2d31f151c90a12b0df5f6acb0d018b08",
+    "status": "superseded-evidence",
+    "version": "1.0.0"
+  },
+  "tolerance_history": [],
+  "tolerances": {
+    "lost_history_rows": 0,
+    "recorded_replay_digest_delta": 0
+  },
+  "validation_id": "VAL-READY-014",
+  "version": "2.0.0"
+}

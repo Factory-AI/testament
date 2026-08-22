@@ -1,0 +1,164 @@
+{
+  "acceptance_rule": "All samples observe PostgreSQL 17 on port 5440, 200 rows, two partitions, no content plaintext column, pruning evidence, and both unchanged resource budgets.",
+  "benchmark_id": "postgres-storage-benchmark",
+  "budgets": {
+    "max_elapsed_ms": 15000,
+    "max_process_rss_bytes": 536870912
+  },
+  "comparison_method": "Create disposable PostgreSQL 17 partitions, insert bytea-only synthetic ciphertext, compare row/partition counts and inspect pruning and schema columns.",
+  "conclusion": "pass",
+  "environment": {
+    "architecture": "arm64",
+    "cpu_count": 12,
+    "docker": "Docker version 28.5.1, build e180ab8",
+    "go": "go version go1.26.4 darwin/arm64",
+    "machine_class": "developer-workstation-12cpu-18gib",
+    "memory_bytes": 19327352832,
+    "os": "macOS-26.6.1-arm64-arm-64bit-Mach-O",
+    "postgres": {
+      "healthcheck": "pg_isready -p 5440",
+      "lifecycle_manifest": "services.yaml",
+      "major": 17,
+      "port": 5440,
+      "resource_source": "Docker container statistics backed by the postgres container cgroup",
+      "service": "postgres"
+    },
+    "python": "3.14.7",
+    "tested_commit": "297e14b14a41582d914c33cda8ea61f1b92bca29"
+  },
+  "feature_id": "prototype-v2-clean-clone-reconciliation",
+  "inputs": [
+    "200 synthetic ciphertext rows",
+    "two monthly range partitions",
+    "one partition-prunable query"
+  ],
+  "limitations": [
+    "The row count is a research proof, not production sizing guidance."
+  ],
+  "plan_commit": "0f3dce5b9418a50eb031ec3fd561282462533bd3",
+  "plan_sha256": "dee0f3d2574b9bc9db319090a43f6fd7745bbb2594b12f0f871fe8a66c051896",
+  "prototype_id": "postgres-storage",
+  "sample_count": 3,
+  "samples": [
+    {
+      "elapsed_ms": 6848.133,
+      "observation": {
+        "ciphertext_nonempty_rows": 200,
+        "ciphertext_only_columns": true,
+        "content_column": "ciphertext",
+        "content_column_type": "bytea",
+        "executed_partition": "chunks_2026_08",
+        "explain_lines": [
+          "Seq Scan on chunks_2026_08 chunks",
+          "  Filter: (received_date = '2026-08-21'::date)"
+        ],
+        "forbidden_plaintext_columns": 0,
+        "partition_pruning": true,
+        "partitions": 2,
+        "port": 5440,
+        "postgres_version": "17.11 (Debian 17.11-1.pgdg12+2)",
+        "pruned_partition": "chunks_2026_09",
+        "rows": 200,
+        "worker_completed": true
+      },
+      "resource_accounting": {
+        "accounting_version": "2.0.0",
+        "budget_bytes": 536870912,
+        "descendants_included": true,
+        "hard_limit_bytes": 536870912,
+        "isolation": "fresh_service_lifecycle_and_worker_process_group",
+        "metric": "peak_container_cgroup_resident_bytes",
+        "peak_rss_bytes": 19482542,
+        "scope": "postgres_container_cgroup",
+        "source": "docker_stats_container_cgroup",
+        "target": "container_id:55018e47748de53906263f26bdc73ce75de2aee52929a24d8a1341126b9c1da8",
+        "within_budget": true
+      }
+    },
+    {
+      "elapsed_ms": 7353.525,
+      "observation": {
+        "ciphertext_nonempty_rows": 200,
+        "ciphertext_only_columns": true,
+        "content_column": "ciphertext",
+        "content_column_type": "bytea",
+        "executed_partition": "chunks_2026_08",
+        "explain_lines": [
+          "Seq Scan on chunks_2026_08 chunks",
+          "  Filter: (received_date = '2026-08-21'::date)"
+        ],
+        "forbidden_plaintext_columns": 0,
+        "partition_pruning": true,
+        "partitions": 2,
+        "port": 5440,
+        "postgres_version": "17.11 (Debian 17.11-1.pgdg12+2)",
+        "pruned_partition": "chunks_2026_09",
+        "rows": 200,
+        "worker_completed": true
+      },
+      "resource_accounting": {
+        "accounting_version": "2.0.0",
+        "budget_bytes": 536870912,
+        "descendants_included": true,
+        "hard_limit_bytes": 536870912,
+        "isolation": "fresh_service_lifecycle_and_worker_process_group",
+        "metric": "peak_container_cgroup_resident_bytes",
+        "peak_rss_bytes": 19493027,
+        "scope": "postgres_container_cgroup",
+        "source": "docker_stats_container_cgroup",
+        "target": "container_id:55018e47748de53906263f26bdc73ce75de2aee52929a24d8a1341126b9c1da8",
+        "within_budget": true
+      }
+    },
+    {
+      "elapsed_ms": 6773.945,
+      "observation": {
+        "ciphertext_nonempty_rows": 200,
+        "ciphertext_only_columns": true,
+        "content_column": "ciphertext",
+        "content_column_type": "bytea",
+        "executed_partition": "chunks_2026_08",
+        "explain_lines": [
+          "Seq Scan on chunks_2026_08 chunks",
+          "  Filter: (received_date = '2026-08-21'::date)"
+        ],
+        "forbidden_plaintext_columns": 0,
+        "partition_pruning": true,
+        "partitions": 2,
+        "port": 5440,
+        "postgres_version": "17.11 (Debian 17.11-1.pgdg12+2)",
+        "pruned_partition": "chunks_2026_09",
+        "rows": 200,
+        "worker_completed": true
+      },
+      "resource_accounting": {
+        "accounting_version": "2.0.0",
+        "budget_bytes": 536870912,
+        "descendants_included": true,
+        "hard_limit_bytes": 536870912,
+        "isolation": "fresh_service_lifecycle_and_worker_process_group",
+        "metric": "peak_container_cgroup_resident_bytes",
+        "peak_rss_bytes": 19126026,
+        "scope": "postgres_container_cgroup",
+        "source": "docker_stats_container_cgroup",
+        "target": "container_id:55018e47748de53906263f26bdc73ce75de2aee52929a24d8a1341126b9c1da8",
+        "within_budget": true
+      }
+    }
+  ],
+  "schema_version": "1.0.0",
+  "supersedes": {
+    "path": "docs/research/benchmarks/postgres-storage.json",
+    "preserved": true,
+    "sha256": "08ea0e80614ba19ed2ba35b723d350f91d34303a7de88d892e5b87a714ad6522",
+    "status": "superseded-evidence",
+    "version": "1.0.0"
+  },
+  "tolerance_history": [],
+  "tolerances": {
+    "row_count_delta": 0,
+    "unexpected_plaintext_columns": 0
+  },
+  "validation_id": "VAL-READY-014",
+  "version": "2.0.0"
+}

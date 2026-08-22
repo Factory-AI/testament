@@ -1,0 +1,119 @@
+{
+  "acceptance_rule": "Every one of at least six byte classes round-trips exactly in every sample within both unchanged resource budgets.",
+  "benchmark_id": "exact-byte-benchmark",
+  "budgets": {
+    "max_elapsed_ms": 10000,
+    "max_process_rss_bytes": 536870912
+  },
+  "comparison_method": "Write each source byte sequence to a new file and compare the exact readback bytes and aggregate SHA-256.",
+  "conclusion": "pass",
+  "environment": {
+    "architecture": "arm64",
+    "cpu_count": 12,
+    "docker": "Docker version 28.5.1, build e180ab8",
+    "go": "go version go1.26.4 darwin/arm64",
+    "machine_class": "developer-workstation-12cpu-18gib",
+    "memory_bytes": 19327352832,
+    "os": "macOS-26.6.1-arm64-arm-64bit-Mach-O",
+    "python": "3.14.7",
+    "tested_commit": "297e14b14a41582d914c33cda8ea61f1b92bca29"
+  },
+  "feature_id": "prototype-v2-clean-clone-reconciliation",
+  "inputs": [
+    "malformed JSON",
+    "malformed JSONL",
+    "provider stream",
+    "empty",
+    "invalid UTF-8 and CRLF",
+    "all byte values"
+  ],
+  "limitations": [
+    "This prototype tests filesystem custody, not HTTP transfer framing."
+  ],
+  "plan_commit": "0f3dce5b9418a50eb031ec3fd561282462533bd3",
+  "plan_sha256": "dee0f3d2574b9bc9db319090a43f6fd7745bbb2594b12f0f871fe8a66c051896",
+  "prototype_id": "exact-byte",
+  "sample_count": 3,
+  "samples": [
+    {
+      "elapsed_ms": 100.366,
+      "observation": {
+        "aggregate_sha256": "bb25c711d6ba39ad50b1dc084ebb37427dbc97dbbe9d16beb1b4cf04ca142de9",
+        "all_exact": true,
+        "classes": 6,
+        "worker_completed": true
+      },
+      "resource_accounting": {
+        "accounting_version": "2.0.0",
+        "budget_bytes": 536870912,
+        "descendants_included": true,
+        "hard_limit_bytes": 536870912,
+        "isolation": "fresh_process_group",
+        "metric": "aggregate_peak_resident_bytes",
+        "peak_rss_bytes": 28459008,
+        "scope": "worker_descendant_tree",
+        "source": "external_ps_process_table",
+        "target": "worker_pid:95489",
+        "within_budget": true
+      }
+    },
+    {
+      "elapsed_ms": 110.734,
+      "observation": {
+        "aggregate_sha256": "bb25c711d6ba39ad50b1dc084ebb37427dbc97dbbe9d16beb1b4cf04ca142de9",
+        "all_exact": true,
+        "classes": 6,
+        "worker_completed": true
+      },
+      "resource_accounting": {
+        "accounting_version": "2.0.0",
+        "budget_bytes": 536870912,
+        "descendants_included": true,
+        "hard_limit_bytes": 536870912,
+        "isolation": "fresh_process_group",
+        "metric": "aggregate_peak_resident_bytes",
+        "peak_rss_bytes": 32768,
+        "scope": "worker_descendant_tree",
+        "source": "external_ps_process_table",
+        "target": "worker_pid:95493",
+        "within_budget": true
+      }
+    },
+    {
+      "elapsed_ms": 116.443,
+      "observation": {
+        "aggregate_sha256": "bb25c711d6ba39ad50b1dc084ebb37427dbc97dbbe9d16beb1b4cf04ca142de9",
+        "all_exact": true,
+        "classes": 6,
+        "worker_completed": true
+      },
+      "resource_accounting": {
+        "accounting_version": "2.0.0",
+        "budget_bytes": 536870912,
+        "descendants_included": true,
+        "hard_limit_bytes": 536870912,
+        "isolation": "fresh_process_group",
+        "metric": "aggregate_peak_resident_bytes",
+        "peak_rss_bytes": 32768,
+        "scope": "worker_descendant_tree",
+        "source": "external_ps_process_table",
+        "target": "worker_pid:95497",
+        "within_budget": true
+      }
+    }
+  ],
+  "schema_version": "1.0.0",
+  "supersedes": {
+    "path": "docs/research/benchmarks/exact-byte.json",
+    "preserved": true,
+    "sha256": "9fe9ba8ded7a1a70daf0dc95d85536dd8684d2435efb04e8baffa98399fd3038",
+    "status": "superseded-evidence",
+    "version": "1.0.0"
+  },
+  "tolerance_history": [],
+  "tolerances": {
+    "byte_mismatch_count": 0
+  },
+  "validation_id": "VAL-READY-014",
+  "version": "2.0.0"
+}
