@@ -1,0 +1,9 @@
+{"contains_actionable_harm":false,"requires_human_review":true,"risk":"cyber","scenario_id":"abuse-synthetic-691488ffd496-01","summary":"Defensive lab alert; no exploit details.","synthetic":true}
+{"contains_actionable_harm":false,"requires_human_review":true,"risk":"cbrn","scenario_id":"abuse-synthetic-691488ffd496-02","summary":"Specialist-review marker; no technical procedure.","synthetic":true}
+{"contains_actionable_harm":false,"requires_human_review":true,"risk":"fraud","scenario_id":"abuse-synthetic-691488ffd496-03","summary":"Fictional transaction-pattern alert.","synthetic":true}
+{"contains_actionable_harm":false,"requires_human_review":true,"risk":"compromised-accounts","scenario_id":"abuse-synthetic-691488ffd496-04","summary":"Synthetic impossible-travel alert.","synthetic":true}
+{"contains_actionable_harm":false,"requires_human_review":true,"risk":"model-extraction","scenario_id":"abuse-synthetic-691488ffd496-05","summary":"Synthetic repeated-query-volume alert.","synthetic":true}
+{"contains_actionable_harm":false,"requires_human_review":true,"risk":"evasion","scenario_id":"abuse-synthetic-691488ffd496-06","summary":"Abstract policy-evasion label.","synthetic":true}
+{"contains_actionable_harm":false,"requires_human_review":true,"risk":"prompt-injection","scenario_id":"abuse-synthetic-691488ffd496-07","summary":"Untrusted-content boundary alert without a payload.","synthetic":true}
+{"contains_actionable_harm":false,"requires_human_review":true,"risk":"insider-risk","scenario_id":"abuse-synthetic-691488ffd496-08","summary":"Synthetic unusual-export-volume alert.","synthetic":true}
+{"contains_actionable_harm":false,"requires_human_review":true,"risk":"coordinated-actors","scenario_id":"abuse-synthetic-691488ffd496-09","summary":"Synthetic shared-pattern cluster alert.","synthetic":true}

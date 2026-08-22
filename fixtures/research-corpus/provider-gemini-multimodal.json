@@ -1,0 +1,1 @@
+{"candidates":[{"content":{"parts":[{"text":"It contains two labeled boxes."}],"role":"model"}}],"contents":[{"parts":[{"text":"Describe the synthetic diagram."},{"fileData":{"fileUri":"urn:testament:synthetic:image:d869b8f514d0","mimeType":"image/png"}}],"role":"user"}],"model":"models/example-gemini"}

@@ -66,7 +66,7 @@
       "paths": ["fixtures/**", "testdata/**"],
       "license": "Apache-2.0 for project-created fixtures; otherwise explicit compatible redistribution terms",
       "notice_required": true,
-      "current_status": "none"
+      "current_status": "project-created synthetic research corpus, with per-fixture provenance and Apache-2.0 redistribution metadata"
     },
     {
       "id": "fonts",

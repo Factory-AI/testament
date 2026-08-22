@@ -48,6 +48,8 @@ PUBLIC_FILES = {
     "docs/research/privacy/retention-deletion.md",
     "docs/research/privacy/sovereignty-profiles.md",
     "docs/research/README.md",
+    "docs/research/corpus/README.md",
+    "docs/research/corpus/manifest.json",
     "docs/research/naming-clearance.md",
     "docs/research/security/key-custody.md",
     "docs/research/studies/abuse-misuse.md",
@@ -64,6 +66,7 @@ PUBLIC_FILES = {
     "schemas/research-manifest.schema.json",
     "schemas/threat-privacy-sovereignty.schema.json",
     "schemas/trace-landscape.schema.json",
+    "schemas/synthetic-corpus.schema.json",
     "policy/threat-privacy-sovereignty.json",
 }
 TRACE_ECOSYSTEMS = {
@@ -318,6 +321,7 @@ SAFE_SCHEMA_PATTERNS = {
     r"^\d+\.\d+\.\d+$",
     r"^RES-(STUDY|CORPUS|PROTOTYPE|BENCHMARK|RFC|REVIEW|DECISION)-[A-Z0-9-]+-\d{3}$",
     r"^[0-9a-f]{40}$",
+    r"^[0-9a-f]{64}$",
     r"^TB-[0-9]{2}$",
     r"^DATA-[0-9]{2}$",
     r"^(STRIDE|LINDDUN)-[0-9]{3}$",
@@ -423,6 +427,10 @@ def schema_errors(instance: Any, schema: dict[str, Any], root_schema: dict[str, 
         if isinstance(items, dict):
             for index, value in enumerate(instance):
                 errors.extend(schema_errors(value, items, root_schema, f"{path}[{index}]"))
+    if isinstance(instance, (int, float)) and not isinstance(instance, bool):
+        minimum = schema.get("minimum")
+        if isinstance(minimum, (int, float)) and instance < minimum:
+            errors.append(f"{path}: below minimum {minimum}")
     if isinstance(instance, str):
         minimum = schema.get("minLength")
         if isinstance(minimum, int) and len(instance) < minimum:
@@ -1972,6 +1980,15 @@ def validate_manifest(root: Path, problems: list[dict[str, str]]) -> dict[str, A
                     )
                 )
     indexed = set(artifact_owners)
+    indexed.update(
+        repository_locator_path(str(evidence.get("locator")))
+        for record in records
+        if isinstance(record, dict)
+        for evidence in record.get("evidence", [])
+        if isinstance(evidence, dict)
+        and evidence.get("kind") == "repository"
+        and isinstance(evidence.get("locator"), str)
+    )
     research_root = root / "docs/research"
     if research_root.is_dir():
         for path in research_root.rglob("*.md"):
@@ -2040,6 +2057,12 @@ def validate(root: Path) -> list[dict[str, str]]:
         "https://github.com/Factory-AI/testament/schemas/threat-privacy-sovereignty.schema.json",
         problems,
     )
+    validate_schema_document(
+        root,
+        "schemas/synthetic-corpus.schema.json",
+        "https://github.com/Factory-AI/testament/schemas/synthetic-corpus.schema.json",
+        problems,
+    )
     validate_schema_instance(
         root,
         "schemas/naming-clearance.schema.json",
@@ -2073,6 +2096,13 @@ def validate(root: Path) -> list[dict[str, str]]:
         "schemas/threat-privacy-sovereignty.schema.json",
         "policy/threat-privacy-sovereignty.json",
         THREAT_PRIVACY_CRITERION,
+        problems,
+    )
+    validate_schema_instance(
+        root,
+        "schemas/synthetic-corpus.schema.json",
+        "docs/research/corpus/manifest.json",
+        "VAL-READY-012",
         problems,
     )
     validate_naming(root, problems)
@@ -2146,6 +2176,7 @@ def report(root: Path) -> dict[str, Any]:
             "draft": "2020-12",
             "documents": sorted(path for path in PUBLIC_FILES if path.startswith("schemas/")),
             "instances": [
+                "docs/research/corpus/manifest.json",
                 "policy/abuse-misuse-research.json",
                 "policy/naming-clearance.json",
                 "policy/research-manifest.json",

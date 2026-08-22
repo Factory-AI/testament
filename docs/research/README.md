@@ -36,8 +36,10 @@ The manifest currently registers 50 stable deliverables:
 The naming study and naming decision are accepted. The trace-format,
 abuse/misuse, STRIDE, LINDDUN, attack-tree, data-inventory, sovereignty,
 no-content-egress, retention/deletion, and key-custody studies are in review.
-The other deliverables are drafts. Each deliverable gets its own artifact
-rather than sharing one file with an incompatible deliverable.
+The [synthetic trace research corpus](corpus/README.md) is complete as an
+informative corpus and awaits independent security, privacy, and licensing
+review. The other deliverables are drafts. Each deliverable gets its own
+artifact rather than sharing one file with an incompatible deliverable.
 
 Current studies:
 
@@ -83,6 +85,12 @@ questions. Threat and privacy validation requires complete STRIDE and LINDDUN
 categories, stable mappings to mitigation, validation, owner, and residual
 risk, all four sovereignty profiles, and explicit data, boundary, egress,
 lifecycle, hold, and key-custody sections.
+
+`make verify-corpus` separately verifies `VAL-READY-012` and
+`VAL-READY-013`, including required class and provider coverage, exact byte
+digests, deterministic regeneration, synchronized byte/provenance/expectation
+versioning, fixture inventory, size bounds, licenses, and secret/privacy
+patterns.
 
 It rejects missing or duplicate IDs, unknown states, private-only evidence,
 orphaned research files, missing accepted artifacts, accepted items without
