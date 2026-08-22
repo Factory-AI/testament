@@ -4647,6 +4647,14 @@
         ],
         "response_fields": [
           {
+            "name": "name",
+            "type": "exact CryptoKeyVersion resource",
+            "required": false,
+            "cardinality": "rawEncrypt response exactly one and must match request",
+            "max_bytes": 2048,
+            "sensitivity": "security-metadata"
+          },
+          {
             "name": "ciphertext",
             "type": "base64 bytes",
             "required": false,
@@ -4655,12 +4663,12 @@
             "sensitivity": "secret-ciphertext"
           },
           {
-            "name": "plaintext",
-            "type": "base64 bytes",
+            "name": "ciphertextCrc32c",
+            "type": "decimal string CRC32C of ciphertext",
             "required": false,
-            "cardinality": "rawDecrypt response decoded length exactly 32",
-            "max_bytes": 44,
-            "sensitivity": "critical-secret"
+            "cardinality": "rawEncrypt response exactly one",
+            "max_bytes": 16,
+            "sensitivity": "integrity-metadata"
           },
           {
             "name": "initializationVector",
@@ -4669,6 +4677,14 @@
             "cardinality": "rawEncrypt response exactly one and retained with wrapped root",
             "max_bytes": 64,
             "sensitivity": "public-cryptographic-parameter"
+          },
+          {
+            "name": "initializationVectorCrc32c",
+            "type": "decimal string CRC32C of initializationVector",
+            "required": false,
+            "cardinality": "rawEncrypt response exactly one",
+            "max_bytes": 16,
+            "sensitivity": "integrity-metadata"
           },
           {
             "name": "tagLength",
@@ -4690,7 +4706,39 @@
             "name": "verifiedAdditionalAuthenticatedDataCrc32c",
             "type": "boolean true",
             "required": true,
-            "cardinality": "rawEncrypt response exactly one; rawDecrypt request integrity is proved by successful authenticated operation and matching AAD",
+            "cardinality": "one in both response types",
+            "max_bytes": 5,
+            "sensitivity": "integrity-metadata"
+          },
+          {
+            "name": "plaintext",
+            "type": "base64 bytes",
+            "required": false,
+            "cardinality": "rawDecrypt response decoded length exactly 32",
+            "max_bytes": 44,
+            "sensitivity": "critical-secret"
+          },
+          {
+            "name": "plaintextCrc32c",
+            "type": "decimal string CRC32C of plaintext",
+            "required": false,
+            "cardinality": "rawDecrypt response exactly one",
+            "max_bytes": 16,
+            "sensitivity": "integrity-metadata"
+          },
+          {
+            "name": "verifiedCiphertextCrc32c",
+            "type": "boolean true",
+            "required": false,
+            "cardinality": "rawDecrypt response exactly one",
+            "max_bytes": 5,
+            "sensitivity": "integrity-metadata"
+          },
+          {
+            "name": "verifiedInitializationVectorCrc32c",
+            "type": "boolean true",
+            "required": false,
+            "cardinality": "rawDecrypt response exactly one",
             "max_bytes": 5,
             "sensitivity": "integrity-metadata"
           },
@@ -4698,15 +4746,15 @@
             "name": "protectionLevel",
             "type": "declared expected protection level enum",
             "required": true,
-            "cardinality": "one",
+            "cardinality": "one in both response types",
             "max_bytes": 32,
             "sensitivity": "security-metadata"
           }
         ],
         "provider_limits": [
           "Plaintext root is exactly 32 bytes.",
-          "Caller accepts rawEncrypt only when plaintext and AAD CRC acknowledgements are true, then retains ciphertext, initializationVector, tagLength, exact CryptoKeyVersion, and AAD together.",
-          "Caller sends ciphertextCrc32c, initializationVectorCrc32c, and AAD CRC on rawDecrypt and accepts only an authenticated 32-byte plaintext result from the exact version.",
+          "Caller accepts rawEncrypt only when name matches the exact version, plaintext and AAD CRC acknowledgements are true, returned ciphertext and IV CRCs recompute, and the declared protection level matches; it then retains ciphertext, initializationVector, tagLength, version, and AAD together.",
+          "Caller sends ciphertextCrc32c, initializationVectorCrc32c, and AAD CRC on rawDecrypt and accepts only when all three verification flags are true, returned plaintextCrc32c recomputes, protection level matches, and authenticated plaintext is exactly 32 bytes.",
           "Error code, request correlation, and throttling may be retained as bounded operational metadata; error messages are not retained."
         ],
         "allowed_fields": [

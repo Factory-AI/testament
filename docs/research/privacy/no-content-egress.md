@@ -37,7 +37,9 @@ exactly 32 bytes. AWS uses `Encrypt` or `Decrypt` with
 `rawDecrypt` against one exact CryptoKeyVersion with AAD and CRC checks. Azure
 `rawDecrypt` against one exact CryptoKeyVersion with AAD and CRC checks. The
 GCP result retains the provider-generated initialization vector and tag length
-and sends them back with the ciphertext for raw decryption. Azure uses
+and sends them back with the ciphertext for raw decryption. Its response
+allowlist includes the exact key-version name, returned ciphertext, IV and
+plaintext CRCs, input-verification flags, and protection level. Azure uses
 versioned `wrapkey` or `unwrapkey` with `RSA-OAEP-256` and a separately
 authenticated binding package. Identity responses are capped at 1 MiB and 100
 public keys. Observability events are capped at 64 KiB and prohibit free text

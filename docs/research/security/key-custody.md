@@ -38,10 +38,12 @@ CryptoKeyVersion and requires AAD and CRC verification on `rawEncrypt` and
 `rawDecrypt`. The raw-encrypt result keeps ciphertext, the provider-generated
 initialization vector, and tag length together; raw decrypt sends all three
 with ciphertext, IV, and AAD CRCs. Azure pins vault host, key name, exact
-version, API version, and `RSA-OAEP-256` for `wrapkey` and `unwrapkey`. Each
-record denies unlisted headers, request fields, response fields, methods,
-paths, query parameters, algorithms, and fallback.
-
+with ciphertext, IV, and AAD CRCs. The client verifies returned ciphertext,
+IV, and plaintext CRCs plus every provider verification flag and protection
+level before accepting the root. Azure pins vault host, key name, exact version,
+API version, and `RSA-OAEP-256` for `wrapkey` and `unwrapkey`. Each record
+denies unlisted headers, request fields, response fields, methods, paths, query
+parameters, algorithms, and fallback.
 Runtime identities may use only the root operations required by their role.
 They cannot create, administer, disable, schedule deletion, or purge cloud
 keys. There is no provider fallback.
