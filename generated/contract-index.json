@@ -11,14 +11,14 @@
       "human_path": "docs/claims-policy.md",
       "id": "claims-evidence",
       "machine_path": "policy/claims-ledger.json",
-      "machine_sha256": "1a1e744ba0894fc2cb2760f5fe1e214d1b51783e8356eb6da95a87f529f5f0bd",
+      "machine_sha256": "4a870b258426417b0e9ed5efc61ff0a38b1a151f46f5f404cbeee4a205d1e028",
       "version": "1.0.0"
     },
     {
       "human_path": "docs/workflows.md#workflow-index",
       "id": "commands",
       "machine_path": "Makefile",
-      "machine_sha256": "b1be89f194f8c4b4c5679abf6861c9b88d34946033bb3ee809726da0a2fd3fca",
+      "machine_sha256": "30af36c5ce5611a914639980a3097640f6aa76f21213beeb3138084108d78d49",
       "version": "1.0.0"
     },
     {
