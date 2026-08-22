@@ -4522,6 +4522,13 @@
           "Plaintext root is exactly 32 bytes.",
           "EncryptionContext keys and values are non-secret and match exactly on Decrypt.",
           "HTTP status, AWS request ID header, throttling, and error type may be retained as bounded operational metadata; error messages are not retained."
+        ],
+        "allowed_fields": [
+          "KeyId",
+          "Plaintext",
+          "CiphertextBlob",
+          "EncryptionContext",
+          "EncryptionAlgorithm"
         ]
       },
       {
@@ -4675,6 +4682,15 @@
           "Plaintext root is exactly 32 bytes.",
           "Caller verifies every request CRC acknowledgement and response CRC before accepting output.",
           "Error code, request correlation, and throttling may be retained as bounded operational metadata; error messages are not retained."
+        ],
+        "allowed_fields": [
+          "name",
+          "plaintext",
+          "ciphertext",
+          "additionalAuthenticatedData",
+          "plaintextCrc32c",
+          "ciphertextCrc32c",
+          "additionalAuthenticatedDataCrc32c"
         ]
       },
       {
@@ -4773,6 +4789,13 @@
           "Selected key is versioned RSA with wrapKey and unwrapKey permissions only and RSA-OAEP-256 support.",
           "Soft-delete and purge-protection state is checked separately and never inferred from wrap success.",
           "HTTP status, x-ms-request-id, throttling, and bounded error code may be retained; error messages are not retained."
+        ],
+        "allowed_fields": [
+          "alg",
+          "value",
+          "key_name",
+          "key_version",
+          "api-version"
         ]
       },
       {
