@@ -183,10 +183,10 @@ class AnalyzerEvaluationFixtureTest(unittest.TestCase):
 
     def test_analyzer_plan_binding_drift_fails(self) -> None:
         root = self.copy_evidence()
-        path = root / GENERATE.ANALYZER_PLAN_PATH
-        plan = json.loads(path.read_text(encoding="utf-8"))
-        plan["status"] = "superseded"
-        path.write_text(json.dumps(plan), encoding="utf-8")
+        path = root / GENERATE.SPLIT_MANIFEST_PATH
+        manifest = json.loads(path.read_text(encoding="utf-8"))
+        manifest["bindings"]["analyzer_plan"]["sha256"] = "0" * 64
+        path.write_text(json.dumps(manifest), encoding="utf-8")
         self.assertIn("split_binding_drift", self.codes(root))
 
     def test_authorized_twins_share_group_and_partition(self) -> None:

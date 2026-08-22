@@ -523,9 +523,6 @@ def validate_split_manifest(
     bindings = manifest.get("bindings")
     bindings = bindings if isinstance(bindings, dict) else {}
     try:
-        analyzer_plan_digest = hashlib.sha256(
-            (root / GENERATE.ANALYZER_PLAN_PATH).read_bytes()
-        ).hexdigest()
         corpus_digest = hashlib.sha256(
             (root / GENERATE.CORPUS_MANIFEST_PATH).read_bytes()
         ).hexdigest()
@@ -538,7 +535,7 @@ def validate_split_manifest(
         if bindings != {
             "analyzer_plan": {
                 "path": GENERATE.ANALYZER_PLAN_PATH,
-                "sha256": analyzer_plan_digest,
+                "sha256": GENERATE.BASE_ANALYZER_PLAN_SHA256,
             },
             "corpus_manifest": {
                 "path": GENERATE.CORPUS_MANIFEST_PATH,

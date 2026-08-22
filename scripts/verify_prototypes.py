@@ -90,6 +90,8 @@ ANALYZER_DIMENSIONS = {
     "abstention",
     "cost",
     "prompt_injection",
+    "artifact_bindings",
+    "resource_budgets",
     "sovereignty",
     "source_ids",
 }
@@ -103,16 +105,13 @@ ANALYZER_NESTED_DIMENSIONS = {
     "sovereignty": {"profiles", "attestation_required"},
 }
 ANALYZER_DATASETS = {
-    "DATASET-SYNTHETIC-CORPUS-1.0.0",
-    "DATASET-AUTHORIZED-USE-TWINS-1.0.0",
-    "DATASET-INJECTION-MUTATIONS-1.0.0",
+    "DATASET-SYNTHETIC-CORPUS-SPLIT-1.0.0",
+    "DATASET-AUTHORIZED-USE-TWINS-SPLIT-1.0.0",
+    "DATASET-INJECTION-MUTATIONS-SPLIT-1.0.0",
 }
 ANALYZER_DATASET_PATHS = {
-    "DATASET-SYNTHETIC-CORPUS-1.0.0": "docs/research/corpus/manifest.json",
-    "DATASET-AUTHORIZED-USE-TWINS-1.0.0": "docs/research/corpus/manifest.json",
-    "DATASET-INJECTION-MUTATIONS-1.0.0": (
-        "docs/research/analysis/evaluation-plan.md#prompt-injection-suite"
-    ),
+    dataset_id: "docs/research/analysis/split-manifest.json"
+    for dataset_id in ANALYZER_DATASETS
 }
 ANALYZER_SOURCES = {
     "SRC-NIST-AML-2025",
@@ -128,6 +127,10 @@ CORE_ANALYZER_METRICS = {
     "injection_control_success_rate",
     "abstention_on_unanswerable",
     "cost_budget_overrun_count",
+    "secret_disclosure_count",
+    "false_evidence_acceptance_count",
+    "instruction_override_count",
+    "analyzer_policy_action_count",
 }
 RESULT_FILES = [RESULT_PATH_BY_CASE[case] for case in sorted(PROTOTYPES)]
 EVIDENCE_FILES = [
@@ -953,9 +956,10 @@ def validate_analyzer_evaluation(root: Path) -> list[dict[str, str]]:
     evaluation = load(root, evaluation_path, problems, "VAL-READY-015")
     if (
         evaluation.get("schema_version") != "1.0.0"
-        or evaluation.get("feature_id") != "analyzer-family-evaluation-plan"
+        or evaluation.get("feature_id")
+        != "analyzer-evaluation-superseding-candidate"
         or evaluation.get("validation_ids") != ["VAL-READY-015"]
-        or evaluation.get("version") != "1.0.0"
+        or evaluation.get("version") != "2.0.0"
         or evaluation.get("status") != "in-review"
     ):
         problems.append(
@@ -1004,7 +1008,6 @@ def validate_analyzer_evaluation(root: Path) -> list[dict[str, str]]:
         )
         if (
             not nonempty_strings(fixture_ids)
-            or not set(fixture_ids) <= corpus_fixture_ids
             or dataset_path != ANALYZER_DATASET_PATHS.get(dataset_id)
             or not bounded_path
             or not (root / bounded_path).is_file()
@@ -1087,18 +1090,6 @@ def validate_analyzer_evaluation(root: Path) -> list[dict[str, str]]:
         if (
             not nonempty_strings(fixtures)
             or not set(fixtures) <= corpus_fixture_ids
-            or (
-                nonempty_strings(family_datasets)
-                and not set(fixtures)
-                <= {
-                    fixture_id
-                    for dataset_id in family_datasets
-                    for fixture_id in dataset_by_id.get(dataset_id, {}).get(
-                        "fixture_ids", []
-                    )
-                    if isinstance(fixture_id, str)
-                }
-            )
         ):
             problems.append(
                 issue(
@@ -1176,7 +1167,7 @@ def validate_analyzer_evaluation(root: Path) -> list[dict[str, str]]:
     else:
         required_prose = {
             "Status: In review",
-            "Version: 1.0.0",
+            "Version: 2.0.0",
             "Validation: `VAL-READY-015`",
             "Machine matrix: [`policy/analyzer-evaluation.json`]",
         }

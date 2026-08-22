@@ -168,6 +168,19 @@ Run `make generate-analyzer-evaluation` to reproduce these files. Verification
 rejects a missing or duplicate case, changed digest, unknown fixture, group
 leakage, empty family partition, injection leakage, or algorithm drift.
 
+The version 2.0.0 [analyzer evaluation successor](analysis/evaluation-plan.md)
+supersedes candidate
+`e5391c64f3e504cab4cda22a2d2155422a82af0d`, which remains preserved and
+ineligible for freeze. Every family now binds the exact split, injection,
+registry, evaluator, and golden-vector versions and digests, plus positive
+unit-bearing wall-time, CPU, peak-RSS, output, attempt, and family-specific
+resource budgets. The
+[deterministic injection evidence](analysis/injection-control-evidence.json)
+records twenty of twenty successful holdout attempts, zero prohibited
+outcomes, and no external inference. The
+[candidate evidence](analysis/evaluation-candidate-evidence.json) binds the
+successor artifact commit and all input digests.
+
 The [analyzer metric registry](../../policy/analyzer-metric-registry.json)
 gives every family metric an executable formula, sample rule, aggregation
 rule, rounding rule, and fail-closed undefined result. Its versioned

@@ -1,0 +1,43 @@
+{
+  "bound_artifacts": [
+    {
+      "path": "policy/analyzer-evaluation.json",
+      "sha256": "7475fac84bb55d60c9ae2684edf090b87408bc6eb0e83e6e755bf7905317328d"
+    },
+    {
+      "path": "docs/research/analysis/evaluation-plan.md",
+      "sha256": "8be9103ad7eea1af194537252a6e9956b69f4a049cbdcb445c40d0a29a051e7b"
+    },
+    {
+      "path": "docs/research/analysis/split-manifest.json",
+      "sha256": "2d4594a9e31803ea19584ffdb0d45a88636837138c0cdcd49dd6a248de57efe0"
+    },
+    {
+      "path": "docs/research/analysis/injection-manifest.json",
+      "sha256": "e4b6a9f6ca78ad34594b14ec97d038d9b686cdc823c398342725765b3752fa41"
+    },
+    {
+      "path": "policy/analyzer-metric-registry.json",
+      "sha256": "7e6fd3d6df2af6797ffa566ae8af8e18de51ac9c18fd5e278dc4588100e7884b"
+    },
+    {
+      "path": "scripts/evaluate_analyzer_metrics.py",
+      "sha256": "7ad4dfccd4740bc6ed8752b1477505710083fe328b98a5faf726c89fbf9ec753"
+    },
+    {
+      "path": "docs/research/analysis/metric-golden-vectors.json",
+      "sha256": "2dfd5aed3c9f7620d27b9729fdfdd7efe22a4de368e4098adc0fda48f809f597"
+    },
+    {
+      "path": "docs/research/analysis/injection-control-evidence.json",
+      "sha256": "bf9e589e23129f94455b487ee8dc294e3067c640d71751042590ca8522a90a6a"
+    }
+  ],
+  "feature_id": "analyzer-evaluation-superseding-candidate",
+  "predecessor_candidate_commit": "e5391c64f3e504cab4cda22a2d2155422a82af0d",
+  "schema_version": "1.0.0",
+  "status": "artifact-commit-bound",
+  "successor_artifact_commit": "294376c3f277ff807c077db9e178e730f6e169b3",
+  "successor_plan_version": "2.0.0",
+  "version": "1.0.0"
+}

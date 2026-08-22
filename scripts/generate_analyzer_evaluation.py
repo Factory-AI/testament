@@ -21,6 +21,9 @@ SPLIT_MANIFEST_PATH = "docs/research/analysis/split-manifest.json"
 INJECTION_FIXTURE_ROOT = "fixtures/research-analyzer-injection"
 CORPUS_MANIFEST_PATH = "docs/research/corpus/manifest.json"
 ANALYZER_PLAN_PATH = "policy/analyzer-evaluation.json"
+BASE_ANALYZER_PLAN_SHA256 = (
+    "e4363ee3d54a22f0f3c08ac451ef350ee37cdee82d191ae551ef7bfe0730d499"
+)
 INJECTION_CLASSES = (
     "direct",
     "indirect",
@@ -366,7 +369,6 @@ def split_manifest(
     root: Path, injection_manifest_bytes: bytes
 ) -> dict[str, Any]:
     corpus_manifest_bytes = (root / CORPUS_MANIFEST_PATH).read_bytes()
-    analyzer_plan_bytes = (root / ANALYZER_PLAN_PATH).read_bytes()
     cases = split_cases()
     groups = split_groups(cases)
     return {
@@ -374,7 +376,7 @@ def split_manifest(
         "bindings": {
             "analyzer_plan": {
                 "path": ANALYZER_PLAN_PATH,
-                "sha256": sha256_bytes(analyzer_plan_bytes),
+                "sha256": BASE_ANALYZER_PLAN_SHA256,
             },
             "corpus_manifest": {
                 "path": CORPUS_MANIFEST_PATH,

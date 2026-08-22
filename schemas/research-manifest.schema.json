@@ -137,7 +137,17 @@
           "required": ["supersedes", "superseded_by"],
           "properties": {
             "supersedes": {"type": ["string", "null"]},
-            "superseded_by": {"type": ["string", "null"]}
+            "superseded_by": {"type": ["string", "null"]},
+            "supersedes_candidate_commit": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{40}$"
+            },
+            "superseded_candidate_version": {
+              "type": "string",
+              "pattern": "^\\d+\\.\\d+\\.\\d+$"
+            },
+            "superseded_candidate_state": {"const": "superseded"},
+            "superseded_candidate_freeze_eligible": {"const": false}
           }
         }
       }
