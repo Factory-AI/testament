@@ -113,8 +113,21 @@ class PrototypeResourceAccountingTest(unittest.TestCase):
             poll_interval_seconds=0.01,
         )
         child_pid = json.loads(result.stdout)["child_pid"]
-        with self.assertRaises(ProcessLookupError):
+        try:
             os.kill(child_pid, 0)
+        except ProcessLookupError:
+            return
+        # Linux may briefly retain the terminated grandchild as a zombie until
+        # the runner's init process reaps it. A zombie cannot execute or retain
+        # the sampled allocation, so it satisfies the no-outliving-worker
+        # contract even though kill(2) still resolves the PID.
+        status = subprocess.run(
+            ["ps", "-o", "stat=", "-p", str(child_pid)],
+            capture_output=True,
+            text=True,
+            check=False,
+        ).stdout.strip()
+        self.assertTrue(status.startswith("Z"), f"child remains live: {status}")
 
     def valid_accounting(self) -> dict[str, object]:
         return {
