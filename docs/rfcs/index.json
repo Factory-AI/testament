@@ -1,0 +1,58 @@
+{
+  "schema_version": "1.0.0",
+  "record_type": "rfc",
+  "statuses": [
+    "proposed",
+    "in-review",
+    "accepted",
+    "rejected",
+    "withdrawn",
+    "superseded"
+  ],
+  "records": [
+    {
+      "id": "RFC-0001",
+      "title": "Three-business-day governance review",
+      "path": "docs/rfcs/0001-three-day-review.md",
+      "status": "superseded",
+      "record_status": "accepted",
+      "version": "1.0.0",
+      "decision_date": "2026-08-21",
+      "deciders": [
+        "enoreyes"
+      ],
+      "reviewers": [],
+      "bootstrap_exception": true,
+      "bootstrap_scope": "foundation-process",
+      "bootstrap_rationale": "The public repository had one active maintainer and needed a review rule before appointing more maintainers.",
+      "bootstrap_expiry": "2026-09-30",
+      "supersedes": null,
+      "superseded_by": "RFC-0002",
+      "record_supersedes": null,
+      "record_superseded_by": null,
+      "sha256": "e91ab3c8c3024d3b6cbe5768960bffadf619f337567156a0f80e87fc36a14d05"
+    },
+    {
+      "id": "RFC-0002",
+      "title": "Five-business-day governance review",
+      "path": "docs/rfcs/0002-five-day-review.md",
+      "status": "accepted",
+      "record_status": "accepted",
+      "version": "1.0.0",
+      "decision_date": "2026-08-21",
+      "deciders": [
+        "enoreyes"
+      ],
+      "reviewers": [],
+      "bootstrap_exception": true,
+      "bootstrap_scope": "foundation-process",
+      "bootstrap_rationale": "The public repository had one active maintainer; the exception is explicit and does not count as independent review.",
+      "bootstrap_expiry": "2026-09-30",
+      "supersedes": "RFC-0001",
+      "superseded_by": null,
+      "record_supersedes": "RFC-0001",
+      "record_superseded_by": null,
+      "sha256": "d0e558eaf723a189f6902343234af2acbcbd1298b799c864ca1566c16e8d387f"
+    }
+  ]
+}

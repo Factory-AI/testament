@@ -22,6 +22,17 @@ reviews, formal readiness report, and external research seal pass.
 - [Licensing](docs/licensing.md): Apache-2.0 policy and artifact inventory.
 - [Machine-readable artifact inventory](policy/artifact-licensing.json)
 - [Machine-readable claims policy](policy/claims.json)
+- [Governance](GOVERNANCE.md): authority, decisions, appeals, amendments, and
+  releases.
+- [Maintainers](MAINTAINERS.md): current roles and contact paths.
+- [Security](SECURITY.md): private reporting, response targets, disclosure,
+  safe harbor, and emergencies.
+- [Contributing](CONTRIBUTING.md): sign-off, branches, tests, documentation,
+  generated files, and review.
+- [RFC lifecycle and index](docs/rfcs/README.md)
+- [ADR lifecycle and index](docs/adrs/README.md)
+- [Governance source record](docs/governance-sources.md)
+- [Machine-readable governance lifecycle](policy/governance-lifecycle.json)
 
 ## Verify this foundation
 
@@ -31,7 +42,8 @@ make test-gate
 
 The command validates the Apache-2.0 text, checks that all artifact classes are
 accounted for, rejects prohibited core dependency licenses, confirms required
-limitations are public, and scans for forbidden overclaims.
+limitations are public, scans for forbidden overclaims, and validates
+governance, security, contribution, RFC, and ADR lifecycle records.
 
 ## License
 
