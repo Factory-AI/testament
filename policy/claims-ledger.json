@@ -167,10 +167,10 @@
       "version": "2.0.0",
       "publication_date": "2026-08-22",
       "accessed_at": "2026-08-22",
-      "sha256": "f50b9853c15e30a0ba4c6278ff69d962ef89d8c80c8f2025eccc3d4a84a627ce",
+      "sha256": "6127ab8a15215e64de2f37283b11e17de763fb2847dd7908b31324b8651e5aab",
       "claim_supported": "Three PostgreSQL 17 samples terminate an exact active fault backend and verify automatic rollback from a fresh connection within unchanged resource budgets.",
       "accessibility": "public-repository",
-      "tested_commit": "c30880a4be7b503206ff934817b9429b101e18af",
+      "tested_commit": "6d0eb1037e7acb33b72834908a74540b0474caa4",
       "environment": "Harmless synthetic rows; PostgreSQL 17.11 on declared port 5440 with fresh service lifecycle and container-cgroup accounting per sample."
     },
     {

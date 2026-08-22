@@ -170,7 +170,7 @@ preserved and is retained only as superseded evidence.
 
 The [version 2 decision-durability result](benchmarks/v2/decision-durability.json)
 contains three resource-bounded PostgreSQL 17 samples from committed
-implementation `c30880a4be7b503206ff934817b9429b101e18af`. In every sample,
+implementation `6d0eb1037e7acb33b72834908a74540b0474caa4`. In every sample,
 a uniquely named fault session emitted an in-transaction readiness marker and
 blocked without explicit rollback. A separate control connection matched and
 terminated that exact backend. The client lost its connection and exited
