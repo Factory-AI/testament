@@ -172,10 +172,13 @@ def analyzer_isolation(_: Path) -> dict[str, Any]:
     )
 
     def limits() -> None:
-        resource.setrlimit(resource.RLIMIT_CPU, (1, 1))
-        resource.setrlimit(resource.RLIMIT_NOFILE, (16, 16))
+        _, cpu_hard = resource.getrlimit(resource.RLIMIT_CPU)
+        _, nofile_hard = resource.getrlimit(resource.RLIMIT_NOFILE)
+        resource.setrlimit(resource.RLIMIT_CPU, (1, cpu_hard))
+        resource.setrlimit(resource.RLIMIT_NOFILE, (16, nofile_hard))
         if hasattr(resource, "RLIMIT_AS"):
-            resource.setrlimit(resource.RLIMIT_AS, (64 << 20, 64 << 20))
+            _, address_hard = resource.getrlimit(resource.RLIMIT_AS)
+            resource.setrlimit(resource.RLIMIT_AS, (64 << 20, address_hard))
 
     with tempfile.TemporaryDirectory() as directory:
         result = subprocess.run(
