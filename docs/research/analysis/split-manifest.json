@@ -1,0 +1,839 @@
+{
+  "algorithm": {
+    "bucket_mapping": {
+      "calibration": [
+        6,
+        7
+      ],
+      "development": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "holdout": [
+        8,
+        9
+      ]
+    },
+    "byte_order": "big-endian unsigned integer",
+    "digest_bytes": "first 8 bytes",
+    "hash": "SHA-256",
+    "hash_input": "UTF-8 bytes of 'testament-analyzer-split-v1\\0' followed by group_id",
+    "modulus": 10,
+    "version": "testament-analyzer-split-v1"
+  },
+  "bindings": {
+    "analyzer_plan": {
+      "path": "policy/analyzer-evaluation.json",
+      "sha256": "e4363ee3d54a22f0f3c08ac451ef350ee37cdee82d191ae551ef7bfe0730d499"
+    },
+    "corpus_manifest": {
+      "path": "docs/research/corpus/manifest.json",
+      "sha256": "2d626be7bbb3ac830ff0a526ec48adb371dd94861a80323e9c0826f3eae2142b"
+    },
+    "injection_manifest": {
+      "path": "docs/research/analysis/injection-manifest.json",
+      "sha256": "e4b6a9f6ca78ad34594b14ec97d038d9b686cdc823c398342725765b3752fa41"
+    }
+  },
+  "cases": [
+    {
+      "case_id": "CASE-CORPUS-PROVIDER-OPENAI-STREAM-TOOL-001",
+      "case_kind": "corpus",
+      "family_applicability": [
+        "deterministic-rules",
+        "traditional-classifier",
+        "local-llm",
+        "external-llm",
+        "ensemble",
+        "sequence",
+        "longitudinal"
+      ],
+      "group_id": "group:fixture:fix-provider-openai-stream-tool-001",
+      "source_fixture": "FIX-PROVIDER-OPENAI-STREAM-TOOL-001"
+    },
+    {
+      "case_id": "CASE-CORPUS-PROVIDER-ANTHROPIC-RETRY-STREAM-001",
+      "case_kind": "corpus",
+      "family_applicability": [
+        "deterministic-rules",
+        "traditional-classifier",
+        "local-llm",
+        "external-llm",
+        "ensemble",
+        "sequence",
+        "longitudinal"
+      ],
+      "group_id": "group:fixture:fix-provider-anthropic-retry-stream-001",
+      "source_fixture": "FIX-PROVIDER-ANTHROPIC-RETRY-STREAM-001"
+    },
+    {
+      "case_id": "CASE-CORPUS-PROVIDER-GEMINI-MULTIMODAL-001",
+      "case_kind": "corpus",
+      "family_applicability": [
+        "deterministic-rules",
+        "traditional-classifier",
+        "local-llm",
+        "external-llm",
+        "ensemble",
+        "sequence",
+        "longitudinal"
+      ],
+      "group_id": "group:fixture:fix-provider-gemini-multimodal-001",
+      "source_fixture": "FIX-PROVIDER-GEMINI-MULTIMODAL-001"
+    },
+    {
+      "case_id": "CASE-CORPUS-PROVIDER-BEDROCK-LATE-LINEAGE-001",
+      "case_kind": "corpus",
+      "family_applicability": [
+        "deterministic-rules",
+        "traditional-classifier",
+        "local-llm",
+        "external-llm",
+        "ensemble",
+        "sequence",
+        "longitudinal"
+      ],
+      "group_id": "group:fixture:fix-provider-bedrock-late-lineage-001",
+      "source_fixture": "FIX-PROVIDER-BEDROCK-LATE-LINEAGE-001"
+    },
+    {
+      "case_id": "CASE-CORPUS-GIANT-JSON-001",
+      "case_kind": "corpus",
+      "family_applicability": [
+        "deterministic-rules",
+        "traditional-classifier",
+        "local-llm",
+        "external-llm",
+        "ensemble",
+        "sequence",
+        "longitudinal"
+      ],
+      "group_id": "group:fixture:fix-giant-json-001",
+      "source_fixture": "FIX-GIANT-JSON-001"
+    },
+    {
+      "case_id": "CASE-CORPUS-GIANT-JSONL-001",
+      "case_kind": "corpus",
+      "family_applicability": [
+        "deterministic-rules",
+        "traditional-classifier",
+        "local-llm",
+        "external-llm",
+        "ensemble",
+        "sequence",
+        "longitudinal"
+      ],
+      "group_id": "group:fixture:fix-giant-jsonl-001",
+      "source_fixture": "FIX-GIANT-JSONL-001"
+    },
+    {
+      "case_id": "CASE-CORPUS-MALFORMED-JSON-001",
+      "case_kind": "corpus",
+      "family_applicability": [
+        "deterministic-rules",
+        "traditional-classifier",
+        "local-llm",
+        "external-llm",
+        "ensemble",
+        "sequence",
+        "longitudinal"
+      ],
+      "group_id": "group:fixture:fix-malformed-json-001",
+      "source_fixture": "FIX-MALFORMED-JSON-001"
+    },
+    {
+      "case_id": "CASE-CORPUS-MALFORMED-JSONL-001",
+      "case_kind": "corpus",
+      "family_applicability": [
+        "deterministic-rules",
+        "traditional-classifier",
+        "local-llm",
+        "external-llm",
+        "ensemble",
+        "sequence",
+        "longitudinal"
+      ],
+      "group_id": "group:fixture:fix-malformed-jsonl-001",
+      "source_fixture": "FIX-MALFORMED-JSONL-001"
+    },
+    {
+      "case_id": "CASE-CORPUS-AUTHORIZED-TWIN-001",
+      "case_kind": "corpus",
+      "family_applicability": [
+        "deterministic-rules",
+        "traditional-classifier",
+        "local-llm",
+        "external-llm",
+        "ensemble",
+        "sequence",
+        "longitudinal"
+      ],
+      "group_id": "group:authorized-use-twins:security-simulation",
+      "source_fixture": "FIX-AUTHORIZED-TWIN-001"
+    },
+    {
+      "case_id": "CASE-CORPUS-ABUSE-SIGNALS-001",
+      "case_kind": "corpus",
+      "family_applicability": [
+        "deterministic-rules",
+        "traditional-classifier",
+        "local-llm",
+        "external-llm",
+        "ensemble",
+        "sequence",
+        "longitudinal"
+      ],
+      "group_id": "group:authorized-use-twins:security-simulation",
+      "source_fixture": "FIX-ABUSE-SIGNALS-001"
+    },
+    {
+      "case_id": "INJECTION-1401",
+      "case_kind": "injection",
+      "family_applicability": [
+        "deterministic-rules",
+        "traditional-classifier",
+        "local-llm",
+        "external-llm",
+        "ensemble",
+        "sequence",
+        "longitudinal"
+      ],
+      "group_id": "group:injection:1401:holdout-3",
+      "source_fixture": "INJECTION-1401"
+    },
+    {
+      "case_id": "INJECTION-1402",
+      "case_kind": "injection",
+      "family_applicability": [
+        "deterministic-rules",
+        "traditional-classifier",
+        "local-llm",
+        "external-llm",
+        "ensemble",
+        "sequence",
+        "longitudinal"
+      ],
+      "group_id": "group:injection:1402:holdout-5",
+      "source_fixture": "INJECTION-1402"
+    },
+    {
+      "case_id": "INJECTION-1403",
+      "case_kind": "injection",
+      "family_applicability": [
+        "deterministic-rules",
+        "traditional-classifier",
+        "local-llm",
+        "external-llm",
+        "ensemble",
+        "sequence",
+        "longitudinal"
+      ],
+      "group_id": "group:injection:1403:holdout-6",
+      "source_fixture": "INJECTION-1403"
+    },
+    {
+      "case_id": "INJECTION-1404",
+      "case_kind": "injection",
+      "family_applicability": [
+        "deterministic-rules",
+        "traditional-classifier",
+        "local-llm",
+        "external-llm",
+        "ensemble",
+        "sequence",
+        "longitudinal"
+      ],
+      "group_id": "group:injection:1404:holdout-2",
+      "source_fixture": "INJECTION-1404"
+    },
+    {
+      "case_id": "INJECTION-1405",
+      "case_kind": "injection",
+      "family_applicability": [
+        "deterministic-rules",
+        "traditional-classifier",
+        "local-llm",
+        "external-llm",
+        "ensemble",
+        "sequence",
+        "longitudinal"
+      ],
+      "group_id": "group:injection:1405:holdout-6",
+      "source_fixture": "INJECTION-1405"
+    },
+    {
+      "case_id": "INJECTION-1406",
+      "case_kind": "injection",
+      "family_applicability": [
+        "deterministic-rules",
+        "traditional-classifier",
+        "local-llm",
+        "external-llm",
+        "ensemble",
+        "sequence",
+        "longitudinal"
+      ],
+      "group_id": "group:injection:1406:holdout-0",
+      "source_fixture": "INJECTION-1406"
+    },
+    {
+      "case_id": "INJECTION-1407",
+      "case_kind": "injection",
+      "family_applicability": [
+        "deterministic-rules",
+        "traditional-classifier",
+        "local-llm",
+        "external-llm",
+        "ensemble",
+        "sequence",
+        "longitudinal"
+      ],
+      "group_id": "group:injection:1407:holdout-2",
+      "source_fixture": "INJECTION-1407"
+    },
+    {
+      "case_id": "INJECTION-1408",
+      "case_kind": "injection",
+      "family_applicability": [
+        "deterministic-rules",
+        "traditional-classifier",
+        "local-llm",
+        "external-llm",
+        "ensemble",
+        "sequence",
+        "longitudinal"
+      ],
+      "group_id": "group:injection:1408:holdout-0",
+      "source_fixture": "INJECTION-1408"
+    },
+    {
+      "case_id": "INJECTION-1409",
+      "case_kind": "injection",
+      "family_applicability": [
+        "deterministic-rules",
+        "traditional-classifier",
+        "local-llm",
+        "external-llm",
+        "ensemble",
+        "sequence",
+        "longitudinal"
+      ],
+      "group_id": "group:injection:1409:holdout-7",
+      "source_fixture": "INJECTION-1409"
+    },
+    {
+      "case_id": "INJECTION-1410",
+      "case_kind": "injection",
+      "family_applicability": [
+        "deterministic-rules",
+        "traditional-classifier",
+        "local-llm",
+        "external-llm",
+        "ensemble",
+        "sequence",
+        "longitudinal"
+      ],
+      "group_id": "group:injection:1410:holdout-0",
+      "source_fixture": "INJECTION-1410"
+    },
+    {
+      "case_id": "INJECTION-1411",
+      "case_kind": "injection",
+      "family_applicability": [
+        "deterministic-rules",
+        "traditional-classifier",
+        "local-llm",
+        "external-llm",
+        "ensemble",
+        "sequence",
+        "longitudinal"
+      ],
+      "group_id": "group:injection:1411:holdout-11",
+      "source_fixture": "INJECTION-1411"
+    },
+    {
+      "case_id": "INJECTION-1412",
+      "case_kind": "injection",
+      "family_applicability": [
+        "deterministic-rules",
+        "traditional-classifier",
+        "local-llm",
+        "external-llm",
+        "ensemble",
+        "sequence",
+        "longitudinal"
+      ],
+      "group_id": "group:injection:1412:holdout-7",
+      "source_fixture": "INJECTION-1412"
+    },
+    {
+      "case_id": "INJECTION-1413",
+      "case_kind": "injection",
+      "family_applicability": [
+        "deterministic-rules",
+        "traditional-classifier",
+        "local-llm",
+        "external-llm",
+        "ensemble",
+        "sequence",
+        "longitudinal"
+      ],
+      "group_id": "group:injection:1413:holdout-1",
+      "source_fixture": "INJECTION-1413"
+    },
+    {
+      "case_id": "INJECTION-1414",
+      "case_kind": "injection",
+      "family_applicability": [
+        "deterministic-rules",
+        "traditional-classifier",
+        "local-llm",
+        "external-llm",
+        "ensemble",
+        "sequence",
+        "longitudinal"
+      ],
+      "group_id": "group:injection:1414:holdout-1",
+      "source_fixture": "INJECTION-1414"
+    },
+    {
+      "case_id": "INJECTION-1415",
+      "case_kind": "injection",
+      "family_applicability": [
+        "deterministic-rules",
+        "traditional-classifier",
+        "local-llm",
+        "external-llm",
+        "ensemble",
+        "sequence",
+        "longitudinal"
+      ],
+      "group_id": "group:injection:1415:holdout-3",
+      "source_fixture": "INJECTION-1415"
+    },
+    {
+      "case_id": "INJECTION-1416",
+      "case_kind": "injection",
+      "family_applicability": [
+        "deterministic-rules",
+        "traditional-classifier",
+        "local-llm",
+        "external-llm",
+        "ensemble",
+        "sequence",
+        "longitudinal"
+      ],
+      "group_id": "group:injection:1416:holdout-1",
+      "source_fixture": "INJECTION-1416"
+    },
+    {
+      "case_id": "INJECTION-1417",
+      "case_kind": "injection",
+      "family_applicability": [
+        "deterministic-rules",
+        "traditional-classifier",
+        "local-llm",
+        "external-llm",
+        "ensemble",
+        "sequence",
+        "longitudinal"
+      ],
+      "group_id": "group:injection:1417:holdout-1",
+      "source_fixture": "INJECTION-1417"
+    },
+    {
+      "case_id": "INJECTION-1418",
+      "case_kind": "injection",
+      "family_applicability": [
+        "deterministic-rules",
+        "traditional-classifier",
+        "local-llm",
+        "external-llm",
+        "ensemble",
+        "sequence",
+        "longitudinal"
+      ],
+      "group_id": "group:injection:1418:holdout-0",
+      "source_fixture": "INJECTION-1418"
+    },
+    {
+      "case_id": "INJECTION-1419",
+      "case_kind": "injection",
+      "family_applicability": [
+        "deterministic-rules",
+        "traditional-classifier",
+        "local-llm",
+        "external-llm",
+        "ensemble",
+        "sequence",
+        "longitudinal"
+      ],
+      "group_id": "group:injection:1419:holdout-16",
+      "source_fixture": "INJECTION-1419"
+    },
+    {
+      "case_id": "INJECTION-1420",
+      "case_kind": "injection",
+      "family_applicability": [
+        "deterministic-rules",
+        "traditional-classifier",
+        "local-llm",
+        "external-llm",
+        "ensemble",
+        "sequence",
+        "longitudinal"
+      ],
+      "group_id": "group:injection:1420:holdout-5",
+      "source_fixture": "INJECTION-1420"
+    }
+  ],
+  "families": [
+    "deterministic-rules",
+    "traditional-classifier",
+    "local-llm",
+    "external-llm",
+    "ensemble",
+    "sequence",
+    "longitudinal"
+  ],
+  "feature_id": "analyzer-evaluation-deterministic-fixtures-and-splits",
+  "groups": [
+    {
+      "bucket": 7,
+      "case_ids": [
+        "CASE-CORPUS-ABUSE-SIGNALS-001",
+        "CASE-CORPUS-AUTHORIZED-TWIN-001"
+      ],
+      "group_id": "group:authorized-use-twins:security-simulation",
+      "hash_input": "74657374616d656e742d616e616c797a65722d73706c69742d76310067726f75703a617574686f72697a65642d7573652d7477696e733a73656375726974792d73696d756c6174696f6e",
+      "partition": "calibration",
+      "sha256": "11a816f87191cfe3c2cc5a1e857292944bbba59133bfc9102352d89c66c24e8f"
+    },
+    {
+      "bucket": 6,
+      "case_ids": [
+        "CASE-CORPUS-GIANT-JSON-001"
+      ],
+      "group_id": "group:fixture:fix-giant-json-001",
+      "hash_input": "74657374616d656e742d616e616c797a65722d73706c69742d76310067726f75703a666978747572653a6669782d6769616e742d6a736f6e2d303031",
+      "partition": "calibration",
+      "sha256": "ff237032f8b7d30cfca6c5f9b9cbfd22101d930767a8d1e9e112220420cea53f"
+    },
+    {
+      "bucket": 7,
+      "case_ids": [
+        "CASE-CORPUS-GIANT-JSONL-001"
+      ],
+      "group_id": "group:fixture:fix-giant-jsonl-001",
+      "hash_input": "74657374616d656e742d616e616c797a65722d73706c69742d76310067726f75703a666978747572653a6669782d6769616e742d6a736f6e6c2d303031",
+      "partition": "calibration",
+      "sha256": "64afc2d47afa7403f28c0ac6dabacaee1d64f3d5d0d68b8e27c9902cc395397a"
+    },
+    {
+      "bucket": 6,
+      "case_ids": [
+        "CASE-CORPUS-MALFORMED-JSON-001"
+      ],
+      "group_id": "group:fixture:fix-malformed-json-001",
+      "hash_input": "74657374616d656e742d616e616c797a65722d73706c69742d76310067726f75703a666978747572653a6669782d6d616c666f726d65642d6a736f6e2d303031",
+      "partition": "calibration",
+      "sha256": "3bcfe23309889c5208636282de49786c95779cea0c8c4649d3b61cba8b0124f9"
+    },
+    {
+      "bucket": 6,
+      "case_ids": [
+        "CASE-CORPUS-MALFORMED-JSONL-001"
+      ],
+      "group_id": "group:fixture:fix-malformed-jsonl-001",
+      "hash_input": "74657374616d656e742d616e616c797a65722d73706c69742d76310067726f75703a666978747572653a6669782d6d616c666f726d65642d6a736f6e6c2d303031",
+      "partition": "calibration",
+      "sha256": "8c79234a5482aef83a3caef9eb78309410920caae11d41f46b98c97ac69df28d"
+    },
+    {
+      "bucket": 0,
+      "case_ids": [
+        "CASE-CORPUS-PROVIDER-ANTHROPIC-RETRY-STREAM-001"
+      ],
+      "group_id": "group:fixture:fix-provider-anthropic-retry-stream-001",
+      "hash_input": "74657374616d656e742d616e616c797a65722d73706c69742d76310067726f75703a666978747572653a6669782d70726f76696465722d616e7468726f7069632d72657472792d73747265616d2d303031",
+      "partition": "development",
+      "sha256": "d857c52926f8a71a44e4851f273f1bfde8f1249b3c2e8b7dae38ab1070dffff6"
+    },
+    {
+      "bucket": 0,
+      "case_ids": [
+        "CASE-CORPUS-PROVIDER-BEDROCK-LATE-LINEAGE-001"
+      ],
+      "group_id": "group:fixture:fix-provider-bedrock-late-lineage-001",
+      "hash_input": "74657374616d656e742d616e616c797a65722d73706c69742d76310067726f75703a666978747572653a6669782d70726f76696465722d626564726f636b2d6c6174652d6c696e656167652d303031",
+      "partition": "development",
+      "sha256": "a3ee2e4dce3ecba0a7296e09bf2034d15acf3569138914e93eb8c3c54095f0fe"
+    },
+    {
+      "bucket": 4,
+      "case_ids": [
+        "CASE-CORPUS-PROVIDER-GEMINI-MULTIMODAL-001"
+      ],
+      "group_id": "group:fixture:fix-provider-gemini-multimodal-001",
+      "hash_input": "74657374616d656e742d616e616c797a65722d73706c69742d76310067726f75703a666978747572653a6669782d70726f76696465722d67656d696e692d6d756c74696d6f64616c2d303031",
+      "partition": "development",
+      "sha256": "d6ad1799bcd08a8426e1b01344a73a0f190e6f757b8dda0c492beb92273a6e3e"
+    },
+    {
+      "bucket": 8,
+      "case_ids": [
+        "CASE-CORPUS-PROVIDER-OPENAI-STREAM-TOOL-001"
+      ],
+      "group_id": "group:fixture:fix-provider-openai-stream-tool-001",
+      "hash_input": "74657374616d656e742d616e616c797a65722d73706c69742d76310067726f75703a666978747572653a6669782d70726f76696465722d6f70656e61692d73747265616d2d746f6f6c2d303031",
+      "partition": "holdout",
+      "sha256": "4d378d0c8853f7fcb0f9c4ae4c64aead63a45a926bb2d7e65ed6023fe74eef59"
+    },
+    {
+      "bucket": 9,
+      "case_ids": [
+        "INJECTION-1401"
+      ],
+      "group_id": "group:injection:1401:holdout-3",
+      "hash_input": "74657374616d656e742d616e616c797a65722d73706c69742d76310067726f75703a696e6a656374696f6e3a313430313a686f6c646f75742d33",
+      "partition": "holdout",
+      "sha256": "46cfeda8f43629ad9acf9d3b7a827bfc77653ad937e95d387fbf5710d6b0dedf"
+    },
+    {
+      "bucket": 8,
+      "case_ids": [
+        "INJECTION-1402"
+      ],
+      "group_id": "group:injection:1402:holdout-5",
+      "hash_input": "74657374616d656e742d616e616c797a65722d73706c69742d76310067726f75703a696e6a656374696f6e3a313430323a686f6c646f75742d35",
+      "partition": "holdout",
+      "sha256": "de6018b8a4fea5fec701f825dfd63b7a979ce7eff9eca5d151ce9620e907b1f2"
+    },
+    {
+      "bucket": 9,
+      "case_ids": [
+        "INJECTION-1403"
+      ],
+      "group_id": "group:injection:1403:holdout-6",
+      "hash_input": "74657374616d656e742d616e616c797a65722d73706c69742d76310067726f75703a696e6a656374696f6e3a313430333a686f6c646f75742d36",
+      "partition": "holdout",
+      "sha256": "a216af6dcf2edbc7126b1837c1df463ebe05ffe60e7e400d18430bd61c7b1353"
+    },
+    {
+      "bucket": 8,
+      "case_ids": [
+        "INJECTION-1404"
+      ],
+      "group_id": "group:injection:1404:holdout-2",
+      "hash_input": "74657374616d656e742d616e616c797a65722d73706c69742d76310067726f75703a696e6a656374696f6e3a313430343a686f6c646f75742d32",
+      "partition": "holdout",
+      "sha256": "1c45c967a0ca19d2931f92ea207c022da030901e883341869945a5421e4caa37"
+    },
+    {
+      "bucket": 9,
+      "case_ids": [
+        "INJECTION-1405"
+      ],
+      "group_id": "group:injection:1405:holdout-6",
+      "hash_input": "74657374616d656e742d616e616c797a65722d73706c69742d76310067726f75703a696e6a656374696f6e3a313430353a686f6c646f75742d36",
+      "partition": "holdout",
+      "sha256": "1576588cdfdf9eb7104c409ad0365d2eb3b178a3a9686b41397f026ebb6d551f"
+    },
+    {
+      "bucket": 9,
+      "case_ids": [
+        "INJECTION-1406"
+      ],
+      "group_id": "group:injection:1406:holdout-0",
+      "hash_input": "74657374616d656e742d616e616c797a65722d73706c69742d76310067726f75703a696e6a656374696f6e3a313430363a686f6c646f75742d30",
+      "partition": "holdout",
+      "sha256": "d877356d364437a515fbcad92dc6f135127a4a2c83e39df055b5cebc940e5b64"
+    },
+    {
+      "bucket": 8,
+      "case_ids": [
+        "INJECTION-1407"
+      ],
+      "group_id": "group:injection:1407:holdout-2",
+      "hash_input": "74657374616d656e742d616e616c797a65722d73706c69742d76310067726f75703a696e6a656374696f6e3a313430373a686f6c646f75742d32",
+      "partition": "holdout",
+      "sha256": "73129e24f67f1e08a8a952527ac2c9e682eebef6d83abc3273e0531d4c11e2f2"
+    },
+    {
+      "bucket": 9,
+      "case_ids": [
+        "INJECTION-1408"
+      ],
+      "group_id": "group:injection:1408:holdout-0",
+      "hash_input": "74657374616d656e742d616e616c797a65722d73706c69742d76310067726f75703a696e6a656374696f6e3a313430383a686f6c646f75742d30",
+      "partition": "holdout",
+      "sha256": "146885832862ed971598d2f9336fd9fc8d34a92b5f5392fa4d27b4726e78d0ba"
+    },
+    {
+      "bucket": 8,
+      "case_ids": [
+        "INJECTION-1409"
+      ],
+      "group_id": "group:injection:1409:holdout-7",
+      "hash_input": "74657374616d656e742d616e616c797a65722d73706c69742d76310067726f75703a696e6a656374696f6e3a313430393a686f6c646f75742d37",
+      "partition": "holdout",
+      "sha256": "9dfa6b830bdfc3902734158fa9615ce0ac143fd7bdba80a9d04025a78007ad4e"
+    },
+    {
+      "bucket": 9,
+      "case_ids": [
+        "INJECTION-1410"
+      ],
+      "group_id": "group:injection:1410:holdout-0",
+      "hash_input": "74657374616d656e742d616e616c797a65722d73706c69742d76310067726f75703a696e6a656374696f6e3a313431303a686f6c646f75742d30",
+      "partition": "holdout",
+      "sha256": "14ed937e4d40f6c52dfcfb4c97e106d34f00ffcacc04779aa161670ae9f424bc"
+    },
+    {
+      "bucket": 9,
+      "case_ids": [
+        "INJECTION-1411"
+      ],
+      "group_id": "group:injection:1411:holdout-11",
+      "hash_input": "74657374616d656e742d616e616c797a65722d73706c69742d76310067726f75703a696e6a656374696f6e3a313431313a686f6c646f75742d3131",
+      "partition": "holdout",
+      "sha256": "0819ef08ebf07fa79aa6ca0e4f7fc0b8d65f6430465001b47cc4a49d832f85f0"
+    },
+    {
+      "bucket": 8,
+      "case_ids": [
+        "INJECTION-1412"
+      ],
+      "group_id": "group:injection:1412:holdout-7",
+      "hash_input": "74657374616d656e742d616e616c797a65722d73706c69742d76310067726f75703a696e6a656374696f6e3a313431323a686f6c646f75742d37",
+      "partition": "holdout",
+      "sha256": "13263db60607172afd9f0540202d55171a1699965665011bd290443762fafaf8"
+    },
+    {
+      "bucket": 8,
+      "case_ids": [
+        "INJECTION-1413"
+      ],
+      "group_id": "group:injection:1413:holdout-1",
+      "hash_input": "74657374616d656e742d616e616c797a65722d73706c69742d76310067726f75703a696e6a656374696f6e3a313431333a686f6c646f75742d31",
+      "partition": "holdout",
+      "sha256": "d99b0248027b2a821ea0dc0d515da0b42711c7206585e7cbf2f0bf64c3f850f0"
+    },
+    {
+      "bucket": 9,
+      "case_ids": [
+        "INJECTION-1414"
+      ],
+      "group_id": "group:injection:1414:holdout-1",
+      "hash_input": "74657374616d656e742d616e616c797a65722d73706c69742d76310067726f75703a696e6a656374696f6e3a313431343a686f6c646f75742d31",
+      "partition": "holdout",
+      "sha256": "3b0dae62111deca35449d4db01b0829941d919b75176a39f499c82143a944e63"
+    },
+    {
+      "bucket": 9,
+      "case_ids": [
+        "INJECTION-1415"
+      ],
+      "group_id": "group:injection:1415:holdout-3",
+      "hash_input": "74657374616d656e742d616e616c797a65722d73706c69742d76310067726f75703a696e6a656374696f6e3a313431353a686f6c646f75742d33",
+      "partition": "holdout",
+      "sha256": "759a00dc3b8c96957a19685f56a1675428a27345d7889b1b533252d32841c295"
+    },
+    {
+      "bucket": 9,
+      "case_ids": [
+        "INJECTION-1416"
+      ],
+      "group_id": "group:injection:1416:holdout-1",
+      "hash_input": "74657374616d656e742d616e616c797a65722d73706c69742d76310067726f75703a696e6a656374696f6e3a313431363a686f6c646f75742d31",
+      "partition": "holdout",
+      "sha256": "73bfcb64205ed72745095a70717f4a9c8ca4f9f7cc36da7017b3dcaff5beca1b"
+    },
+    {
+      "bucket": 8,
+      "case_ids": [
+        "INJECTION-1417"
+      ],
+      "group_id": "group:injection:1417:holdout-1",
+      "hash_input": "74657374616d656e742d616e616c797a65722d73706c69742d76310067726f75703a696e6a656374696f6e3a313431373a686f6c646f75742d31",
+      "partition": "holdout",
+      "sha256": "a3a86221b8d23554e002cfa7592206b90c4bcd3b559fb779dc2a46fcf0dccc84"
+    },
+    {
+      "bucket": 9,
+      "case_ids": [
+        "INJECTION-1418"
+      ],
+      "group_id": "group:injection:1418:holdout-0",
+      "hash_input": "74657374616d656e742d616e616c797a65722d73706c69742d76310067726f75703a696e6a656374696f6e3a313431383a686f6c646f75742d30",
+      "partition": "holdout",
+      "sha256": "d070eadb6e91c6e93faf50e770b644ae4c08ca75a2e5d8fb5c57c33e48425a44"
+    },
+    {
+      "bucket": 8,
+      "case_ids": [
+        "INJECTION-1419"
+      ],
+      "group_id": "group:injection:1419:holdout-16",
+      "hash_input": "74657374616d656e742d616e616c797a65722d73706c69742d76310067726f75703a696e6a656374696f6e3a313431393a686f6c646f75742d3136",
+      "partition": "holdout",
+      "sha256": "4f89d25a1be2b698c5a7ac4871a08544b1f5dea89e82d6d9366a48c6dd782ba6"
+    },
+    {
+      "bucket": 9,
+      "case_ids": [
+        "INJECTION-1420"
+      ],
+      "group_id": "group:injection:1420:holdout-5",
+      "hash_input": "74657374616d656e742d616e616c797a65722d73706c69742d76310067726f75703a696e6a656374696f6e3a313432303a686f6c646f75742d35",
+      "partition": "holdout",
+      "sha256": "24748be6d143bdcbbb5cf74061637b3fdfbeffced03db81f1c33dbd0bd228c80"
+    }
+  ],
+  "injection_partition": "holdout",
+  "required_partitions": {
+    "deterministic-rules": [
+      "development",
+      "calibration",
+      "holdout"
+    ],
+    "ensemble": [
+      "development",
+      "calibration",
+      "holdout"
+    ],
+    "external-llm": [
+      "development",
+      "calibration",
+      "holdout"
+    ],
+    "local-llm": [
+      "development",
+      "calibration",
+      "holdout"
+    ],
+    "longitudinal": [
+      "development",
+      "calibration",
+      "holdout"
+    ],
+    "sequence": [
+      "development",
+      "calibration",
+      "holdout"
+    ],
+    "traditional-classifier": [
+      "development",
+      "calibration",
+      "holdout"
+    ]
+  },
+  "schema_version": "1.0.0",
+  "scope": "Successor control-suite input. All families process every harmless contract fixture so each required partition is executable. The immutable version 1.0.0 efficacy selections remain unchanged until the separately versioned successor plan adopts this manifest.",
+  "status": "informative-research",
+  "version": "1.0.0"
+}

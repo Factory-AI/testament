@@ -48,6 +48,8 @@ PUBLIC_FILES = {
     "docs/research/privacy/retention-deletion.md",
     "docs/research/privacy/sovereignty-profiles.md",
     "docs/research/README.md",
+    "docs/research/analysis/injection-manifest.json",
+    "docs/research/analysis/split-manifest.json",
     "docs/research/corpus/README.md",
     "docs/research/corpus/manifest.json",
     "docs/research/naming-clearance.md",
