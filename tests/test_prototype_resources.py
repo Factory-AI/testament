@@ -127,7 +127,10 @@ class PrototypeResourceAccountingTest(unittest.TestCase):
             text=True,
             check=False,
         ).stdout.strip()
-        self.assertTrue(status.startswith("Z"), f"child remains live: {status}")
+        self.assertTrue(
+            not status or status.startswith("Z"),
+            f"child remains live: {status}",
+        )
 
     def valid_accounting(self) -> dict[str, object]:
         return {
