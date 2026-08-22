@@ -1,8 +1,11 @@
 from __future__ import annotations
 
 import copy
+import hashlib
 import importlib.util
 import json
+import shutil
+import tempfile
 import unittest
 from pathlib import Path
 
@@ -58,6 +61,19 @@ def passing_observation() -> dict[str, object]:
 
 
 class DecisionDurabilityEvidenceTest(unittest.TestCase):
+    def copy_evidence(self) -> Path:
+        temporary = tempfile.TemporaryDirectory()
+        self.addCleanup(temporary.cleanup)
+        root = Path(temporary.name)
+        for relative in VERIFY.EVIDENCE_FILES:
+            source = ROOT / relative
+            if not source.is_file():
+                continue
+            target = root / relative
+            target.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(source, target)
+        return root
+
     def test_fault_transaction_has_no_explicit_rollback(self) -> None:
         self.assertNotIn(
             "ROLLBACK",
@@ -204,6 +220,49 @@ class DecisionDurabilityEvidenceTest(unittest.TestCase):
                 self.assertFalse(
                     VERIFY.valid_v2_decision_durability_result(changed, plan)
                 )
+
+    def test_recorded_v2_evidence_recomputes_all_samples(self) -> None:
+        plan = json.loads(
+            (ROOT / VERIFY.SUCCESSOR_PLAN_PATH).read_text(encoding="utf-8")
+        )
+        result = json.loads(
+            (ROOT / VERIFY.V2_DECISION_DURABILITY_PATH).read_text(
+                encoding="utf-8"
+            )
+        )
+        self.assertTrue(
+            VERIFY.valid_v2_decision_durability_result(result, plan)
+        )
+        self.assertEqual(3, len(result["samples"]))
+        self.assertTrue(
+            all(
+                VERIFY.valid_v2_decision_durability_observation(
+                    sample["observation"]
+                )
+                for sample in result["samples"]
+            )
+        )
+
+    def test_recorded_v2_evidence_mutation_fails(self) -> None:
+        root = self.copy_evidence()
+        path = root / VERIFY.V2_DECISION_DURABILITY_PATH
+        result = json.loads(path.read_text(encoding="utf-8"))
+        result["samples"][0]["observation"]["backend_disappeared"] = False
+        path.write_text(json.dumps(result), encoding="utf-8")
+        self.assertIn(
+            "invalid_v2_decision_durability_evidence",
+            {
+                problem["code"]
+                for problem in VERIFY.validate_prototype_evidence(root)
+            },
+        )
+
+    def test_version_one_decision_evidence_is_immutable(self) -> None:
+        path = ROOT / "docs/research/benchmarks/decision-durability.json"
+        self.assertEqual(
+            VERIFY.V1_DECISION_DURABILITY_SHA256,
+            hashlib.sha256(path.read_bytes()).hexdigest(),
+        )
 
 
 if __name__ == "__main__":

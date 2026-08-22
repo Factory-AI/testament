@@ -168,6 +168,21 @@ Acceptance is recomputed from those fields. The
 [version 1 result](benchmarks/key-rotation.json) remains byte-for-byte
 preserved and is retained only as superseded evidence.
 
+The [version 2 decision-durability result](benchmarks/v2/decision-durability.json)
+contains three resource-bounded PostgreSQL 17 samples from committed
+implementation `c30880a4be7b503206ff934817b9429b101e18af`. In every sample,
+a uniquely named fault session emitted an in-transaction readiness marker and
+blocked without explicit rollback. A separate control connection matched and
+terminated that exact backend. The client lost its connection and exited
+nonzero. A fresh verification connection observed backend disappearance, one
+committed decision/audit/receipt triplet, zero faulted rows, zero orphans, and
+automatic rollback.
+
+This evidence demonstrates backend-disconnect rollback only. Process death,
+host crash, storage loss, WAL corruption, and fsync faults remain unproven.
+The [version 1 result](benchmarks/decision-durability.json) remains
+byte-for-byte preserved and is retained only as superseded evidence.
+
 ## Verification
 
 ```sh
