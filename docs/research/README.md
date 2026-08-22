@@ -33,9 +33,18 @@ The manifest currently registers 50 stable deliverables:
 - 3 independent reviews; and
 - 4 decisions.
 
-The naming study and naming decision are accepted. All later deliverables are
-drafts. A draft gets its own artifact rather than sharing one file with an
+The naming study and naming decision are accepted. The trace-format and
+abuse/misuse studies are in review. The other deliverables are drafts. Each
+deliverable gets its own artifact rather than sharing one file with an
 incompatible deliverable.
+
+Current studies:
+
+- [Trace-format landscape](studies/trace-landscape.md), with its
+  [machine-readable ecosystem matrix](../../policy/trace-landscape.json);
+- [Abuse and misuse research](studies/abuse-misuse.md), with its
+  [machine-readable harm matrix](../../policy/abuse-misuse-research.json); and
+- [Naming clearance](naming-clearance.md).
 
 Use the JSON manifest when exact IDs or lifecycle data matter. This page is the
 stable public evidence link for planned entries until their own artifact is
@@ -47,12 +56,19 @@ published.
 make verify-research
 ```
 
-The verifier emits four machine-readable sections:
+The verifier emits machine-readable sections for:
 
 - schema validation inputs;
 - one-to-one coverage against all 50 required IDs;
-- resolved repository and public source links; and
+- resolved repository references and declared HTTPS source links (the local
+  verifier checks syntax, not remote network availability); and
 - lifecycle state and supersession counts.
+
+It also validates exact trace-ecosystem and abuse-domain coverage. Every trace
+row needs transport, projection, unknown-field, and lossiness findings. Every
+harm row needs online, nearline, and offline signals, an authorized-use twin,
+false-positive factors, reviewer and appeal paths, limitations, and open
+questions.
 
 It rejects missing or duplicate IDs, unknown states, private-only evidence,
 orphaned research files, missing accepted artifacts, accepted items without

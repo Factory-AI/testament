@@ -1,0 +1,964 @@
+{
+  "schema_version": "1.0.0",
+  "deliverable_id": "RES-STUDY-TRACE-LANDSCAPE-001",
+  "validation_id": "VAL-READY-008",
+  "status": "informative-draft",
+  "researched_at": "2026-08-21",
+  "methodology": [
+    "Treat transport bytes, semantic projection, unknown-field behavior, and transformation loss as separate questions.",
+    "Prefer publisher specifications and documentation. Mark behavior not stated by those sources as not-specified rather than inferring compatibility.",
+    "Use descriptions of harmless structural samples; this study does not redistribute provider payloads."
+  ],
+  "ecosystems": [
+    {
+      "id": "openai",
+      "name": "OpenAI Responses API",
+      "category": "provider-api",
+      "version_or_date": "Responses streaming reference, accessed 2026-08-21",
+      "transport": {
+        "mode": "HTTPS request/response; streaming uses server-sent events",
+        "raw_bytes": "conditional",
+        "framing": "Named semantic events are delivered as SSE data",
+        "capture_surface": "Client, reverse proxy, or SDK transport hook before parsing"
+      },
+      "projection": {
+        "model": "Response objects and typed lifecycle/content delta events",
+        "granularity": "Response, output item, content part, and delta",
+        "semantic_mapping": "SDKs project SSE JSON into typed response events"
+      },
+      "unknown_fields": {
+        "behavior": "not-specified",
+        "scope": "The API reference does not promise that SDK parsing and reserialization retain future JSON members"
+      },
+      "lossiness": {
+        "rating": "medium",
+        "known_losses": ["Typed projections need not retain SSE delimiters, header order, JSON whitespace, or unmodeled members"]
+      },
+      "samples": [
+        {
+          "kind": "stream event",
+          "shape": "response.output_text.delta event containing a delta and identifiers",
+          "research_use": "Exercise the boundary between captured SSE bytes and the typed event projection"
+        }
+      ],
+      "conclusions": ["A typed event stream is not proof of exact request or response byte retention."],
+      "open_questions": ["Which official SDK versions preserve unrecognized event types and members?"],
+      "limitations": ["Documentation describes protocol semantics, not every intermediary or SDK implementation."],
+      "sources": [
+        {
+          "id": "TRACE-SRC-OPENAI-001",
+          "publisher": "OpenAI",
+          "title": "Streaming API responses",
+          "version_or_date": "Current documentation, accessed 2026-08-21",
+          "source_url": "https://platform.openai.com/docs/api-reference/responses-streaming",
+          "accessed_at": "2026-08-21",
+          "claim_supported": "The Responses API exposes typed streaming events including response and output-text lifecycle events."
+        }
+      ]
+    },
+    {
+      "id": "anthropic",
+      "name": "Anthropic Messages API",
+      "category": "provider-api",
+      "version_or_date": "Messages streaming reference, accessed 2026-08-21",
+      "transport": {
+        "mode": "HTTPS; streaming uses server-sent events",
+        "raw_bytes": "conditional",
+        "framing": "SSE events carry message, content-block, ping, and error event payloads",
+        "capture_surface": "Client or gateway before the SDK combines content deltas"
+      },
+      "projection": {
+        "model": "Message/content-block lifecycle with typed deltas",
+        "granularity": "Message, content block, and delta",
+        "semantic_mapping": "Events may be accumulated into a final Message object"
+      },
+      "unknown_fields": {
+        "behavior": "not-specified",
+        "scope": "Anthropic states clients should handle unknown event types gracefully; this is forward-compatible handling, not an exact-byte guarantee"
+      },
+      "lossiness": {
+        "rating": "medium",
+        "known_losses": ["Accumulating deltas loses original SSE framing and may lose unknown-event payloads depending on the client"]
+      },
+      "samples": [
+        {
+          "kind": "stream sequence",
+          "shape": "message_start, content_block_delta, and message_stop SSE events",
+          "research_use": "Compare event order and partial JSON deltas with a final projected message"
+        }
+      ],
+      "conclusions": ["Unknown event tolerance does not imply that an SDK stores or re-emits unknown events."],
+      "open_questions": ["Do all maintained SDK stream helpers expose raw unknown events to callers?"],
+      "limitations": ["The source gives client guidance but does not specify intermediary retention."],
+      "sources": [
+        {
+          "id": "TRACE-SRC-ANTHROPIC-001",
+          "publisher": "Anthropic",
+          "title": "Streaming Messages",
+          "version_or_date": "Current documentation, accessed 2026-08-21",
+          "source_url": "https://docs.anthropic.com/en/docs/build-with-claude/streaming",
+          "accessed_at": "2026-08-21",
+          "claim_supported": "Message streaming uses SSE, defines typed events and deltas, and instructs clients to handle unknown event types gracefully."
+        }
+      ]
+    },
+    {
+      "id": "gemini",
+      "name": "Google Gemini generateContent API",
+      "category": "provider-api",
+      "version_or_date": "Gemini API reference, accessed 2026-08-21",
+      "transport": {
+        "mode": "REST or RPC; streamGenerateContent supports an SSE mode",
+        "raw_bytes": "conditional",
+        "framing": "A stream of GenerateContentResponse values",
+        "capture_surface": "HTTP/RPC client or gateway before SDK object conversion"
+      },
+      "projection": {
+        "model": "Content, Part, Candidate, usage, citation, and safety objects",
+        "granularity": "Candidate and content part per streamed response",
+        "semantic_mapping": "SDKs project wire responses into language-specific response objects"
+      },
+      "unknown_fields": {
+        "behavior": "not-specified",
+        "scope": "The API reference does not guarantee retention of unknown JSON members by SDK objects"
+      },
+      "lossiness": {
+        "rating": "medium",
+        "known_losses": ["SDK aggregation can lose response chunk boundaries, serialization details, and future fields"]
+      },
+      "samples": [
+        {
+          "kind": "stream response",
+          "shape": "GenerateContentResponse with candidate content parts and usage metadata",
+          "research_use": "Test chunk-order capture separately from final candidate text"
+        }
+      ],
+      "conclusions": ["Gemini semantic content objects should be linked to, not substituted for, transport capture."],
+      "open_questions": ["How do current SDKs expose unknown Part variants and response fields?"],
+      "limitations": ["REST, RPC, and SDK transports may produce different observable framing."],
+      "sources": [
+        {
+          "id": "TRACE-SRC-GEMINI-001",
+          "publisher": "Google",
+          "title": "Gemini API: models.streamGenerateContent",
+          "version_or_date": "Current API reference, accessed 2026-08-21",
+          "source_url": "https://ai.google.dev/api/generate-content#method:-models.streamgeneratecontent",
+          "accessed_at": "2026-08-21",
+          "claim_supported": "The API streams GenerateContentResponse objects and documents SSE as a supported streaming response mode."
+        }
+      ]
+    },
+    {
+      "id": "bedrock",
+      "name": "Amazon Bedrock Runtime",
+      "category": "provider-api",
+      "version_or_date": "Runtime API reference, accessed 2026-08-21",
+      "transport": {
+        "mode": "HTTPS with AWS event-stream responses for streaming inference",
+        "raw_bytes": "conditional",
+        "framing": "Binary AWS event-stream frames contain model response chunks and exception events",
+        "capture_surface": "SigV4-aware client or gateway before event-stream decoding"
+      },
+      "projection": {
+        "model": "Provider-specific body inside Bedrock chunk and exception envelope types",
+        "granularity": "Event-stream message and model chunk",
+        "semantic_mapping": "SDK decodes the envelope; model body remains dependent on the selected model"
+      },
+      "unknown_fields": {
+        "behavior": "not-specified",
+        "scope": "The Runtime reference does not promise preservation of unknown provider body fields after model-specific decoding"
+      },
+      "lossiness": {
+        "rating": "medium",
+        "known_losses": ["A unified projection can erase AWS event headers, binary frame boundaries, and provider-specific payload members"]
+      },
+      "samples": [
+        {
+          "kind": "event-stream frame",
+          "shape": "PayloadPart bytes or a modeled exception event",
+          "research_use": "Retain envelope and payload boundaries before provider-specific parsing"
+        }
+      ],
+      "conclusions": ["Bedrock has both an AWS envelope and a model-specific inner format; both layers matter."],
+      "open_questions": ["Which managed gateways expose the original AWS event-stream headers and CRC-protected frames?"],
+      "limitations": ["Model-specific bodies vary and cannot be treated as one Bedrock semantic schema."],
+      "sources": [
+        {
+          "id": "TRACE-SRC-BEDROCK-001",
+          "publisher": "Amazon Web Services",
+          "title": "InvokeModelWithResponseStream",
+          "version_or_date": "Current API reference, accessed 2026-08-21",
+          "source_url": "https://docs.aws.amazon.com/bedrock/latest/APIReference/API_runtime_InvokeModelWithResponseStream.html",
+          "accessed_at": "2026-08-21",
+          "claim_supported": "Streaming model invocation returns an AWS event stream with payload-part and modeled exception events."
+        }
+      ]
+    },
+    {
+      "id": "openai-compatible",
+      "name": "OpenAI-compatible APIs",
+      "category": "provider-api",
+      "version_or_date": "TGI Messages API documentation, accessed 2026-08-21",
+      "transport": {
+        "mode": "Typically OpenAI-shaped HTTP JSON and SSE endpoints",
+        "raw_bytes": "conditional",
+        "framing": "Implementation-specific subset of OpenAI request, response, and SSE shapes",
+        "capture_surface": "Compatibility endpoint before client normalization"
+      },
+      "projection": {
+        "model": "A claimed subset or extension of OpenAI chat/message objects",
+        "granularity": "Request, response, choice, message, and delta",
+        "semantic_mapping": "Compatibility adapters translate an implementation's native model into OpenAI-shaped fields"
+      },
+      "unknown_fields": {
+        "behavior": "implementation-dependent",
+        "scope": "Compatibility is not a versioned universal contract; accepted and returned extensions vary"
+      },
+      "lossiness": {
+        "rating": "high",
+        "known_losses": ["Native finish reasons, tool semantics, usage accounting, errors, and extensions may be approximated or omitted"]
+      },
+      "samples": [
+        {
+          "kind": "compatibility request",
+          "shape": "Chat-completions-style messages with streaming enabled",
+          "research_use": "Compare accepted fields and returned event shapes across implementations"
+        }
+      ],
+      "conclusions": ["The label OpenAI-compatible is a test target, not evidence of wire or semantic equivalence."],
+      "open_questions": ["Which compatibility version and extension set does each deployment claim?"],
+      "limitations": ["TGI is one concrete counterexample to a universal compatibility profile, not a survey of every implementation."],
+      "sources": [
+        {
+          "id": "TRACE-SRC-OAI-COMPAT-001",
+          "publisher": "Hugging Face",
+          "title": "Messages API",
+          "version_or_date": "Text Generation Inference documentation, accessed 2026-08-21",
+          "source_url": "https://huggingface.co/docs/text-generation-inference/en/messages_api",
+          "accessed_at": "2026-08-21",
+          "claim_supported": "TGI offers an OpenAI Chat Completions compatible Messages API, demonstrating that compatibility is implemented by a distinct server."
+        }
+      ]
+    },
+    {
+      "id": "mcp",
+      "name": "Model Context Protocol",
+      "category": "protocol",
+      "version_or_date": "Specification 2025-06-18",
+      "transport": {
+        "mode": "JSON-RPC over stdio or Streamable HTTP",
+        "raw_bytes": "conditional",
+        "framing": "Newline-delimited JSON-RPC on stdio; HTTP request/response with optional SSE streaming",
+        "capture_surface": "Transport boundary before JSON-RPC dispatch"
+      },
+      "projection": {
+        "model": "JSON-RPC requests, responses, notifications, tools, resources, prompts, and content",
+        "granularity": "Protocol message and capability object",
+        "semantic_mapping": "Implementations dispatch method names and map content into SDK types"
+      },
+      "unknown_fields": {
+        "behavior": "implementation-dependent",
+        "scope": "JSON-RPC extensibility exists, but retention by SDK models and middleware is not a protocol-wide exact-byte promise"
+      },
+      "lossiness": {
+        "rating": "medium",
+        "known_losses": ["Parsed JSON-RPC drops serialization details; SDK types may omit extensions; stdio and HTTP metadata differ"]
+      },
+      "samples": [
+        {
+          "kind": "JSON-RPC exchange",
+          "shape": "tools/call request and result with structured or text content",
+          "research_use": "Test protocol IDs, transport framing, and extension retention independently"
+        }
+      ],
+      "conclusions": ["MCP capture needs an explicit transport profile because stdio and HTTP expose different metadata."],
+      "open_questions": ["Which extension members survive current SDK validation and forwarding?"],
+      "limitations": ["The specification evolves and optional capabilities change the observed message set."],
+      "sources": [
+        {
+          "id": "TRACE-SRC-MCP-001",
+          "publisher": "Model Context Protocol",
+          "title": "Transports",
+          "version_or_date": "2025-06-18",
+          "source_url": "https://modelcontextprotocol.io/specification/2025-06-18/basic/transports",
+          "accessed_at": "2026-08-21",
+          "claim_supported": "MCP defines JSON-RPC transport over stdio and Streamable HTTP, including framing and optional SSE behavior."
+        }
+      ]
+    },
+    {
+      "id": "a2a",
+      "name": "Agent2Agent Protocol",
+      "category": "protocol",
+      "version_or_date": "A2A specification, accessed 2026-08-21",
+      "transport": {
+        "mode": "HTTP(S) bindings for JSON-RPC, gRPC, and HTTP+JSON",
+        "raw_bytes": "conditional",
+        "framing": "Binding-specific requests, responses, streaming task updates, and artifacts",
+        "capture_surface": "Selected protocol binding before task/event projection"
+      },
+      "projection": {
+        "model": "Agent cards, messages, tasks, status updates, parts, and artifacts",
+        "granularity": "Task, message, part, artifact, and update event",
+        "semantic_mapping": "Bindings map common A2A concepts into distinct wire encodings"
+      },
+      "unknown_fields": {
+        "behavior": "implementation-dependent",
+        "scope": "Binding and language implementations determine whether unrecognized fields are retained"
+      },
+      "lossiness": {
+        "rating": "medium",
+        "known_losses": ["Cross-binding conversion can lose HTTP headers, gRPC metadata, JSON serialization, and extension fields"]
+      },
+      "samples": [
+        {
+          "kind": "task lifecycle",
+          "shape": "Message creates work followed by status and artifact update events",
+          "research_use": "Preserve binding-specific order while projecting a common task graph"
+        }
+      ],
+      "conclusions": ["A2A semantic parity across bindings does not imply transport-byte parity."],
+      "open_questions": ["What conformance cases cover unknown extension forwarding across gateways?"],
+      "limitations": ["The protocol remains under active development, so versions must be recorded with captures."],
+      "sources": [
+        {
+          "id": "TRACE-SRC-A2A-001",
+          "publisher": "A2A Project",
+          "title": "A2A Protocol Specification",
+          "version_or_date": "Current specification, accessed 2026-08-21",
+          "source_url": "https://a2a-protocol.org/latest/specification/",
+          "accessed_at": "2026-08-21",
+          "claim_supported": "A2A defines agent discovery and task/message/artifact semantics with multiple protocol bindings."
+        }
+      ]
+    },
+    {
+      "id": "langgraph",
+      "name": "LangGraph",
+      "category": "agent-framework",
+      "version_or_date": "Streaming documentation, accessed 2026-08-21",
+      "transport": {
+        "mode": "In-process iterators or service streaming, depending on deployment",
+        "raw_bytes": "unavailable",
+        "framing": "Framework stream modes emit state updates, values, messages, custom data, or debug data",
+        "capture_surface": "Framework callback/stream API; network bytes require separate service instrumentation"
+      },
+      "projection": {
+        "model": "Graph runs, nodes, state snapshots/updates, messages, tasks, and checkpoints",
+        "granularity": "Graph step, node update, token/message, or checkpoint",
+        "semantic_mapping": "Stream mode selects a projection of graph execution"
+      },
+      "unknown_fields": {
+        "behavior": "not-specified",
+        "scope": "Framework documentation does not promise passthrough retention of provider response extensions"
+      },
+      "lossiness": {
+        "rating": "high",
+        "known_losses": ["Selected stream modes omit other execution views and do not retain provider transport framing"]
+      },
+      "samples": [
+        {
+          "kind": "graph stream",
+          "shape": "updates mode yields per-node state changes",
+          "research_use": "Link graph-step projections to separately captured provider calls"
+        }
+      ],
+      "conclusions": ["Framework events add orchestration context but cannot replace provider transport evidence."],
+      "open_questions": ["Which checkpoint serializers preserve arbitrary channel values and provider metadata?"],
+      "limitations": ["Available events depend on stream mode, runtime, and enabled persistence."],
+      "sources": [
+        {
+          "id": "TRACE-SRC-LANGGRAPH-001",
+          "publisher": "LangChain",
+          "title": "Streaming overview",
+          "version_or_date": "Current LangGraph documentation, accessed 2026-08-21",
+          "source_url": "https://docs.langchain.com/oss/python/langgraph/streaming",
+          "accessed_at": "2026-08-21",
+          "claim_supported": "LangGraph exposes multiple stream modes for graph state, updates, messages, custom data, and debugging."
+        }
+      ]
+    },
+    {
+      "id": "crewai",
+      "name": "CrewAI",
+      "category": "agent-framework",
+      "version_or_date": "Event listener documentation, accessed 2026-08-21",
+      "transport": {
+        "mode": "In-process event bus plus optional tracing integrations",
+        "raw_bytes": "unavailable",
+        "framing": "Typed lifecycle events for crews, agents, tasks, tools, flows, and LLM calls",
+        "capture_surface": "Event listener before an observability exporter transforms the event"
+      },
+      "projection": {
+        "model": "Crew, agent, task, tool, flow, and LLM lifecycle events",
+        "granularity": "Framework lifecycle event",
+        "semantic_mapping": "Listeners receive framework objects and selected LLM-call metadata"
+      },
+      "unknown_fields": {
+        "behavior": "not-specified",
+        "scope": "Event documentation does not guarantee retention of arbitrary provider fields"
+      },
+      "lossiness": {
+        "rating": "high",
+        "known_losses": ["Framework events summarize provider exchange and omit network framing unless separately captured"]
+      },
+      "samples": [
+        {
+          "kind": "tool event pair",
+          "shape": "tool usage started/completed events linked to a task",
+          "research_use": "Reconstruct orchestration order without asserting provider byte fidelity"
+        }
+      ],
+      "conclusions": ["CrewAI events are useful semantic evidence but require provider-side capture for wire fidelity."],
+      "open_questions": ["Which event payload fields are stable compatibility contracts across CrewAI releases?"],
+      "limitations": ["Optional tracing and event listeners may be disabled or customized."],
+      "sources": [
+        {
+          "id": "TRACE-SRC-CREWAI-001",
+          "publisher": "CrewAI",
+          "title": "Event Listeners",
+          "version_or_date": "Current documentation, accessed 2026-08-21",
+          "source_url": "https://docs.crewai.com/en/concepts/event-listener",
+          "accessed_at": "2026-08-21",
+          "claim_supported": "CrewAI documents typed events across crew, agent, task, flow, tool, and LLM execution."
+        }
+      ]
+    },
+    {
+      "id": "autogen",
+      "name": "Microsoft AutoGen",
+      "category": "agent-framework",
+      "version_or_date": "Logging documentation, accessed 2026-08-21",
+      "transport": {
+        "mode": "In-process Python logging and event objects",
+        "raw_bytes": "unavailable",
+        "framing": "Structured log records and framework events",
+        "capture_surface": "AutoGen event/logger handler; provider transport must be captured separately"
+      },
+      "projection": {
+        "model": "Agent messages, tool calls/results, model-call events, usage, and runtime events",
+        "granularity": "Message or runtime event",
+        "semantic_mapping": "Provider responses become AutoGen message and event types"
+      },
+      "unknown_fields": {
+        "behavior": "not-specified",
+        "scope": "Logging contracts do not promise retention of every provider member"
+      },
+      "lossiness": {
+        "rating": "high",
+        "known_losses": ["Log records are selected projections and do not preserve provider request/response bytes"]
+      },
+      "samples": [
+        {
+          "kind": "model-call log",
+          "shape": "Structured event with messages, response, and token usage",
+          "research_use": "Link agent-level conversation events to independent provider capture"
+        }
+      ],
+      "conclusions": ["AutoGen logging is an orchestration view, not a transport archive."],
+      "open_questions": ["Which event types and fields are stable across the Core and AgentChat APIs?"],
+      "limitations": ["Logging content and detail depend on configuration and framework version."],
+      "sources": [
+        {
+          "id": "TRACE-SRC-AUTOGEN-001",
+          "publisher": "Microsoft",
+          "title": "Logging",
+          "version_or_date": "AutoGen stable documentation, accessed 2026-08-21",
+          "source_url": "https://microsoft.github.io/autogen/stable/user-guide/core-user-guide/framework/logging.html",
+          "accessed_at": "2026-08-21",
+          "claim_supported": "AutoGen uses structured events and Python logging for model calls and runtime activity."
+        }
+      ]
+    },
+    {
+      "id": "semantic-kernel",
+      "name": "Microsoft Semantic Kernel",
+      "category": "agent-framework",
+      "version_or_date": "Telemetry documentation, accessed 2026-08-21",
+      "transport": {
+        "mode": "In-process OpenTelemetry activities, metrics, and logs",
+        "raw_bytes": "unavailable",
+        "framing": "Telemetry signals emitted through configured OpenTelemetry providers",
+        "capture_surface": "Instrumentation/exporter boundary; provider bytes require separate capture"
+      },
+      "projection": {
+        "model": "Kernel/function invocation spans, AI-operation spans, metrics, and logs",
+        "granularity": "Function or model invocation",
+        "semantic_mapping": "Semantic Kernel maps execution to OpenTelemetry telemetry"
+      },
+      "unknown_fields": {
+        "behavior": "implementation-dependent",
+        "scope": "Exporter and semantic-convention versions govern additional attribute handling"
+      },
+      "lossiness": {
+        "rating": "high",
+        "known_losses": ["Telemetry may suppress content by default and cannot reconstruct provider framing or all response fields"]
+      },
+      "samples": [
+        {
+          "kind": "invocation span",
+          "shape": "Kernel function span with model and token attributes when enabled",
+          "research_use": "Correlate framework execution while respecting content-recording controls"
+        }
+      ],
+      "conclusions": ["Semantic Kernel telemetry is privacy-sensitive and intentionally may omit content."],
+      "open_questions": ["How stable are emitted attributes while GenAI semantic conventions evolve?"],
+      "limitations": ["Telemetry differs by language SDK, version, exporter, and content settings."],
+      "sources": [
+        {
+          "id": "TRACE-SRC-SK-001",
+          "publisher": "Microsoft",
+          "title": "Semantic Kernel telemetry",
+          "version_or_date": "Current documentation, accessed 2026-08-21",
+          "source_url": "https://learn.microsoft.com/en-us/semantic-kernel/concepts/enterprise-readiness/observability/telemetry-with-app-insights",
+          "accessed_at": "2026-08-21",
+          "claim_supported": "Semantic Kernel emits logs, metrics, and traces through OpenTelemetry-compatible instrumentation."
+        }
+      ]
+    },
+    {
+      "id": "llamaindex",
+      "name": "LlamaIndex",
+      "category": "agent-framework",
+      "version_or_date": "Instrumentation documentation, accessed 2026-08-21",
+      "transport": {
+        "mode": "In-process event/span dispatch with optional observability exporters",
+        "raw_bytes": "unavailable",
+        "framing": "Typed instrumentation events and spans",
+        "capture_surface": "Instrumentation dispatcher before third-party export"
+      },
+      "projection": {
+        "model": "Queries, retrievals, LLM calls, embeddings, agents, tools, and workflow events",
+        "granularity": "Framework operation, event, or span",
+        "semantic_mapping": "Instrumentation maps LlamaIndex components into event/span classes"
+      },
+      "unknown_fields": {
+        "behavior": "not-specified",
+        "scope": "Instrumentation does not state that arbitrary provider extensions survive projection"
+      },
+      "lossiness": {
+        "rating": "high",
+        "known_losses": ["Component events omit transport encoding and may omit provider metadata or content"]
+      },
+      "samples": [
+        {
+          "kind": "instrumentation event",
+          "shape": "LLM start/end or retrieval event within a span",
+          "research_use": "Build framework lineage and correlate it with provider evidence"
+        }
+      ],
+      "conclusions": ["LlamaIndex instrumentation should be retained as a separate semantic layer."],
+      "open_questions": ["Which custom event and span fields are preserved by each supported exporter?"],
+      "limitations": ["Instrumented coverage varies across modules and integrations."],
+      "sources": [
+        {
+          "id": "TRACE-SRC-LLAMAINDEX-001",
+          "publisher": "LlamaIndex",
+          "title": "Instrumentation",
+          "version_or_date": "Current Python documentation, accessed 2026-08-21",
+          "source_url": "https://docs.llamaindex.ai/en/stable/module_guides/observability/instrumentation/",
+          "accessed_at": "2026-08-21",
+          "claim_supported": "LlamaIndex provides event and span instrumentation for observing framework operations."
+        }
+      ]
+    },
+    {
+      "id": "otlp",
+      "name": "OpenTelemetry Protocol",
+      "category": "telemetry-standard",
+      "version_or_date": "OTLP specification 1.9.0",
+      "transport": {
+        "mode": "Protobuf over gRPC or HTTP; JSON-encoded protobuf over HTTP is also defined",
+        "raw_bytes": "conditional",
+        "framing": "Export requests group resource, scope, and signal data",
+        "capture_surface": "OTLP receiver before protobuf/JSON decoding"
+      },
+      "projection": {
+        "model": "Resources, instrumentation scopes, traces, metrics, logs, and profiles",
+        "granularity": "Batch, resource, scope, and signal record",
+        "semantic_mapping": "Telemetry SDKs project application events into OTLP signal schemas"
+      },
+      "unknown_fields": {
+        "behavior": "implementation-dependent",
+        "scope": "Binary protobuf parsers generally retain unknown fields in many runtimes, while protobuf JSON parsers reject unknown fields by default unless configured to ignore them"
+      },
+      "lossiness": {
+        "rating": "medium",
+        "known_losses": ["JSON conversion changes encoding and field names; collectors may batch, sample, truncate, filter, or transform attributes"]
+      },
+      "samples": [
+        {
+          "kind": "ExportTraceServiceRequest",
+          "shape": "ResourceSpans containing ScopeSpans and spans",
+          "research_use": "Test binary and JSON unknown-field behavior separately"
+        }
+      ],
+      "conclusions": ["OTLP transport capture and decoded telemetry are different artifacts; protobuf and JSON need separate conformance cases."],
+      "open_questions": ["Which collector processors preserve protobuf unknown fields end to end?"],
+      "limitations": ["Unknown-field behavior also depends on protobuf runtime and collector transformations."],
+      "sources": [
+        {
+          "id": "TRACE-SRC-OTLP-001",
+          "publisher": "OpenTelemetry",
+          "title": "OpenTelemetry Protocol Specification 1.9.0",
+          "version_or_date": "1.9.0",
+          "source_url": "https://opentelemetry.io/docs/specs/otlp/",
+          "accessed_at": "2026-08-21",
+          "claim_supported": "OTLP defines protobuf-based telemetry export over gRPC and HTTP, including a JSON protobuf encoding."
+        },
+        {
+          "id": "TRACE-SRC-OTLP-002",
+          "publisher": "Protocol Buffers",
+          "title": "ProtoJSON Format",
+          "version_or_date": "Current programming guide, accessed 2026-08-21",
+          "source_url": "https://protobuf.dev/programming-guides/json/",
+          "accessed_at": "2026-08-21",
+          "claim_supported": "ProtoJSON does not support unknown fields and parsers reject them by default unless configured otherwise."
+        }
+      ]
+    },
+    {
+      "id": "opentelemetry-genai",
+      "name": "OpenTelemetry GenAI semantic conventions",
+      "category": "telemetry-standard",
+      "version_or_date": "Semantic conventions 1.37.0",
+      "transport": {
+        "mode": "No independent wire transport; conventions ride OpenTelemetry signals and OTLP or another exporter",
+        "raw_bytes": "unavailable",
+        "framing": "Spans, events, metrics, and logs with GenAI attributes",
+        "capture_surface": "Instrumentation API before sampling, processors, and export"
+      },
+      "projection": {
+        "model": "GenAI operation spans, model/provider attributes, token usage, tool and agent operations",
+        "granularity": "Inference, embedding, tool, or agent operation",
+        "semantic_mapping": "Provider/framework details map into conventional attributes and event bodies"
+      },
+      "unknown_fields": {
+        "behavior": "implementation-dependent",
+        "scope": "OTel attribute maps can carry additional keys, but downstream schemas, processors, and backends may filter them"
+      },
+      "lossiness": {
+        "rating": "high",
+        "known_losses": ["Conventions intentionally abstract providers; content capture is opt-in and sensitive; transport bytes are absent"]
+      },
+      "samples": [
+        {
+          "kind": "GenAI client span",
+          "shape": "gen_ai operation name, provider/model identifiers, token usage, and optional content",
+          "research_use": "Compare standardized attributes with provider-specific evidence"
+        }
+      ],
+      "conclusions": ["GenAI conventions are a semantic projection and should not be labeled raw provider traces."],
+      "open_questions": ["Which experimental attributes will stabilize or change names?"],
+      "limitations": ["Many GenAI conventions remain development or experimental and content recording creates privacy risk."],
+      "sources": [
+        {
+          "id": "TRACE-SRC-OTEL-GENAI-001",
+          "publisher": "OpenTelemetry",
+          "title": "Semantic conventions for generative AI systems",
+          "version_or_date": "1.37.0",
+          "source_url": "https://opentelemetry.io/docs/specs/semconv/gen-ai/",
+          "accessed_at": "2026-08-21",
+          "claim_supported": "The GenAI semantic conventions define telemetry attributes and operations for model, agent, and tool activity and identify stability levels."
+        }
+      ]
+    },
+    {
+      "id": "openinference",
+      "name": "OpenInference",
+      "category": "telemetry-standard",
+      "version_or_date": "Specification documentation, accessed 2026-08-21",
+      "transport": {
+        "mode": "OpenTelemetry traces with OpenInference semantic attributes",
+        "raw_bytes": "unavailable",
+        "framing": "Spans and attributes exported through an OpenTelemetry pipeline",
+        "capture_surface": "Instrumentor span creation before processors and export"
+      },
+      "projection": {
+        "model": "Span kinds for LLM, chain, tool, retriever, embedding, reranker, agent, and guardrail operations",
+        "granularity": "AI application operation",
+        "semantic_mapping": "Framework/provider inputs and outputs map into OpenInference span attributes"
+      },
+      "unknown_fields": {
+        "behavior": "implementation-dependent",
+        "scope": "OpenTelemetry supports additional attributes, but instrumentors and backends decide what they emit and retain"
+      },
+      "lossiness": {
+        "rating": "high",
+        "known_losses": ["Semantic attributes cannot reconstruct network bytes and may serialize, truncate, redact, or omit inputs and outputs"]
+      },
+      "samples": [
+        {
+          "kind": "LLM span",
+          "shape": "OpenInference span kind with model, input/output, message, and token attributes",
+          "research_use": "Evaluate projection coverage without assuming provider fidelity"
+        }
+      ],
+      "conclusions": ["OpenInference improves cross-framework analysis at the cost of provider-specific detail."],
+      "open_questions": ["What extension and truncation behavior is consistent across instrumentors?"],
+      "limitations": ["Instrumentor versions and privacy configuration materially change recorded content."],
+      "sources": [
+        {
+          "id": "TRACE-SRC-OPENINFERENCE-001",
+          "publisher": "Arize AI",
+          "title": "OpenInference Specification",
+          "version_or_date": "Current specification, accessed 2026-08-21",
+          "source_url": "https://arize-ai.github.io/openinference/spec/",
+          "accessed_at": "2026-08-21",
+          "claim_supported": "OpenInference defines OpenTelemetry span kinds and attributes for AI application operations."
+        }
+      ]
+    },
+    {
+      "id": "langfuse",
+      "name": "Langfuse",
+      "category": "observability-platform",
+      "version_or_date": "Data model documentation, accessed 2026-08-21",
+      "transport": {
+        "mode": "SDK/API ingestion, including OpenTelemetry-based integrations",
+        "raw_bytes": "unavailable",
+        "framing": "Ingestion events become traces, observations, scores, and related entities",
+        "capture_surface": "SDK enqueue/ingestion request before backend normalization"
+      },
+      "projection": {
+        "model": "Trace-level context with observations such as spans, generations, and events",
+        "granularity": "Trace, observation, score, session, and user",
+        "semantic_mapping": "SDK and OTel integrations map application/provider events into Langfuse entities"
+      },
+      "unknown_fields": {
+        "behavior": "implementation-dependent",
+        "scope": "Documented metadata supports arbitrary JSON, while top-level unrecognized ingestion members are not promised to persist"
+      },
+      "lossiness": {
+        "rating": "high",
+        "known_losses": ["Backend entities omit original network framing and may normalize, truncate, redact, or reject fields"]
+      },
+      "samples": [
+        {
+          "kind": "generation observation",
+          "shape": "Model, input, output, usage, cost, metadata, and parent trace identifiers",
+          "research_use": "Test whether provider-specific members survive only inside explicit metadata"
+        }
+      ],
+      "conclusions": ["Langfuse is a projected observability store, not an exact transport archive."],
+      "open_questions": ["What field-size limits and unknown-member behavior apply to each ingestion API version?"],
+      "limitations": ["Cloud and self-hosted versions, SDKs, and retention settings may differ."],
+      "sources": [
+        {
+          "id": "TRACE-SRC-LANGFUSE-001",
+          "publisher": "Langfuse",
+          "title": "Data Model",
+          "version_or_date": "Current documentation, accessed 2026-08-21",
+          "source_url": "https://langfuse.com/docs/observability/data-model",
+          "accessed_at": "2026-08-21",
+          "claim_supported": "Langfuse organizes LLM application telemetry into traces, observations, and scores."
+        }
+      ]
+    },
+    {
+      "id": "mlflow",
+      "name": "MLflow Tracing",
+      "category": "observability-platform",
+      "version_or_date": "Tracing data model documentation, accessed 2026-08-21",
+      "transport": {
+        "mode": "SDK instrumentation and trace export to MLflow tracking storage",
+        "raw_bytes": "unavailable",
+        "framing": "Trace records contain spans, assessments, and metadata",
+        "capture_surface": "Instrumentor or tracing API before backend persistence"
+      },
+      "projection": {
+        "model": "TraceInfo plus span tree, inputs, outputs, attributes, events, status, and assessments",
+        "granularity": "Trace and span",
+        "semantic_mapping": "Framework integrations translate operations to MLflow spans"
+      },
+      "unknown_fields": {
+        "behavior": "implementation-dependent",
+        "scope": "Attributes can carry extensions, but schema and backend behavior for unknown top-level fields is not guaranteed"
+      },
+      "lossiness": {
+        "rating": "high",
+        "known_losses": ["Instrumentation and serialization omit transport bytes and can redact or truncate content"]
+      },
+      "samples": [
+        {
+          "kind": "trace with spans",
+          "shape": "Root trace metadata and nested LLM/tool spans with inputs and outputs",
+          "research_use": "Evaluate span lineage independently from provider transport evidence"
+        }
+      ],
+      "conclusions": ["MLflow traces are analysis projections whose completeness depends on the instrumentor."],
+      "open_questions": ["How are unknown attributes and large inputs handled across storage backends?"],
+      "limitations": ["Automatic integrations and manually authored spans have different coverage."],
+      "sources": [
+        {
+          "id": "TRACE-SRC-MLFLOW-001",
+          "publisher": "MLflow",
+          "title": "Tracing data model",
+          "version_or_date": "Current documentation, accessed 2026-08-21",
+          "source_url": "https://mlflow.org/docs/latest/genai/tracing/concepts/data-model/",
+          "accessed_at": "2026-08-21",
+          "claim_supported": "MLflow tracing stores trace metadata, a span hierarchy, and assessments."
+        }
+      ]
+    },
+    {
+      "id": "langsmith",
+      "name": "LangSmith",
+      "category": "observability-platform",
+      "version_or_date": "Observability concepts, accessed 2026-08-21",
+      "transport": {
+        "mode": "SDK/API trace ingestion",
+        "raw_bytes": "unavailable",
+        "framing": "Runs form traces and may be grouped into threads or sessions",
+        "capture_surface": "Tracing callback or ingestion API before service normalization"
+      },
+      "projection": {
+        "model": "Runs with inputs, outputs, errors, timing, run type, tags, metadata, feedback, and parent/child links",
+        "granularity": "Run and trace",
+        "semantic_mapping": "Instrumented application calls become nested run records"
+      },
+      "unknown_fields": {
+        "behavior": "implementation-dependent",
+        "scope": "Metadata permits extensions; undocumented top-level ingestion fields have no retention promise"
+      },
+      "lossiness": {
+        "rating": "high",
+        "known_losses": ["Run records omit original HTTP/SSE encoding and depend on tracing configuration and sampling"]
+      },
+      "samples": [
+        {
+          "kind": "run tree",
+          "shape": "Root chain run with child LLM and tool runs",
+          "research_use": "Recover orchestration lineage while preserving separate raw provider artifacts"
+        }
+      ],
+      "conclusions": ["LangSmith's run graph should be linked to raw captures, not treated as one."],
+      "open_questions": ["Which metadata limits and sampling policies apply to each service plan and SDK?"],
+      "limitations": ["Hosted service behavior and SDK schemas can evolve independently."],
+      "sources": [
+        {
+          "id": "TRACE-SRC-LANGSMITH-001",
+          "publisher": "LangChain",
+          "title": "Observability concepts",
+          "version_or_date": "Current LangSmith documentation, accessed 2026-08-21",
+          "source_url": "https://docs.langchain.com/langsmith/observability-concepts",
+          "accessed_at": "2026-08-21",
+          "claim_supported": "LangSmith models traces as nested runs with inputs, outputs, timing, errors, tags, and metadata."
+        }
+      ]
+    },
+    {
+      "id": "phoenix",
+      "name": "Arize Phoenix",
+      "category": "observability-platform",
+      "version_or_date": "Tracing concepts, accessed 2026-08-21",
+      "transport": {
+        "mode": "OpenTelemetry/OpenInference collection through instrumentors and exporters",
+        "raw_bytes": "unavailable",
+        "framing": "Spans grouped into traces",
+        "capture_surface": "OpenTelemetry processor/exporter before Phoenix ingestion"
+      },
+      "projection": {
+        "model": "OpenInference spans for LLMs, agents, chains, tools, retrievals, embeddings, and related evaluations",
+        "granularity": "Span and trace",
+        "semantic_mapping": "OpenInference instrumentors translate framework/provider operations into OTel spans"
+      },
+      "unknown_fields": {
+        "behavior": "implementation-dependent",
+        "scope": "OTel attributes may carry extensions, but instrumentor and Phoenix storage behavior controls retention"
+      },
+      "lossiness": {
+        "rating": "high",
+        "known_losses": ["Phoenix receives semantic spans, not provider wire bytes; sampling and content controls can omit evidence"]
+      },
+      "samples": [
+        {
+          "kind": "OpenInference trace",
+          "shape": "Agent root span with retriever, LLM, and tool children",
+          "research_use": "Inspect semantic lineage while retaining separate source captures"
+        }
+      ],
+      "conclusions": ["Phoenix inherits both the value and the fidelity limits of OpenInference/OpenTelemetry projection."],
+      "open_questions": ["Which arbitrary OTel attributes are indexed, retained, or truncated by each Phoenix release?"],
+      "limitations": ["Observed fidelity depends on instrumentor, collector, exporter, and Phoenix versions."],
+      "sources": [
+        {
+          "id": "TRACE-SRC-PHOENIX-001",
+          "publisher": "Arize AI",
+          "title": "Tracing concepts",
+          "version_or_date": "Current Phoenix documentation, accessed 2026-08-21",
+          "source_url": "https://arize.com/docs/phoenix/tracing/concepts-tracing",
+          "accessed_at": "2026-08-21",
+          "claim_supported": "Phoenix uses OpenTelemetry and OpenInference spans to represent LLM application traces."
+        }
+      ]
+    },
+    {
+      "id": "raw-gateway-logs",
+      "name": "Raw Envoy and NGINX gateway logs",
+      "category": "gateway",
+      "version_or_date": "Envoy and NGINX documentation, accessed 2026-08-21",
+      "transport": {
+        "mode": "Gateway access logs and optional body-tap facilities",
+        "raw_bytes": "conditional",
+        "framing": "Configured text/JSON access-log records; body and streaming frames are not present by default",
+        "capture_surface": "Proxy filters, taps, or packet/application capture with explicit authorization"
+      },
+      "projection": {
+        "model": "Configured request/response metadata such as method, path, status, duration, bytes, and selected headers",
+        "granularity": "Usually one access record per request",
+        "semantic_mapping": "Format variables project proxy state into text or structured JSON"
+      },
+      "unknown_fields": {
+        "behavior": "drop",
+        "scope": "Only configured variables and headers are logged; unselected headers, bodies, and application JSON fields are absent"
+      },
+      "lossiness": {
+        "rating": "high",
+        "known_losses": ["Default access logs omit bodies, SSE event boundaries, TLS plaintext outside termination, and unconfigured metadata"]
+      },
+      "samples": [
+        {
+          "kind": "structured access record",
+          "shape": "Timestamp, request method/path, response code, duration, byte counts, and selected correlation header",
+          "research_use": "Use as transport metadata and correlation evidence, not as message-content evidence"
+        }
+      ],
+      "conclusions": ["Calling access logs raw is misleading unless the exact configured record bytes and omissions are stated."],
+      "open_questions": ["What bounded body-capture controls can preserve evidence without exposing secrets or excessive content?"],
+      "limitations": ["Logging configuration, TLS termination, buffering, sampling, and redaction determine observability."],
+      "sources": [
+        {
+          "id": "TRACE-SRC-ENVOY-001",
+          "publisher": "Envoy Project",
+          "title": "Access logging",
+          "version_or_date": "Current documentation, accessed 2026-08-21",
+          "source_url": "https://www.envoyproxy.io/docs/envoy/latest/configuration/observability/access_log/usage",
+          "accessed_at": "2026-08-21",
+          "claim_supported": "Envoy access logs render configured command operators and can use structured formats."
+        },
+        {
+          "id": "TRACE-SRC-NGINX-001",
+          "publisher": "NGINX",
+          "title": "Module ngx_http_log_module",
+          "version_or_date": "Current documentation, accessed 2026-08-21",
+          "source_url": "https://nginx.org/en/docs/http/ngx_http_log_module.html",
+          "accessed_at": "2026-08-21",
+          "claim_supported": "NGINX access logs contain variables selected by log_format and therefore are configured projections."
+        }
+      ]
+    }
+  ],
+  "cross_ecosystem_conclusions": [
+    "Transport capture, framework events, telemetry conventions, and observability backends are complementary layers. None should silently stand in for another.",
+    "Exact-byte claims require capture before parsing plus digest and provenance. Parsed JSON, SDK objects, spans, and access logs cannot establish byte identity.",
+    "Unknown-field behavior must be tested for each parser, SDK, collector, exporter, and backend version. Protocol extensibility alone is insufficient.",
+    "Compatibility labels describe intent or a subset. They do not establish equivalent errors, streaming, tools, usage, extensions, or retention."
+  ],
+  "global_limitations": [
+    "This is documentation research, not packet-level conformance testing.",
+    "Hosted services and SDKs can change without preserving old documentation; adapters must pin and test versions.",
+    "The listed framework and platform projections may omit content intentionally for privacy, cost, or security.",
+    "No system can provide perfect safety. Trace completeness does not establish semantic correctness or policy authority."
+  ]
+}

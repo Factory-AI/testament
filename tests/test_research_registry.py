@@ -192,6 +192,77 @@ class ResearchRegistryTest(unittest.TestCase):
         path.write_text(json.dumps(record), encoding="utf-8")
         self.assertIn("unsupported_naming_approval", self.codes(root))
 
+    def test_trace_landscape_requires_every_ecosystem(self) -> None:
+        root = self.copy_repository()
+        path = root / "policy/trace-landscape.json"
+        landscape = json.loads(path.read_text(encoding="utf-8"))
+        landscape["ecosystems"] = [
+            item for item in landscape["ecosystems"] if item["id"] != "anthropic"
+        ]
+        path.write_text(json.dumps(landscape), encoding="utf-8")
+        self.assertIn("missing_trace_ecosystem_coverage", self.codes(root))
+
+    def test_trace_landscape_reports_malformed_id_without_crashing(self) -> None:
+        root = self.copy_repository()
+        path = root / "policy/trace-landscape.json"
+        landscape = json.loads(path.read_text(encoding="utf-8"))
+        landscape["ecosystems"][0]["id"] = []
+        path.write_text(json.dumps(landscape), encoding="utf-8")
+        codes = self.codes(root)
+        self.assertIn("schema_validation_failed", codes)
+        self.assertIn("missing_trace_ecosystem_coverage", codes)
+
+    def test_trace_landscape_requires_all_format_dimensions(self) -> None:
+        root = self.copy_repository()
+        path = root / "policy/trace-landscape.json"
+        landscape = json.loads(path.read_text(encoding="utf-8"))
+        del landscape["ecosystems"][0]["unknown_fields"]
+        path.write_text(json.dumps(landscape), encoding="utf-8")
+        codes = self.codes(root)
+        self.assertIn("schema_validation_failed", codes)
+        self.assertIn("incomplete_trace_dimensions", codes)
+
+    def test_trace_landscape_requires_public_dated_sources(self) -> None:
+        root = self.copy_repository()
+        path = root / "policy/trace-landscape.json"
+        landscape = json.loads(path.read_text(encoding="utf-8"))
+        landscape["ecosystems"][0]["sources"][0]["source_url"] = "http://example.test"
+        landscape["ecosystems"][0]["sources"][0]["accessed_at"] = "not-a-date"
+        path.write_text(json.dumps(landscape), encoding="utf-8")
+        codes = self.codes(root)
+        self.assertIn("invalid_research_source_url", codes)
+        self.assertIn("invalid_research_source_date", codes)
+
+    def test_abuse_research_requires_every_domain(self) -> None:
+        root = self.copy_repository()
+        path = root / "policy/abuse-misuse-research.json"
+        research = json.loads(path.read_text(encoding="utf-8"))
+        research["risks"] = [
+            item for item in research["risks"] if item["id"] != "cyber"
+        ]
+        path.write_text(json.dumps(research), encoding="utf-8")
+        self.assertIn("missing_abuse_domain_coverage", self.codes(root))
+
+    def test_abuse_research_requires_every_detection_timing(self) -> None:
+        root = self.copy_repository()
+        path = root / "policy/abuse-misuse-research.json"
+        research = json.loads(path.read_text(encoding="utf-8"))
+        research["risks"][0]["signals"]["nearline"] = []
+        path.write_text(json.dumps(research), encoding="utf-8")
+        codes = self.codes(root)
+        self.assertIn("schema_validation_failed", codes)
+        self.assertIn("incomplete_timing_coverage", codes)
+
+    def test_abuse_research_requires_appeals_and_review(self) -> None:
+        root = self.copy_repository()
+        path = root / "policy/abuse-misuse-research.json"
+        research = json.loads(path.read_text(encoding="utf-8"))
+        research["cross_cutting_controls"]["appeals"] = []
+        path.write_text(json.dumps(research), encoding="utf-8")
+        codes = self.codes(root)
+        self.assertIn("schema_validation_failed", codes)
+        self.assertIn("missing_cross_cutting_safeguards", codes)
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -11,11 +11,15 @@ _python-check:
 
 lint: _python-check
 	@$(PYTHON) -m json.tool policy/artifact-licensing.json >/dev/null
+	@$(PYTHON) -m json.tool policy/abuse-misuse-research.json >/dev/null
 	@$(PYTHON) -m json.tool policy/claims.json >/dev/null
 	@$(PYTHON) -m json.tool policy/naming-clearance.json >/dev/null
 	@$(PYTHON) -m json.tool policy/research-manifest.json >/dev/null
+	@$(PYTHON) -m json.tool policy/trace-landscape.json >/dev/null
+	@$(PYTHON) -m json.tool schemas/abuse-misuse-research.schema.json >/dev/null
 	@$(PYTHON) -m json.tool schemas/naming-clearance.schema.json >/dev/null
 	@$(PYTHON) -m json.tool schemas/research-manifest.schema.json >/dev/null
+	@$(PYTHON) -m json.tool schemas/trace-landscape.schema.json >/dev/null
 
 typecheck: _python-check
 

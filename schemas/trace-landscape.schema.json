@@ -1,0 +1,184 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/Factory-AI/testament/schemas/trace-landscape.schema.json",
+  "title": "Testament trace-format landscape",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "deliverable_id",
+    "validation_id",
+    "status",
+    "researched_at",
+    "methodology",
+    "ecosystems",
+    "cross_ecosystem_conclusions",
+    "global_limitations"
+  ],
+  "properties": {
+    "schema_version": {"const": "1.0.0"},
+    "deliverable_id": {"const": "RES-STUDY-TRACE-LANDSCAPE-001"},
+    "validation_id": {"const": "VAL-READY-008"},
+    "status": {"const": "informative-draft"},
+    "researched_at": {"type": "string", "format": "date"},
+    "methodology": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}},
+    "ecosystems": {
+      "type": "array",
+      "minItems": 20,
+      "items": {"$ref": "#/$defs/ecosystem"}
+    },
+    "cross_ecosystem_conclusions": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"type": "string", "minLength": 1}
+    },
+    "global_limitations": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"type": "string", "minLength": 1}
+    }
+  },
+  "$defs": {
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "publisher",
+        "title",
+        "version_or_date",
+        "source_url",
+        "accessed_at",
+        "claim_supported"
+      ],
+      "properties": {
+        "id": {"type": "string", "minLength": 1},
+        "publisher": {"type": "string", "minLength": 1},
+        "title": {"type": "string", "minLength": 1},
+        "version_or_date": {"type": "string", "minLength": 1},
+        "source_url": {"type": "string", "format": "uri"},
+        "accessed_at": {"type": "string", "format": "date"},
+        "claim_supported": {"type": "string", "minLength": 1}
+      }
+    },
+    "ecosystem": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "name",
+        "category",
+        "version_or_date",
+        "transport",
+        "projection",
+        "unknown_fields",
+        "lossiness",
+        "samples",
+        "conclusions",
+        "open_questions",
+        "limitations",
+        "sources"
+      ],
+      "properties": {
+        "id": {"type": "string", "minLength": 1},
+        "name": {"type": "string", "minLength": 1},
+        "category": {
+          "enum": [
+            "provider-api",
+            "protocol",
+            "agent-framework",
+            "telemetry-standard",
+            "observability-platform",
+            "gateway"
+          ]
+        },
+        "version_or_date": {"type": "string", "minLength": 1},
+        "transport": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["mode", "raw_bytes", "framing", "capture_surface"],
+          "properties": {
+            "mode": {"type": "string", "minLength": 1},
+            "raw_bytes": {"enum": ["available", "conditional", "unavailable", "not-specified"]},
+            "framing": {"type": "string", "minLength": 1},
+            "capture_surface": {"type": "string", "minLength": 1}
+          }
+        },
+        "projection": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["model", "granularity", "semantic_mapping"],
+          "properties": {
+            "model": {"type": "string", "minLength": 1},
+            "granularity": {"type": "string", "minLength": 1},
+            "semantic_mapping": {"type": "string", "minLength": 1}
+          }
+        },
+        "unknown_fields": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["behavior", "scope"],
+          "properties": {
+            "behavior": {
+              "enum": [
+                "preserve",
+                "drop",
+                "reject",
+                "not-specified",
+                "implementation-dependent"
+              ]
+            },
+            "scope": {"type": "string", "minLength": 1}
+          }
+        },
+        "lossiness": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["rating", "known_losses"],
+          "properties": {
+            "rating": {"enum": ["none-at-capture", "low", "medium", "high", "unknown"]},
+            "known_losses": {
+              "type": "array",
+              "minItems": 1,
+              "items": {"type": "string", "minLength": 1}
+            }
+          }
+        },
+        "samples": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["kind", "shape", "research_use"],
+            "properties": {
+              "kind": {"type": "string", "minLength": 1},
+              "shape": {"type": "string", "minLength": 1},
+              "research_use": {"type": "string", "minLength": 1}
+            }
+          }
+        },
+        "conclusions": {
+          "type": "array",
+          "minItems": 1,
+          "items": {"type": "string", "minLength": 1}
+        },
+        "open_questions": {
+          "type": "array",
+          "minItems": 1,
+          "items": {"type": "string", "minLength": 1}
+        },
+        "limitations": {
+          "type": "array",
+          "minItems": 1,
+          "items": {"type": "string", "minLength": 1}
+        },
+        "sources": {
+          "type": "array",
+          "minItems": 1,
+          "items": {"$ref": "#/$defs/source"}
+        }
+      }
+    }
+  }
+}

@@ -16,6 +16,8 @@ from urllib.parse import urlparse
 
 
 CRITERIA = ["VAL-READY-006", "VAL-READY-007"]
+TRACE_CRITERION = "VAL-READY-008"
+ABUSE_CRITERION = "VAL-READY-009"
 STATES = {"draft", "in-review", "accepted", "blocked", "superseded"}
 SEARCH_CLASSES = {
     "trademark",
@@ -28,10 +30,49 @@ SEARCH_CLASSES = {
 PUBLIC_FILES = {
     "docs/research/README.md",
     "docs/research/naming-clearance.md",
+    "docs/research/studies/abuse-misuse.md",
+    "docs/research/studies/trace-landscape.md",
+    "policy/abuse-misuse-research.json",
     "policy/naming-clearance.json",
     "policy/research-manifest.json",
+    "policy/trace-landscape.json",
+    "schemas/abuse-misuse-research.schema.json",
     "schemas/naming-clearance.schema.json",
     "schemas/research-manifest.schema.json",
+    "schemas/trace-landscape.schema.json",
+}
+TRACE_ECOSYSTEMS = {
+    "openai",
+    "anthropic",
+    "gemini",
+    "bedrock",
+    "openai-compatible",
+    "mcp",
+    "a2a",
+    "langgraph",
+    "crewai",
+    "autogen",
+    "semantic-kernel",
+    "llamaindex",
+    "otlp",
+    "opentelemetry-genai",
+    "openinference",
+    "langfuse",
+    "mlflow",
+    "langsmith",
+    "phoenix",
+    "raw-gateway-logs",
+}
+ABUSE_DOMAINS = {
+    "cyber",
+    "cbrn",
+    "fraud",
+    "compromised-accounts",
+    "model-extraction",
+    "evasion",
+    "prompt-injection",
+    "insider-risk",
+    "coordinated-actors",
 }
 REQUIRED_DELIVERABLES = {
     "RES-STUDY-NAMING-001": "study",
@@ -344,6 +385,276 @@ def validate_naming(root: Path, problems: list[dict[str, str]]) -> None:
         )
 
 
+def validate_exact_coverage(
+    *,
+    relative: str,
+    entries: Any,
+    expected: set[str],
+    criterion: str,
+    noun: str,
+    problems: list[dict[str, str]],
+) -> list[dict[str, Any]]:
+    if not isinstance(entries, list):
+        problems.append(
+            issue(
+                criterion,
+                f"invalid_{noun}_matrix",
+                relative,
+                f"{noun}s must be an array",
+                f"repair {relative}",
+            )
+        )
+        return []
+    records = [entry for entry in entries if isinstance(entry, dict)]
+    ids = [
+        value
+        for entry in records
+        if isinstance(value := entry.get("id"), str)
+    ]
+    duplicates = sorted(
+        str(value)
+        for value, count in Counter(ids).items()
+        if isinstance(value, str) and count > 1
+    )
+    if duplicates:
+        problems.append(
+            issue(
+                criterion,
+                f"duplicate_{noun}",
+                relative,
+                ", ".join(duplicates),
+                f"deduplicate {noun} records",
+            )
+        )
+    missing = sorted(expected - set(ids))
+    extra = sorted(set(ids) - expected)
+    if missing:
+        problems.append(
+            issue(
+                criterion,
+                f"missing_{noun}_coverage",
+                relative,
+                ", ".join(missing),
+                f"add every required {noun}",
+            )
+        )
+    if extra:
+        problems.append(
+            issue(
+                criterion,
+                f"unknown_{noun}",
+                relative,
+                ", ".join(extra),
+                f"remove or register additional {noun}s",
+            )
+        )
+    return records
+
+
+def validate_research_sources(
+    *,
+    relative: str,
+    records: list[dict[str, Any]],
+    criterion: str,
+    problems: list[dict[str, str]],
+) -> None:
+    source_ids: list[str] = []
+    for record in records:
+        record_id = str(record.get("id", "<unknown>"))
+        sources = record.get("sources")
+        if not isinstance(sources, list):
+            continue
+        for source in sources:
+            if not isinstance(source, dict):
+                continue
+            source_id = source.get("id")
+            if isinstance(source_id, str):
+                source_ids.append(source_id)
+            source_url = source.get("source_url")
+            if not isinstance(source_url, str) or urlparse(source_url).scheme != "https":
+                problems.append(
+                    issue(
+                        criterion,
+                        "invalid_research_source_url",
+                        relative,
+                        f"{record_id}: {source_url}",
+                        "use a public HTTPS primary source",
+                    )
+                )
+            if not valid_date(source.get("accessed_at")):
+                problems.append(
+                    issue(
+                        criterion,
+                        "invalid_research_source_date",
+                        relative,
+                        f"{record_id}: {source.get('accessed_at')}",
+                        "record a valid ISO access date",
+                    )
+                )
+    duplicates = sorted(
+        value for value, count in Counter(source_ids).items() if count > 1
+    )
+    if duplicates:
+        problems.append(
+            issue(
+                criterion,
+                "duplicate_research_source_id",
+                relative,
+                ", ".join(duplicates),
+                "assign unique source IDs",
+            )
+        )
+
+
+def validate_trace_landscape(root: Path, problems: list[dict[str, str]]) -> None:
+    relative = "policy/trace-landscape.json"
+    landscape = load_object(root, relative, problems, TRACE_CRITERION)
+    if (
+        landscape.get("schema_version") != "1.0.0"
+        or landscape.get("deliverable_id") != "RES-STUDY-TRACE-LANDSCAPE-001"
+        or landscape.get("validation_id") != TRACE_CRITERION
+        or landscape.get("status") != "informative-draft"
+    ):
+        problems.append(
+            issue(
+                TRACE_CRITERION,
+                "invalid_trace_landscape",
+                relative,
+                "Landscape identity, version, or informative status drifted",
+                "repair the trace landscape identity",
+            )
+        )
+    records = validate_exact_coverage(
+        relative=relative,
+        entries=landscape.get("ecosystems"),
+        expected=TRACE_ECOSYSTEMS,
+        criterion=TRACE_CRITERION,
+        noun="trace_ecosystem",
+        problems=problems,
+    )
+    for record in records:
+        ecosystem_id = str(record.get("id", "<unknown>"))
+        dimensions = ("transport", "projection", "unknown_fields", "lossiness")
+        if any(not isinstance(record.get(dimension), dict) for dimension in dimensions):
+            problems.append(
+                issue(
+                    TRACE_CRITERION,
+                    "incomplete_trace_dimensions",
+                    relative,
+                    ecosystem_id,
+                    "record transport, projection, unknown-field, and lossiness findings",
+                )
+            )
+        if not record.get("samples") or not record.get("conclusions") or not record.get("open_questions"):
+            problems.append(
+                issue(
+                    TRACE_CRITERION,
+                    "incomplete_trace_research",
+                    relative,
+                    ecosystem_id,
+                    "add samples, conclusions, and open questions",
+                )
+            )
+        sources = record.get("sources")
+        if not isinstance(sources, list) or not sources:
+            problems.append(
+                issue(
+                    TRACE_CRITERION,
+                    "unsourced_trace_ecosystem",
+                    relative,
+                    ecosystem_id,
+                    "add dated primary sources",
+                )
+            )
+    validate_research_sources(
+        relative=relative,
+        records=records,
+        criterion=TRACE_CRITERION,
+        problems=problems,
+    )
+
+
+def validate_abuse_research(root: Path, problems: list[dict[str, str]]) -> None:
+    relative = "policy/abuse-misuse-research.json"
+    research = load_object(root, relative, problems, ABUSE_CRITERION)
+    if (
+        research.get("schema_version") != "1.0.0"
+        or research.get("deliverable_id") != "RES-STUDY-ABUSE-MISUSE-001"
+        or research.get("validation_id") != ABUSE_CRITERION
+        or research.get("status") != "informative-draft"
+    ):
+        problems.append(
+            issue(
+                ABUSE_CRITERION,
+                "invalid_abuse_research",
+                relative,
+                "Research identity, version, or informative status drifted",
+                "repair the abuse and misuse research identity",
+            )
+        )
+    records = validate_exact_coverage(
+        relative=relative,
+        entries=research.get("risks"),
+        expected=ABUSE_DOMAINS,
+        criterion=ABUSE_CRITERION,
+        noun="abuse_domain",
+        problems=problems,
+    )
+    for record in records:
+        risk_id = str(record.get("id", "<unknown>"))
+        signals = record.get("signals")
+        if not isinstance(signals, dict) or any(
+            not isinstance(signals.get(timing), list) or not signals[timing]
+            for timing in ("online", "nearline", "offline")
+        ):
+            problems.append(
+                issue(
+                    ABUSE_CRITERION,
+                    "incomplete_timing_coverage",
+                    relative,
+                    risk_id,
+                    "record online, nearline, and offline signals",
+                )
+            )
+        required = (
+            "authorized_use_twins",
+            "false_positive_factors",
+            "reviewer_path",
+            "limitations",
+            "unresolved_questions",
+            "sources",
+        )
+        if any(not record.get(field) for field in required):
+            problems.append(
+                issue(
+                    ABUSE_CRITERION,
+                    "incomplete_harm_research",
+                    relative,
+                    risk_id,
+                    "add counterexamples, false positives, review, limits, questions, and sources",
+                )
+            )
+    validate_research_sources(
+        relative=relative,
+        records=records,
+        criterion=ABUSE_CRITERION,
+        problems=problems,
+    )
+    controls = research.get("cross_cutting_controls")
+    if not isinstance(controls, dict) or any(
+        not controls.get(field) for field in ("human_review", "appeals", "false_positives")
+    ):
+        problems.append(
+            issue(
+                ABUSE_CRITERION,
+                "missing_cross_cutting_safeguards",
+                relative,
+                "Human review, appeals, and false-positive safeguards are required",
+                "complete cross_cutting_controls",
+            )
+        )
+
+
 def repository_locator_path(locator: str) -> str:
     return locator.split("#", 1)[0]
 
@@ -605,6 +916,18 @@ def validate(root: Path) -> list[dict[str, str]]:
         "https://github.com/Factory-AI/testament/schemas/research-manifest.schema.json",
         problems,
     )
+    validate_schema_document(
+        root,
+        "schemas/trace-landscape.schema.json",
+        "https://github.com/Factory-AI/testament/schemas/trace-landscape.schema.json",
+        problems,
+    )
+    validate_schema_document(
+        root,
+        "schemas/abuse-misuse-research.schema.json",
+        "https://github.com/Factory-AI/testament/schemas/abuse-misuse-research.schema.json",
+        problems,
+    )
     validate_schema_instance(
         root,
         "schemas/naming-clearance.schema.json",
@@ -619,8 +942,24 @@ def validate(root: Path) -> list[dict[str, str]]:
         CRITERIA[1],
         problems,
     )
+    validate_schema_instance(
+        root,
+        "schemas/trace-landscape.schema.json",
+        "policy/trace-landscape.json",
+        TRACE_CRITERION,
+        problems,
+    )
+    validate_schema_instance(
+        root,
+        "schemas/abuse-misuse-research.schema.json",
+        "policy/abuse-misuse-research.json",
+        ABUSE_CRITERION,
+        problems,
+    )
     validate_naming(root, problems)
     validate_manifest(root, problems)
+    validate_trace_landscape(root, problems)
+    validate_abuse_research(root, problems)
     return problems
 
 
@@ -628,6 +967,8 @@ def report(root: Path) -> dict[str, Any]:
     problems = validate(root)
     manifest = load_object(root, "policy/research-manifest.json", [], CRITERIA[1])
     naming = load_object(root, "policy/naming-clearance.json", [], CRITERIA[0])
+    trace = load_object(root, "policy/trace-landscape.json", [], TRACE_CRITERION)
+    abuse = load_object(root, "policy/abuse-misuse-research.json", [], ABUSE_CRITERION)
     records = manifest.get("deliverables", []) if isinstance(manifest, dict) else []
     repository_links = 0
     public_urls = sum(
@@ -648,14 +989,31 @@ def report(root: Path) -> dict[str, Any]:
             public_urls += evidence.get("kind") == "url"
         lineage = record.get("lineage")
         lineage_edges += isinstance(lineage, dict) and bool(lineage.get("supersedes"))
+    research_source_urls = sum(
+        1
+        for collection in (trace.get("ecosystems", []), abuse.get("risks", []))
+        if isinstance(collection, list)
+        for record in collection
+        if isinstance(record, dict)
+        for source in record.get("sources", [])
+        if isinstance(source, dict)
+        and isinstance(source.get("source_url"), str)
+        and urlparse(source["source_url"]).scheme == "https"
+    )
+    public_urls += research_source_urls
     return {
         "schema_version": "1.0.0",
-        "criteria": CRITERIA,
+        "criteria": CRITERIA + [TRACE_CRITERION, ABUSE_CRITERION],
         "status": "pass" if not problems else "fail",
         "schema_report": {
             "draft": "2020-12",
             "documents": sorted(path for path in PUBLIC_FILES if path.startswith("schemas/")),
-            "instances": ["policy/naming-clearance.json", "policy/research-manifest.json"],
+            "instances": [
+                "policy/abuse-misuse-research.json",
+                "policy/naming-clearance.json",
+                "policy/research-manifest.json",
+                "policy/trace-landscape.json",
+            ],
         },
         "coverage_report": {
             "required": len(REQUIRED_DELIVERABLES),
@@ -665,6 +1023,8 @@ def report(root: Path) -> dict[str, Any]:
         "resolved_link_report": {
             "repository_references": repository_links,
             "public_url_references": public_urls,
+            "research_source_urls": research_source_urls,
+            "network_resolution_performed": False,
             "unresolved": sum(1 for problem in problems if problem["code"] == "unresolved_evidence_link"),
         },
         "lifecycle_lineage_report": {

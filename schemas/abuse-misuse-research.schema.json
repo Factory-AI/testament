@@ -1,0 +1,177 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/Factory-AI/testament/schemas/abuse-misuse-research.schema.json",
+  "title": "Testament abuse and misuse research",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "deliverable_id",
+    "validation_id",
+    "status",
+    "researched_at",
+    "methodology",
+    "timing_definitions",
+    "risks",
+    "cross_cutting_controls",
+    "global_limitations"
+  ],
+  "properties": {
+    "schema_version": {"const": "1.0.0"},
+    "deliverable_id": {"const": "RES-STUDY-ABUSE-MISUSE-001"},
+    "validation_id": {"const": "VAL-READY-009"},
+    "status": {"const": "informative-draft"},
+    "researched_at": {"type": "string", "format": "date"},
+    "methodology": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}},
+    "timing_definitions": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["online", "nearline", "offline"],
+      "properties": {
+        "online": {"type": "string", "minLength": 1},
+        "nearline": {"type": "string", "minLength": 1},
+        "offline": {"type": "string", "minLength": 1}
+      }
+    },
+    "risks": {
+      "type": "array",
+      "minItems": 9,
+      "items": {"$ref": "#/$defs/risk"}
+    },
+    "cross_cutting_controls": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["human_review", "appeals", "false_positives"],
+      "properties": {
+        "human_review": {
+          "type": "array",
+          "minItems": 1,
+          "items": {"type": "string", "minLength": 1}
+        },
+        "appeals": {
+          "type": "array",
+          "minItems": 1,
+          "items": {"type": "string", "minLength": 1}
+        },
+        "false_positives": {
+          "type": "array",
+          "minItems": 1,
+          "items": {"type": "string", "minLength": 1}
+        }
+      }
+    },
+    "global_limitations": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"type": "string", "minLength": 1}
+    }
+  },
+  "$defs": {
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "publisher",
+        "title",
+        "version_or_date",
+        "source_url",
+        "accessed_at",
+        "claim_supported"
+      ],
+      "properties": {
+        "id": {"type": "string", "minLength": 1},
+        "publisher": {"type": "string", "minLength": 1},
+        "title": {"type": "string", "minLength": 1},
+        "version_or_date": {"type": "string", "minLength": 1},
+        "source_url": {"type": "string", "format": "uri"},
+        "accessed_at": {"type": "string", "format": "date"},
+        "claim_supported": {"type": "string", "minLength": 1}
+      }
+    },
+    "reviewer_path": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["triage_role", "escalation_role", "evidence_requirements", "appeal_route"],
+      "properties": {
+        "triage_role": {"type": "string", "minLength": 1},
+        "escalation_role": {"type": "string", "minLength": 1},
+        "evidence_requirements": {
+          "type": "array",
+          "minItems": 1,
+          "items": {"type": "string", "minLength": 1}
+        },
+        "appeal_route": {"type": "string", "minLength": 1}
+      }
+    },
+    "risk": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "name",
+        "harm",
+        "signals",
+        "authorized_use_twins",
+        "false_positive_factors",
+        "reviewer_path",
+        "limitations",
+        "unresolved_questions",
+        "sources"
+      ],
+      "properties": {
+        "id": {"type": "string", "minLength": 1},
+        "name": {"type": "string", "minLength": 1},
+        "harm": {"type": "string", "minLength": 1},
+        "signals": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["online", "nearline", "offline"],
+          "properties": {
+            "online": {
+              "type": "array",
+              "minItems": 1,
+              "items": {"type": "string", "minLength": 1}
+            },
+            "nearline": {
+              "type": "array",
+              "minItems": 1,
+              "items": {"type": "string", "minLength": 1}
+            },
+            "offline": {
+              "type": "array",
+              "minItems": 1,
+              "items": {"type": "string", "minLength": 1}
+            }
+          }
+        },
+        "authorized_use_twins": {
+          "type": "array",
+          "minItems": 1,
+          "items": {"type": "string", "minLength": 1}
+        },
+        "false_positive_factors": {
+          "type": "array",
+          "minItems": 1,
+          "items": {"type": "string", "minLength": 1}
+        },
+        "reviewer_path": {"$ref": "#/$defs/reviewer_path"},
+        "limitations": {
+          "type": "array",
+          "minItems": 1,
+          "items": {"type": "string", "minLength": 1}
+        },
+        "unresolved_questions": {
+          "type": "array",
+          "minItems": 1,
+          "items": {"type": "string", "minLength": 1}
+        },
+        "sources": {
+          "type": "array",
+          "minItems": 1,
+          "items": {"$ref": "#/$defs/source"}
+        }
+      }
+    }
+  }
+}
