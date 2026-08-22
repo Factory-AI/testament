@@ -11,7 +11,7 @@
       "human_path": "docs/claims-policy.md",
       "id": "claims-evidence",
       "machine_path": "policy/claims-ledger.json",
-      "machine_sha256": "e57a6be225ef217f7cbb38914dcc9b3324665f9a80d74e50ffcf3ed1638cc8e6",
+      "machine_sha256": "1a1e744ba0894fc2cb2760f5fe1e214d1b51783e8356eb6da95a87f529f5f0bd",
       "version": "1.0.0"
     },
     {
