@@ -330,6 +330,11 @@ SAFE_SCHEMA_PATTERNS = {
     r"^CTRL-[A-Z0-9-]+$",
     r"^VAL-[A-Z0-9-]+$",
     r"^EGRESS-[A-Z0-9-]+$",
+    r"^EVID-[A-Z0-9-]+$",
+    r"^CLAIM-(ARCH|RELEASE)-[A-Z0-9-]+$",
+    r"^NORM-RFC-\d{4}$",
+    r"^RFC-\d{4}$",
+    r"^CONF-RFC-\d{4}$",
 }
 
 

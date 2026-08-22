@@ -8,17 +8,24 @@
       "version": "1.0.0"
     },
     {
-      "human_path": "docs/workflows.md#workflow-index",
-      "id": "commands",
-      "machine_path": "Makefile",
-      "machine_sha256": "07eb82e0532be100052e6d5b1790407d1cc1866963876fdcb9ae2d81e5f073ae",
+      "human_path": "docs/claims-policy.md",
+      "id": "claims-evidence",
+      "machine_path": "policy/claims-ledger.json",
+      "machine_sha256": "e57a6be225ef217f7cbb38914dcc9b3324665f9a80d74e50ffcf3ed1638cc8e6",
       "version": "1.0.0"
     },
     {
-      "human_path": "docs/rfcs/0014-conformance-profiles.md",
+      "human_path": "docs/workflows.md#workflow-index",
+      "id": "commands",
+      "machine_path": "Makefile",
+      "machine_sha256": "d1b1392f1fdd26a32a5294e4ea8982b93113be2c54d637db391cf5c6a5285757",
+      "version": "1.0.0"
+    },
+    {
+      "human_path": "docs/standards-status.md",
       "id": "conformance",
-      "machine_path": "docs/rfcs/index.json",
-      "machine_sha256": "88df748c3518e45602bc28ad4ad3e07514383e41cf82b0c8b339f1806e8cf14d",
+      "machine_path": "policy/normative-sources.json",
+      "machine_sha256": "047c1681767a6bd491c6664e8a2f8c94f734e3826059a5427e58d203a42649b7",
       "version": "0.1.0-draft"
     },
     {
@@ -52,5 +59,5 @@
   ],
   "schema_version": "1.0.0",
   "source": "policy/repository-contracts.json",
-  "source_sha256": "e140decfa9c4857de0ddfe4aca2b201905976db2ad22b96ce6ca671251398c18"
+  "source_sha256": "d1dcc8ebcbcd6e3bcf79bd4d6920b473a85d4eaacee32e8c0971fef7e5040b67"
 }

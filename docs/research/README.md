@@ -86,6 +86,22 @@ contained the non-resolving transcription
 records that identifier and a digest of the preserved raw samples; no sample
 was rewritten.
 
+## Claims and standards authority
+
+The [claims-evidence ledger](../../policy/claims-ledger.json) gives each
+architecture-shaping and release-blocking claim a stable trace to its source
+pointer, dated/versioned evidence, contradiction, uncertainty, limitation,
+owner, reviewer, status, and supersession record. All 21 current claims remain
+`in-review`; pending review does not support a public pass claim.
+
+The [standards status page](../standards-status.md) renders authority, version,
+source, and supersession labels. Its
+[normative source inventory](../../policy/normative-sources.json) is the only
+allowlist for conformance inputs. Research, rationale, examples, prototypes,
+and unpromoted fixtures remain informative. The twelve proposed RFC contracts
+may drive draft checks, but none is certification-eligible and no research
+fixture is promoted.
+
 To repeat the measurement in a fresh clone, check out the report's
 `source_commit`, run `make setup`, start PostgreSQL with `make dev`, confirm
 `docker compose exec -T postgres pg_isready -p 5440`, then run:
@@ -135,6 +151,12 @@ lifecycle, hold, and key-custody sections.
 `make verify-analyzer-evaluation` validates the analyzer evaluation plan. It
 rejects a missing family, dataset, fixture mapping, metric, threshold, source,
 required evaluation dimension, or lifecycle agreement.
+
+`make verify-claims` validates `VAL-READY-016` and `VAL-READY-017`. It checks
+schema and digest integrity, exact architecture and release reverse coverage,
+claim source pointers, evidence accessibility, contradiction and review
+metadata, normative RFC inventory agreement, conformance section allowlisting,
+fixture promotion, and rendered authority labels.
 
 `make verify-prototypes` validates exact nine-pair coverage, canonical
 precommit and tested-commit resolution, preserved historical observations,

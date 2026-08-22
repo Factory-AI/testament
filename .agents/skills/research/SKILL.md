@@ -15,7 +15,8 @@ owner, reviewer, and supersession explicitly.
 ## Entry points
 
 Read `docs/research/README.md`, add a failing registry or evidence-coverage
-test, then run `make verify-research` and `make test-gate`.
+test, then run `make verify-research`, `make verify-claims`, and
+`make test-gate`.
 
 ## Recovery
 

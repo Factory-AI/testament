@@ -357,6 +357,7 @@ def validate(root: Path) -> list[dict[str, str]]:
     commands = contracts.get("commands", [])
     required_contracts = {
         "architecture",
+        "claims-evidence",
         "services",
         "commands",
         "toolchain",

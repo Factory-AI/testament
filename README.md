@@ -38,6 +38,9 @@ PostgreSQL is needed. The complete command and recovery map is in
 - [Licensing](docs/licensing.md): Apache-2.0 policy and artifact inventory.
 - [Machine-readable artifact inventory](policy/artifact-licensing.json)
 - [Machine-readable claims policy](policy/claims.json)
+- [Claims-evidence ledger](policy/claims-ledger.json)
+- [Standards source status](docs/standards-status.md)
+- [Normative source and conformance-input inventory](policy/normative-sources.json)
 - [Governance](GOVERNANCE.md): authority, decisions, appeals, amendments, and
   releases.
 - [Maintainers](MAINTAINERS.md): current roles and contact paths.
@@ -69,7 +72,8 @@ The command validates the Apache-2.0 text, checks that all artifact classes are
 accounted for, rejects prohibited core dependency licenses, confirms required
 limitations are public, scans for forbidden overclaims, and validates
 governance, security, contribution, RFC, ADR, naming, and research lifecycle
-records.
+records. It also proves reverse claim-to-evidence coverage and rejects
+informative or uninventoried conformance inputs.
 
 ## License
 

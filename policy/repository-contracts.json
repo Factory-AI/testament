@@ -10,6 +10,12 @@
       "human_path": "CHARTER.md"
     },
     {
+      "id": "claims-evidence",
+      "version": "1.0.0",
+      "machine_path": "policy/claims-ledger.json",
+      "human_path": "docs/claims-policy.md"
+    },
+    {
       "id": "services",
       "version": "1.0.0",
       "machine_path": "compose.yaml",
@@ -36,8 +42,8 @@
     {
       "id": "conformance",
       "version": "0.1.0-draft",
-      "machine_path": "docs/rfcs/index.json",
-      "human_path": "docs/rfcs/0014-conformance-profiles.md"
+      "machine_path": "policy/normative-sources.json",
+      "human_path": "docs/standards-status.md"
     },
     {
       "id": "readiness",

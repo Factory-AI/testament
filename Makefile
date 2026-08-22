@@ -1,4 +1,4 @@
-.PHONY: setup dev dev-stop lint typecheck test test-gate build agent-ready conformance generate generate-corpus migrate release rollback doctor incident verify-analyzer-evaluation verify-corpus verify-foundation verify-governance verify-prototypes verify-readiness verify-research _python-check
+.PHONY: setup dev dev-stop lint typecheck test test-gate build agent-ready conformance generate generate-corpus migrate release rollback doctor incident verify-analyzer-evaluation verify-claims verify-corpus verify-foundation verify-governance verify-prototypes verify-readiness verify-research _python-check
 
 PYTHON ?= python3
 
@@ -12,14 +12,16 @@ dev-stop:
 	@TESTAMENT_POSTGRES_PORT=5440 docker compose stop postgres
 
 _python-check:
-	@$(PYTHON) -m py_compile scripts/generate_corpus.py scripts/run_prototypes.py scripts/verify_corpus.py scripts/verify_foundation.py scripts/verify_governance.py scripts/verify_prototypes.py scripts/verify_readiness.py scripts/verify_research.py scripts/workflow.py tests/test_corpus.py tests/test_foundation.py tests/test_governance.py tests/test_prototypes.py tests/test_readiness.py tests/test_research_registry.py
+	@$(PYTHON) -m py_compile scripts/generate_corpus.py scripts/run_prototypes.py scripts/verify_claims.py scripts/verify_corpus.py scripts/verify_foundation.py scripts/verify_governance.py scripts/verify_prototypes.py scripts/verify_readiness.py scripts/verify_research.py scripts/workflow.py tests/test_claims_and_boundaries.py tests/test_corpus.py tests/test_foundation.py tests/test_governance.py tests/test_prototypes.py tests/test_readiness.py tests/test_research_registry.py
 
 lint: _python-check
 	@$(PYTHON) -m json.tool policy/artifact-licensing.json >/dev/null
 	@$(PYTHON) -m json.tool policy/abuse-misuse-research.json >/dev/null
 	@$(PYTHON) -m json.tool policy/analyzer-evaluation.json >/dev/null
 	@$(PYTHON) -m json.tool policy/architecture.json >/dev/null
+	@$(PYTHON) -m json.tool policy/claims-ledger.json >/dev/null
 	@$(PYTHON) -m json.tool policy/claims.json >/dev/null
+	@$(PYTHON) -m json.tool policy/normative-sources.json >/dev/null
 	@$(PYTHON) -m json.tool policy/prototype-claims.json >/dev/null
 	@$(PYTHON) -m json.tool policy/naming-clearance.json >/dev/null
 	@$(PYTHON) -m json.tool policy/readiness.json >/dev/null
@@ -33,7 +35,9 @@ lint: _python-check
 	@$(PYTHON) -m json.tool generated/contract-index.json >/dev/null
 	@$(PYTHON) -m json.tool schemas/actionable-error.schema.json >/dev/null
 	@$(PYTHON) -m json.tool schemas/abuse-misuse-research.schema.json >/dev/null
+	@$(PYTHON) -m json.tool schemas/claims-ledger.schema.json >/dev/null
 	@$(PYTHON) -m json.tool schemas/naming-clearance.schema.json >/dev/null
+	@$(PYTHON) -m json.tool schemas/normative-sources.schema.json >/dev/null
 	@$(PYTHON) -m json.tool schemas/repository-contracts.schema.json >/dev/null
 	@$(PYTHON) -m json.tool schemas/research-manifest.schema.json >/dev/null
 	@$(PYTHON) -m json.tool schemas/threat-privacy-sovereignty.schema.json >/dev/null
@@ -50,6 +54,7 @@ test-gate:
 	@$(MAKE) verify-foundation
 	@$(MAKE) verify-governance
 	@$(MAKE) verify-research
+	@$(MAKE) verify-claims
 	@$(MAKE) verify-corpus
 	@$(MAKE) verify-prototypes
 	@$(MAKE) verify-analyzer-evaluation
@@ -58,6 +63,7 @@ test-gate:
 build: verify-foundation
 	@$(MAKE) verify-governance
 	@$(MAKE) verify-research
+	@$(MAKE) verify-claims
 	@$(MAKE) verify-corpus
 	@$(MAKE) verify-prototypes
 	@$(MAKE) verify-analyzer-evaluation
@@ -67,6 +73,7 @@ build: verify-foundation
 agent-ready: verify-foundation
 	@$(MAKE) verify-governance
 	@$(MAKE) verify-research
+	@$(MAKE) verify-claims
 	@$(MAKE) verify-corpus
 	@$(MAKE) verify-prototypes
 	@$(MAKE) verify-analyzer-evaluation
@@ -75,6 +82,7 @@ agent-ready: verify-foundation
 conformance: verify-foundation
 	@$(MAKE) verify-governance
 	@$(MAKE) verify-research
+	@$(MAKE) verify-claims
 	@$(MAKE) verify-corpus
 	@$(MAKE) verify-prototypes
 	@$(MAKE) verify-analyzer-evaluation
@@ -104,6 +112,9 @@ verify-foundation:
 
 verify-governance:
 	@$(PYTHON) scripts/verify_governance.py --root .
+
+verify-claims:
+	@$(PYTHON) scripts/verify_claims.py --root .
 
 verify-prototypes:
 	@$(PYTHON) scripts/verify_prototypes.py --root . --criterion VAL-READY-014
