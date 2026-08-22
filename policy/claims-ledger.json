@@ -151,11 +151,11 @@
       "version": "2.0.0",
       "publication_date": "2026-08-22",
       "accessed_at": "2026-08-22",
-      "sha256": "fccfdd73276ef47873a11eb15e9e3907279ef849ff5ad55c0a55e542f2fe3e63",
-      "claim_supported": "Links each disposable prototype conclusion to its active result, observation, inference, uncertainty, limitation, pending reviewer, and superseded evidence where applicable.",
+      "sha256": "4c0c7103482df4921e2c26a5480940178bc42210c965ef694fa863823db4d7f6",
+      "claim_supported": "Links each disposable prototype conclusion to its active version 2 result, shared clean-clone report, observation, inference, uncertainty, limitation, pending reviewer, and immutable superseded version 1 evidence.",
       "accessibility": "public-repository",
-      "tested_commit": "347a6969ae8bda5e8514be9a474414b26010312a",
-      "environment": "Harmless synthetic fixtures; pinned plan and local or PostgreSQL 17 prototype harnesses."
+      "tested_commit": "297e14b14a41582d914c33cda8ea61f1b92bca29",
+      "environment": "One independent complete clean clone; harmless synthetic fixtures; pinned version 2 plan; externally observed local descendant trees and PostgreSQL container cgroups."
     },
     {
       "id": "EVID-PROTOTYPE-DECISION-V2-001",
@@ -167,27 +167,27 @@
       "version": "2.0.0",
       "publication_date": "2026-08-22",
       "accessed_at": "2026-08-22",
-      "sha256": "6127ab8a15215e64de2f37283b11e17de763fb2847dd7908b31324b8651e5aab",
+      "sha256": "8105854da7cd2f52215efbbd60fc9d04f8673b9ae6da2fbb56ca8a118dbb939d",
       "claim_supported": "Three PostgreSQL 17 samples terminate an exact active fault backend and verify automatic rollback from a fresh connection within unchanged resource budgets.",
       "accessibility": "public-repository",
-      "tested_commit": "6d0eb1037e7acb33b72834908a74540b0474caa4",
+      "tested_commit": "297e14b14a41582d914c33cda8ea61f1b92bca29",
       "environment": "Harmless synthetic rows; PostgreSQL 17.11 on declared port 5440 with fresh service lifecycle and container-cgroup accounting per sample."
     },
     {
       "id": "EVID-PROTOTYPE-REPRODUCTION-001",
       "qualification": "reproducible",
-      "path": "docs/research/benchmarks/reproduction.json",
+      "path": "docs/research/benchmarks/v2/reproduction.json",
       "url": null,
       "publisher": "Testament maintainers",
-      "title": "Clean-clone prototype reproduction report",
-      "version": "1.0.0",
+      "title": "Version 2 clean-clone prototype reconciliation report",
+      "version": "2.0.0",
       "publication_date": "2026-08-22",
       "accessed_at": "2026-08-22",
-      "sha256": "a275b0993c733032b11684fe64f5ab2673d558e7b1b5cb38e3e2f09460d3d59a",
-      "claim_supported": "Preserves 27 passing clean-clone samples and exact comparisons for all nine precommitted prototype and benchmark pairs.",
+      "sha256": "e0bc765d70d73db318d1e4841a5bf1670d7a992e5493219014d484ea1fa4f0f4",
+      "claim_supported": "Preserves exactly 27 passing version 2 samples and recomputed comparisons for all nine precommitted prototype and benchmark pairs from one independent clean clone.",
       "accessibility": "public-repository",
-      "tested_commit": "69109a20ad1045cd2432a71a9fa216ffdc676458",
-      "environment": "Darwin arm64 host, Go 1.26.4, Python 3.14.7, PostgreSQL 17.11 where declared."
+      "tested_commit": "297e14b14a41582d914c33cda8ea61f1b92bca29",
+      "environment": "Darwin arm64 developer-workstation-12cpu-18gib, Go 1.26.4, Python 3.14.7, and PostgreSQL 17.11 with per-sample lifecycle where declared."
     }
   ],
   "claims": [
