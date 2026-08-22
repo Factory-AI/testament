@@ -163,6 +163,19 @@ class ResearchRegistryTest(unittest.TestCase):
         (root / accepted["artifact"]["path"]).unlink()
         self.assertIn("missing_research_artifact", self.codes(root))
 
+    def test_in_review_artifact_must_be_bound_to_commit(self) -> None:
+        root = self.copy_repository()
+        shutil.copytree(ROOT / ".git", root / ".git")
+
+        def break_commit(value) -> None:
+            in_review = next(
+                record for record in value["deliverables"] if record["state"] == "in-review"
+            )
+            in_review["commit"] = "0" * 40
+
+        self.mutate_manifest(root, break_commit)
+        self.assertIn("unbound_artifact_commit", self.codes(root))
+
     def test_naming_record_requires_every_search_class(self) -> None:
         root = self.copy_repository()
         path = root / "policy/naming-clearance.json"

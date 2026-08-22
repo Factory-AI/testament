@@ -747,11 +747,11 @@ def validate_manifest(root: Path, problems: list[dict[str, str]]) -> dict[str, A
         else:
             artifact_owners.setdefault(artifact_path, []).append(record_id)
             artifact_exists = (root / artifact_path).is_file()
-            if state in {"accepted", "superseded"} and not artifact_exists:
+            if state in {"in-review", "accepted", "superseded"} and not artifact_exists:
                 problems.append(
-                    issue(CRITERIA[1], "missing_research_artifact", artifact_path, record_id, "restore the accepted artifact")
+                    issue(CRITERIA[1], "missing_research_artifact", artifact_path, record_id, "restore the reviewable artifact")
                 )
-            if state in {"accepted", "superseded"} and (root / ".git").exists():
+            if state in {"in-review", "accepted", "superseded"} and (root / ".git").exists():
                 commit = record.get("commit")
                 result = subprocess.run(
                     ["git", "cat-file", "-e", f"{commit}:{artifact_path}"],

@@ -12,9 +12,9 @@ benchmark, RFC, review, and decision. Each entry has a stable ID, owner,
 dependencies, acceptance criteria, version, source commit, artifact path,
 public evidence, reviewer, decision, state, and supersession links.
 
-For accepted or superseded work, `commit` is the immutable commit containing
-the reviewed artifact. For draft work, it is the last source commit on which
-the plan depends.
+For in-review, accepted, or superseded work, `commit` is the immutable commit
+containing the reviewable artifact. For draft work, it is the last source
+commit on which the plan depends.
 
 The only allowed states are `draft`, `in-review`, `accepted`, `blocked`, and
 `superseded`. Draft work may point to its planned artifact path, but accepted
