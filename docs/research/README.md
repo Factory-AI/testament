@@ -168,6 +168,15 @@ Run `make generate-analyzer-evaluation` to reproduce these files. Verification
 rejects a missing or duplicate case, changed digest, unknown fixture, group
 leakage, empty family partition, injection leakage, or algorithm drift.
 
+The [analyzer metric registry](../../policy/analyzer-metric-registry.json)
+gives every family metric an executable formula, sample rule, aggregation
+rule, rounding rule, and fail-closed undefined result. Its versioned
+[golden vectors](analysis/metric-golden-vectors.json) cover every metric plus
+micro and macro aggregation, repeats, zero denominators, percentiles,
+abstention, calibration bins, cost overruns, and each prohibited injection
+outcome. Run `make generate-analyzer-metrics` to reproduce the registry and
+vectors.
+
 `make verify-claims` validates `VAL-READY-016` and `VAL-READY-017`. It checks
 schema and digest integrity, exact architecture and release reverse coverage,
 claim source pointers, evidence accessibility, contradiction and review

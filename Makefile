@@ -1,4 +1,4 @@
-.PHONY: setup dev dev-stop lint typecheck test test-gate build agent-ready conformance generate generate-analyzer-evaluation generate-corpus migrate release rollback doctor incident verify-analyzer-evaluation verify-claims verify-corpus verify-foundation verify-governance verify-prototypes verify-readiness verify-research _python-check
+.PHONY: setup dev dev-stop lint typecheck test test-gate build agent-ready conformance generate generate-analyzer-evaluation generate-analyzer-metrics generate-corpus migrate release rollback doctor incident verify-analyzer-evaluation verify-analyzer-metrics verify-claims verify-corpus verify-foundation verify-governance verify-prototypes verify-readiness verify-research _python-check
 
 PYTHON ?= python3
 
@@ -12,12 +12,13 @@ dev-stop:
 	@TESTAMENT_POSTGRES_PORT=5440 docker compose stop postgres
 
 _python-check:
-	@$(PYTHON) -m py_compile scripts/generate_analyzer_evaluation.py scripts/generate_corpus.py scripts/run_prototypes.py scripts/verify_analyzer_evaluation.py scripts/verify_claims.py scripts/verify_corpus.py scripts/verify_foundation.py scripts/verify_governance.py scripts/verify_prototypes.py scripts/verify_readiness.py scripts/verify_research.py scripts/workflow.py tests/test_analyzer_evaluation.py tests/test_claims_and_boundaries.py tests/test_corpus.py tests/test_foundation.py tests/test_governance.py tests/test_prototypes.py tests/test_readiness.py tests/test_research_registry.py
+	@$(PYTHON) -m py_compile scripts/evaluate_analyzer_metrics.py scripts/generate_analyzer_evaluation.py scripts/generate_analyzer_metrics.py scripts/generate_corpus.py scripts/run_prototypes.py scripts/verify_analyzer_evaluation.py scripts/verify_analyzer_metrics.py scripts/verify_claims.py scripts/verify_corpus.py scripts/verify_foundation.py scripts/verify_governance.py scripts/verify_prototypes.py scripts/verify_readiness.py scripts/verify_research.py scripts/workflow.py tests/test_analyzer_evaluation.py tests/test_analyzer_metrics.py tests/test_claims_and_boundaries.py tests/test_corpus.py tests/test_foundation.py tests/test_governance.py tests/test_prototypes.py tests/test_readiness.py tests/test_research_registry.py
 
 lint: _python-check
 	@$(PYTHON) -m json.tool policy/artifact-licensing.json >/dev/null
 	@$(PYTHON) -m json.tool policy/abuse-misuse-research.json >/dev/null
 	@$(PYTHON) -m json.tool policy/analyzer-evaluation.json >/dev/null
+	@$(PYTHON) -m json.tool policy/analyzer-metric-registry.json >/dev/null
 	@$(PYTHON) -m json.tool policy/architecture.json >/dev/null
 	@$(PYTHON) -m json.tool policy/claims-ledger.json >/dev/null
 	@$(PYTHON) -m json.tool policy/claims.json >/dev/null
@@ -32,6 +33,7 @@ lint: _python-check
 	@$(PYTHON) -m json.tool policy/trace-landscape.json >/dev/null
 	@$(PYTHON) -m json.tool docs/research/corpus/manifest.json >/dev/null
 	@$(PYTHON) -m json.tool docs/research/analysis/injection-manifest.json >/dev/null
+	@$(PYTHON) -m json.tool docs/research/analysis/metric-golden-vectors.json >/dev/null
 	@$(PYTHON) -m json.tool docs/research/analysis/split-manifest.json >/dev/null
 	@$(PYTHON) -m json.tool docs/research/benchmarks/reproduction.json >/dev/null
 	@$(PYTHON) -m json.tool generated/contract-index.json >/dev/null
@@ -94,6 +96,7 @@ conformance: verify-foundation
 generate:
 	@$(MAKE) generate-corpus
 	@$(MAKE) generate-analyzer-evaluation
+	@$(MAKE) generate-analyzer-metrics
 	@$(PYTHON) scripts/verify_readiness.py --root . --write-index
 
 migrate:
@@ -126,6 +129,10 @@ verify-prototypes:
 verify-analyzer-evaluation:
 	@$(PYTHON) scripts/verify_prototypes.py --root . --criterion VAL-READY-015
 	@$(PYTHON) scripts/verify_analyzer_evaluation.py --root .
+	@$(MAKE) verify-analyzer-metrics
+
+verify-analyzer-metrics:
+	@$(PYTHON) scripts/verify_analyzer_metrics.py --root .
 
 verify-readiness:
 	@$(PYTHON) scripts/verify_readiness.py --root .
@@ -138,6 +145,9 @@ generate-corpus:
 
 generate-analyzer-evaluation:
 	@$(PYTHON) scripts/generate_analyzer_evaluation.py --root . --write
+
+generate-analyzer-metrics:
+	@$(PYTHON) scripts/generate_analyzer_metrics.py --root . --write
 
 verify-corpus:
 	@$(PYTHON) scripts/verify_corpus.py --root .
