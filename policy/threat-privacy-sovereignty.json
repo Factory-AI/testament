@@ -533,7 +533,7 @@
       "sensitivity": "critical secret",
       "purpose": "data, search, secret, and audit protection",
       "storage": "provider-custodied top key and application-wrapped purpose-separated organization roots",
-      "egress": "Cloud custody sends plaintext organization roots through the selected provider API for wrap/encrypt and receives them through unwrap/decrypt; payload DEKs and trace plaintext do not cross this boundary.",
+      "egress": "Cloud custody sends one 32-byte plaintext organization root only through the selected exact AWS, GCP, or Azure egress schema and receives one bounded wrapped root; payload DEKs and trace plaintext do not cross this boundary.",
       "retention": "generation dependency graph; held or referenced generations cannot retire",
       "deletion": "controlled destruction only after dependency and hold proof",
       "boundary_owner": "key custody owner"
@@ -4235,7 +4235,7 @@
       "destinations": [
         "local PostgreSQL and local analyzer processes",
         "organization-controlled operator clients inside the declared boundary",
-        "one selected cloud KMS key endpoint under EGRESS-KMS-01, which processes plaintext organization roots and wrapped roots",
+        "one selected cloud KMS key endpoint under the selected EGRESS-AWS-KMS-01, EGRESS-GCP-KMS-01, or EGRESS-AZURE-KMS-01, which processes plaintext organization roots and wrapped roots",
         "pinned identity issuer metadata and JWKS endpoints under EGRESS-IDP-01",
         "optional monitoring endpoint only when it is inside the declared boundary under EGRESS-OBS-01"
       ],
@@ -4372,7 +4372,7 @@
       "silent redirect, retry destination, provider, model, or profile fallback"
     ],
     "permitted_non_content_egress": [
-      "Selected cloud KMS custody is a critical-keying-material exception, not a non-content call: plaintext organization roots cross the provider API for wrap/encrypt and unwrap/decrypt; trace content and payload DEKs do not.",
+      "Selected cloud KMS custody is a critical-keying-material exception under EGRESS-AWS-KMS-01, EGRESS-GCP-KMS-01, or EGRESS-AZURE-KMS-01, not a non-content call: plaintext organization roots cross the selected provider API for encrypt/wrap and decrypt/unwrap.",
       "Identity verification may fetch only the exact issuer metadata and public verification-key fields in EGRESS-IDP-01.",
       "Operational monitoring may send only EGRESS-OBS-01 fields when the destination is inside the declared boundary; otherwise isolated deployments disable it.",
       "Operator export is never classified as non-content and requires a separate governed operation to an in-boundary client."
@@ -4409,79 +4409,370 @@
     "boundary_definition": "An operator client is inside the isolated boundary only when the organization declares and controls its endpoint, network path, DNS/proxy, and storage. Delivery to an uncontrolled or out-of-boundary client is a separately authorized export and the deployment cannot claim that request stayed within isolated-sovereign.",
     "permitted_egress_schemas": [
       {
-        "id": "EGRESS-KMS-01",
-        "purpose": "seal or unseal purpose-separated organization roots",
-        "allowed_fields": [
-          "provider key identifier and exact version",
-          "cryptographic operation and algorithm",
-          "plaintext organization root inside TLS request for provider encrypt or wrap",
-          "wrapped root inside response or decrypt/unwrap request",
-          "non-secret organization opaque ID, realm, purpose, generation, and request ID binding",
-          "provider integrity checks"
-        ],
-        "max_request_bytes": 131072,
+        "id": "EGRESS-AWS-KMS-01",
+        "purpose": "seal or unseal one purpose-separated 32-byte organization root under one selected provider key",
         "max_calls": "bounded root operations only; never per content chunk",
-        "destinations": "one canonical selected provider key endpoint; no redirects or endpoint fallback",
         "dns_and_tls": "connect-time DNS/IP allowlist revalidation, approved proxy only, TLS certificate and hostname validation, IPv4/IPv6 and link-local/private-address policy, redirects denied",
-        "retention": "provider operation and audit metadata declaration; no secret in logged context",
-        "unknown_fields": "deny",
+        "retention": "provider operation and audit metadata declaration; plaintext roots and secret credentials are never logged",
+        "unknown_fields": "deny request fields, response fields, headers, methods, paths, query parameters, algorithms, and redirect targets not named by this contract",
+        "destinations": "one canonical regional AWS KMS endpoint and customer-managed symmetric key ARN in the selected account and region",
+        "max_request_bytes": 16384,
+        "max_response_bytes": 16384,
+        "method": "POST",
+        "path": "/",
+        "query_parameters": [],
+        "allowed_headers": [
+          "Host",
+          "Content-Type: application/x-amz-json-1.1",
+          "Accept: application/x-amz-json-1.1",
+          "Authorization: AWS Signature Version 4 using service kms and selected region",
+          "X-Amz-Date",
+          "X-Amz-Content-Sha256",
+          "X-Amz-Target: TrentService.Encrypt or TrentService.Decrypt",
+          "X-Amz-Security-Token only for temporary credentials",
+          "User-Agent: one pinned Testament build identifier"
+        ],
         "authentication_headers": [
-          "provider SDK authentication and integrity headers only; credentials are organization-scoped and never logged"
+          "Authorization",
+          "X-Amz-Date",
+          "X-Amz-Content-Sha256",
+          "X-Amz-Security-Token when temporary credentials are used"
         ],
         "wire_fields": [
           {
-            "name": "provider",
-            "type": "enum: aws-kms|gcp-cloud-kms|azure-key-vault",
+            "name": "KeyId",
+            "type": "exact canonical AWS KMS key ARN",
+            "required": true,
+            "cardinality": "one",
+            "max_bytes": 2048,
+            "sensitivity": "security-metadata"
+          },
+          {
+            "name": "Plaintext",
+            "type": "base64 bytes",
+            "required": false,
+            "cardinality": "Encrypt only, decoded length exactly 32",
+            "max_bytes": 44,
+            "sensitivity": "critical-secret"
+          },
+          {
+            "name": "CiphertextBlob",
+            "type": "base64 bytes",
+            "required": false,
+            "cardinality": "Decrypt only, decoded length at most 8192",
+            "max_bytes": 12000,
+            "sensitivity": "secret-ciphertext"
+          },
+          {
+            "name": "EncryptionContext",
+            "type": "JSON object with exactly testament:organization, testament:realm, testament:purpose, testament:generation, testament:request_id",
+            "required": true,
+            "cardinality": "five unique entries",
+            "max_bytes": 2048,
+            "sensitivity": "non-secret-security-metadata"
+          },
+          {
+            "name": "EncryptionAlgorithm",
+            "type": "constant SYMMETRIC_DEFAULT",
             "required": true,
             "cardinality": "one",
             "max_bytes": 32,
             "sensitivity": "operational"
+          }
+        ],
+        "conditional_rules": [
+          "Encrypt requires Plaintext and forbids CiphertextBlob; Decrypt requires CiphertextBlob and forbids Plaintext.",
+          "GrantTokens, DryRun, Recipient, asymmetric algorithms, aliases, multi-region fallback, and endpoint override are prohibited."
+        ],
+        "response_fields": [
+          {
+            "name": "CiphertextBlob",
+            "type": "base64 bytes",
+            "required": false,
+            "cardinality": "Encrypt response exactly one",
+            "max_bytes": 12000,
+            "sensitivity": "secret-ciphertext"
           },
           {
-            "name": "operation",
-            "type": "enum: encrypt|decrypt|wrapKey|unwrapKey",
+            "name": "Plaintext",
+            "type": "base64 bytes",
+            "required": false,
+            "cardinality": "Decrypt response decoded length exactly 32",
+            "max_bytes": 44,
+            "sensitivity": "critical-secret"
+          },
+          {
+            "name": "KeyId",
+            "type": "exact canonical ARN matching request",
+            "required": true,
+            "cardinality": "one",
+            "max_bytes": 2048,
+            "sensitivity": "security-metadata"
+          },
+          {
+            "name": "EncryptionAlgorithm",
+            "type": "constant SYMMETRIC_DEFAULT",
+            "required": true,
+            "cardinality": "one",
+            "max_bytes": 32,
+            "sensitivity": "operational"
+          }
+        ],
+        "provider_limits": [
+          "Plaintext root is exactly 32 bytes.",
+          "EncryptionContext keys and values are non-secret and match exactly on Decrypt.",
+          "HTTP status, AWS request ID header, throttling, and error type may be retained as bounded operational metadata; error messages are not retained."
+        ]
+      },
+      {
+        "id": "EGRESS-GCP-KMS-01",
+        "purpose": "seal or unseal one purpose-separated 32-byte organization root under one selected provider key",
+        "max_calls": "bounded root operations only; never per content chunk",
+        "dns_and_tls": "connect-time DNS/IP allowlist revalidation, approved proxy only, TLS certificate and hostname validation, IPv4/IPv6 and link-local/private-address policy, redirects denied",
+        "retention": "provider operation and audit metadata declaration; plaintext roots and secret credentials are never logged",
+        "unknown_fields": "deny request fields, response fields, headers, methods, paths, query parameters, algorithms, and redirect targets not named by this contract",
+        "destinations": "one canonical Cloud KMS API host and exact symmetric CryptoKeyVersion resource in the selected project and location",
+        "max_request_bytes": 16384,
+        "max_response_bytes": 16384,
+        "method": "POST",
+        "path": "/v1/{exact CryptoKeyVersion resource}:rawEncrypt or :rawDecrypt",
+        "query_parameters": [],
+        "allowed_headers": [
+          "Host",
+          "Content-Type: application/json",
+          "Accept: application/json",
+          "Authorization: Bearer organization-scoped Google credential",
+          "X-Goog-User-Project only when the attestation names the quota project",
+          "X-Goog-Request-Params: name={exact percent-encoded CryptoKeyVersion resource}",
+          "User-Agent: one pinned Testament build identifier"
+        ],
+        "authentication_headers": [
+          "Authorization",
+          "X-Goog-User-Project only when declared",
+          "X-Goog-Request-Params"
+        ],
+        "wire_fields": [
+          {
+            "name": "name",
+            "type": "exact CryptoKeyVersion resource in path and routing header",
+            "required": true,
+            "cardinality": "one",
+            "max_bytes": 2048,
+            "sensitivity": "security-metadata"
+          },
+          {
+            "name": "plaintext",
+            "type": "base64 bytes",
+            "required": false,
+            "cardinality": "rawEncrypt only, decoded length exactly 32",
+            "max_bytes": 44,
+            "sensitivity": "critical-secret"
+          },
+          {
+            "name": "ciphertext",
+            "type": "base64 bytes",
+            "required": false,
+            "cardinality": "rawDecrypt only, decoded length at most 8192",
+            "max_bytes": 12000,
+            "sensitivity": "secret-ciphertext"
+          },
+          {
+            "name": "additionalAuthenticatedData",
+            "type": "base64 canonical binding for organization, realm, purpose, generation, and request ID",
+            "required": true,
+            "cardinality": "one, decoded length at most 2048",
+            "max_bytes": 2732,
+            "sensitivity": "non-secret-security-metadata"
+          },
+          {
+            "name": "plaintextCrc32c",
+            "type": "decimal string CRC32C of plaintext",
+            "required": false,
+            "cardinality": "rawEncrypt only",
+            "max_bytes": 16,
+            "sensitivity": "integrity-metadata"
+          },
+          {
+            "name": "ciphertextCrc32c",
+            "type": "decimal string CRC32C of ciphertext",
+            "required": false,
+            "cardinality": "rawDecrypt only",
+            "max_bytes": 16,
+            "sensitivity": "integrity-metadata"
+          },
+          {
+            "name": "additionalAuthenticatedDataCrc32c",
+            "type": "decimal string CRC32C of AAD",
+            "required": true,
+            "cardinality": "one",
+            "max_bytes": 16,
+            "sensitivity": "integrity-metadata"
+          }
+        ],
+        "conditional_rules": [
+          "rawEncrypt requires plaintext and plaintextCrc32c and forbids ciphertext and ciphertextCrc32c; rawDecrypt requires ciphertext and ciphertextCrc32c and forbids plaintext and plaintextCrc32c.",
+          "The exact CryptoKeyVersion must be enabled, symmetric, and declared; CryptoKey primary-version selection, version fallback, initialization-vector override, and non-AES-GCM purpose are prohibited."
+        ],
+        "response_fields": [
+          {
+            "name": "ciphertext",
+            "type": "base64 bytes",
+            "required": false,
+            "cardinality": "rawEncrypt response exactly one",
+            "max_bytes": 12000,
+            "sensitivity": "secret-ciphertext"
+          },
+          {
+            "name": "plaintext",
+            "type": "base64 bytes",
+            "required": false,
+            "cardinality": "rawDecrypt response decoded length exactly 32",
+            "max_bytes": 44,
+            "sensitivity": "critical-secret"
+          },
+          {
+            "name": "ciphertextCrc32c",
+            "type": "decimal string CRC32C",
+            "required": false,
+            "cardinality": "rawEncrypt response exactly one",
+            "max_bytes": 16,
+            "sensitivity": "integrity-metadata"
+          },
+          {
+            "name": "plaintextCrc32c",
+            "type": "decimal string CRC32C",
+            "required": false,
+            "cardinality": "rawDecrypt response exactly one",
+            "max_bytes": 16,
+            "sensitivity": "integrity-metadata"
+          },
+          {
+            "name": "verifiedPlaintextCrc32c",
+            "type": "boolean true",
+            "required": false,
+            "cardinality": "rawEncrypt response exactly one",
+            "max_bytes": 5,
+            "sensitivity": "integrity-metadata"
+          },
+          {
+            "name": "verifiedAdditionalAuthenticatedDataCrc32c",
+            "type": "boolean true",
+            "required": true,
+            "cardinality": "one",
+            "max_bytes": 5,
+            "sensitivity": "integrity-metadata"
+          },
+          {
+            "name": "protectionLevel",
+            "type": "declared expected protection level enum",
+            "required": true,
+            "cardinality": "one",
+            "max_bytes": 32,
+            "sensitivity": "security-metadata"
+          }
+        ],
+        "provider_limits": [
+          "Plaintext root is exactly 32 bytes.",
+          "Caller verifies every request CRC acknowledgement and response CRC before accepting output.",
+          "Error code, request correlation, and throttling may be retained as bounded operational metadata; error messages are not retained."
+        ]
+      },
+      {
+        "id": "EGRESS-AZURE-KMS-01",
+        "purpose": "seal or unseal one purpose-separated 32-byte organization root under one selected provider key",
+        "max_calls": "bounded root operations only; never per content chunk",
+        "dns_and_tls": "connect-time DNS/IP allowlist revalidation, approved proxy only, TLS certificate and hostname validation, IPv4/IPv6 and link-local/private-address policy, redirects denied",
+        "retention": "provider operation and audit metadata declaration; plaintext roots and secret credentials are never logged",
+        "unknown_fields": "deny request fields, response fields, headers, methods, paths, query parameters, algorithms, and redirect targets not named by this contract",
+        "destinations": "one canonical HTTPS Azure Key Vault or Managed HSM host and exact RSA key version",
+        "max_request_bytes": 16384,
+        "max_response_bytes": 16384,
+        "method": "POST",
+        "path": "/keys/{percent-encoded key-name}/{exact version}/wrapkey or /unwrapkey",
+        "query_parameters": [
+          "api-version=7.4 exactly"
+        ],
+        "allowed_headers": [
+          "Host",
+          "Content-Type: application/json",
+          "Accept: application/json",
+          "Authorization: Bearer organization-scoped Azure credential",
+          "x-ms-client-request-id: one UUID generated by Testament",
+          "User-Agent: one pinned Testament build identifier"
+        ],
+        "authentication_headers": [
+          "Authorization",
+          "x-ms-client-request-id"
+        ],
+        "wire_fields": [
+          {
+            "name": "alg",
+            "type": "constant RSA-OAEP-256",
             "required": true,
             "cardinality": "one",
             "max_bytes": 16,
             "sensitivity": "operational"
           },
           {
-            "name": "key_resource",
-            "type": "canonical provider key and exact version string",
+            "name": "value",
+            "type": "base64url bytes without padding",
+            "required": true,
+            "cardinality": "wrapkey decoded length exactly 32; unwrapkey decoded length bounded by selected RSA modulus",
+            "max_bytes": 12000,
+            "sensitivity": "critical-secret for wrapkey, secret-ciphertext for unwrapkey"
+          },
+          {
+            "name": "key_name",
+            "type": "exact percent-encoded configured key name in path",
             "required": true,
             "cardinality": "one",
-            "max_bytes": 1024,
+            "max_bytes": 256,
             "sensitivity": "security-metadata"
           },
           {
-            "name": "plaintext_root",
-            "type": "bytes",
-            "required": false,
-            "cardinality": "exactly one for encrypt or wrapKey",
-            "max_bytes": 32,
-            "sensitivity": "critical-secret"
-          },
-          {
-            "name": "wrapped_root",
-            "type": "bytes",
-            "required": false,
-            "cardinality": "exactly one for decrypt or unwrapKey",
-            "max_bytes": 8192,
-            "sensitivity": "secret-ciphertext"
-          },
-          {
-            "name": "binding",
-            "type": "map of fixed UTF-8 keys to bounded UTF-8 values",
+            "name": "key_version",
+            "type": "exact configured version in path",
             "required": true,
-            "cardinality": "organization, realm, purpose, generation, request-id exactly once",
-            "max_bytes": 2048,
-            "sensitivity": "non-secret-security-metadata"
+            "cardinality": "one",
+            "max_bytes": 256,
+            "sensitivity": "security-metadata"
+          },
+          {
+            "name": "api-version",
+            "type": "constant 7.4 query value",
+            "required": true,
+            "cardinality": "one",
+            "max_bytes": 3,
+            "sensitivity": "operational"
+          }
+        ],
+        "conditional_rules": [
+          "wrapkey value is the 32-byte root; unwrapkey value is the prior wrapped root.",
+          "Empty key version, version fallback, RSA-OAEP, RSA1_5, encrypt/decrypt operations, redirects, and alternate vault hosts are prohibited.",
+          "The separate KEY-AZURE-BINDING authenticator verifies organization, realm, purpose, generation, key ID/version, algorithm, wrapped bytes, and request ID before unwrap output is accepted."
+        ],
+        "response_fields": [
+          {
+            "name": "kid",
+            "type": "exact HTTPS key identifier including configured version",
+            "required": true,
+            "cardinality": "one",
+            "max_bytes": 4096,
+            "sensitivity": "security-metadata"
+          },
+          {
+            "name": "value",
+            "type": "base64url bytes without padding",
+            "required": true,
+            "cardinality": "wrapkey ciphertext bounded by RSA modulus; unwrapkey decoded length exactly 32",
+            "max_bytes": 12000,
+            "sensitivity": "secret-ciphertext or critical-secret"
           }
         ],
         "provider_limits": [
-          "AWS symmetric Encrypt plaintext root is exactly 32 bytes and uses EncryptionContext; Decrypt must match it.",
-          "GCP Encrypt plaintext root is exactly 32 bytes and uses additionalAuthenticatedData plus request/response CRC verification.",
-          "Azure wrapKey plaintext root is exactly 32 bytes using RSA-OAEP-256; unwrapKey uses the exact version and application-authenticated binding package."
+          "Selected key is versioned RSA with wrapKey and unwrapKey permissions only and RSA-OAEP-256 support.",
+          "Soft-delete and purge-protection state is checked separately and never inferred from wrap success.",
+          "HTTP status, x-ms-request-id, throttling, and bounded error code may be retained; error messages are not retained."
         ]
       },
       {
@@ -4538,6 +4829,47 @@
         "provider_limits": [
           "Discovery and JWKS media type must be JSON and total decoded response must not exceed 1 MiB.",
           "Unknown JWK members may be retained as public raw evidence but cannot select identity semantics or algorithms."
+        ],
+        "max_response_bytes": 1048576,
+        "method": "GET",
+        "path": "/.well-known/openid-configuration, then the exact same-issuer jwks_uri path",
+        "query_parameters": [],
+        "allowed_headers": [
+          "Host",
+          "Accept: application/json",
+          "If-None-Match only from the same cached response",
+          "If-Modified-Since only from the same cached response",
+          "User-Agent: one pinned Testament build identifier"
+        ],
+        "conditional_rules": [
+          "Discovery may return only issuer and jwks_uri fields used by the verifier; jwks_uri must remain on the pinned allowlist and is revalidated before connect.",
+          "JWKS response must be JSON, no larger than 1 MiB, contain at most 100 keys, and cannot select an algorithm outside the configured allowlist."
+        ],
+        "response_fields": [
+          {
+            "name": "issuer|jwks_uri",
+            "type": "pinned absolute HTTPS URL",
+            "required": true,
+            "cardinality": "one each in discovery response",
+            "max_bytes": 2048,
+            "sensitivity": "operational"
+          },
+          {
+            "name": "keys",
+            "type": "array of strict public JWK objects",
+            "required": true,
+            "cardinality": "maximum 100",
+            "max_bytes": 1048576,
+            "sensitivity": "public"
+          },
+          {
+            "name": "kid|kty|alg|use|crv|n|e|x5c",
+            "type": "bounded public JWK member",
+            "required": false,
+            "cardinality": "one each per key; x5c maximum 10",
+            "max_bytes": 65536,
+            "sensitivity": "public"
+          }
         ]
       },
       {
@@ -4588,6 +4920,39 @@
         "provider_limits": [
           "No event exceeds 64 KiB, no batch exceeds the declared deployment bound, and labels use a fixed low-cardinality registry.",
           "Source bytes, prompts, free text, filenames, URLs, user identifiers, findings, credentials, keys, stack traces, and content-derived dimensions are prohibited."
+        ],
+        "max_response_bytes": 65536,
+        "method": "POST",
+        "path": "one exact administrator-declared HTTPS ingestion path inside the boundary",
+        "query_parameters": [],
+        "allowed_headers": [
+          "Host",
+          "Content-Type: application/json",
+          "Accept: application/json",
+          "Authorization: one write-only organization destination credential",
+          "User-Agent: one pinned Testament build identifier"
+        ],
+        "conditional_rules": [
+          "Every event validates against the fixed field registry before serialization; batches use a declared maximum event count and 64 KiB total bound.",
+          "Redirects, dynamic paths, dynamic query parameters, content-derived labels, and response-provided callbacks are prohibited."
+        ],
+        "response_fields": [
+          {
+            "name": "accepted",
+            "type": "boolean",
+            "required": true,
+            "cardinality": "one",
+            "max_bytes": 5,
+            "sensitivity": "operational"
+          },
+          {
+            "name": "request_id",
+            "type": "bounded opaque string",
+            "required": false,
+            "cardinality": "one",
+            "max_bytes": 128,
+            "sensitivity": "operational"
+          }
         ]
       }
     ]

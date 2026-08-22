@@ -21,18 +21,25 @@ embedding, moderation, classifier, callback, browsing, tool, telemetry, crash
 upload, package call-home, support bundle, remote font, CDN, hidden analytics,
 auto-fetch, redirect, retry, and fallback paths.
 
-There are three exact egress schemas. `EGRESS-KMS-01` permits a plaintext
-organization root, wrapped root, key identity, and non-secret binding fields
-only for the selected key. `EGRESS-IDP-01` permits public issuer metadata and
-verification keys. `EGRESS-OBS-01` permits bounded content-excluding health
-fields only when the monitoring endpoint is inside the declared boundary.
-Each schema sets byte, call, destination, DNS, TLS, proxy, redirect, retention,
-authentication-header, field-name, type, cardinality, sensitivity, provider,
-and unknown-field rules. Organization roots are exactly 32 bytes. Identity
-responses are capped at 1 MiB and 100 public keys. Observability events are
-capped at 64 KiB and prohibit free text and content-derived labels. KMS
-context must not contain secrets. A user export is not "non-content egress";
-it is a separate governed operation.
+There are five exact egress schemas. `EGRESS-AWS-KMS-01`,
+`EGRESS-GCP-KMS-01`, and `EGRESS-AZURE-KMS-01` define the actual method,
+service path, query parameters, header allowlist, request fields, conditional
+rules, and response fields for each provider. `EGRESS-IDP-01` permits public
+issuer metadata and verification keys. `EGRESS-OBS-01` permits bounded
+content-excluding health fields only when the monitoring endpoint is inside
+the declared boundary.
+
+Each schema sets request and response bytes, calls, destinations, DNS, TLS,
+proxy, redirects, retention, field types, cardinalities, sensitivity,
+provider-specific limits, and unknown-field handling. Organization roots are
+exactly 32 bytes. AWS uses `Encrypt` or `Decrypt` with
+`SYMMETRIC_DEFAULT` and exact encryption context. GCP uses `rawEncrypt` or
+`rawDecrypt` against one exact CryptoKeyVersion with AAD and CRC checks. Azure
+uses versioned `wrapkey` or `unwrapkey` with `RSA-OAEP-256` and a separately
+authenticated binding package. Identity responses are capped at 1 MiB and 100
+public keys. Observability events are capped at 64 KiB and prohibit free text
+and content-derived labels. A user export is not "non-content egress"; it is a
+separate governed operation.
 
 An operator client counts as inside the boundary only when the organization
 controls the endpoint, path, proxy, DNS, and storage. Delivery to an

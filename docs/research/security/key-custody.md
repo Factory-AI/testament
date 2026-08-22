@@ -31,6 +31,15 @@ that API. Trace plaintext and payload DEKs do not cross this boundary.
 | Azure Key Vault | RSA-OAEP-256 wrap/unwrap with versioned RSA key | application-verified binding package | contract cases specified; no implementation or real E2E yet |
 | Development | ephemeral or explicit local file provider | same logical context | refused in production |
 
+The provider contracts are not a shared weak abstraction. AWS uses one
+regional KMS endpoint, canonical key ARN, SigV4 service and region, explicit
+target, `SYMMETRIC_DEFAULT`, and exact encryption context. GCP pins one
+CryptoKeyVersion and requires AAD and CRC verification on `rawEncrypt` and
+`rawDecrypt`. Azure pins vault host, key name, exact version, API version, and
+`RSA-OAEP-256` for `wrapkey` and `unwrapkey`. Each record denies unlisted
+headers, request fields, response fields, methods, paths, query parameters,
+algorithms, and fallback.
+
 Runtime identities may use only the root operations required by their role.
 They cannot create, administer, disable, schedule deletion, or purge cloud
 keys. There is no provider fallback.

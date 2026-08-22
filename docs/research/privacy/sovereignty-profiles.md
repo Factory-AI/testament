@@ -40,6 +40,11 @@ are critical-keying-material egress, not trace-content egress. A deployment
 that requires no key material to cross an external provider must use an
 approved local custody design.
 
+The machine contract does not hide this behind a generic SDK call. It has
+separate AWS, GCP, and Azure method, path, header, request, response, binding,
+size, and failure rules. Unknown provider fields, headers, query parameters,
+redirects, algorithms, or versions are denied.
+
 The model also separates three analyzer trust tiers. Trusted built-ins run in
 a role process with inventoried capabilities. Extensions run in WASM or a
 subprocess behind bounded handles and get no ambient capability. External
