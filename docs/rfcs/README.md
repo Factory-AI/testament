@@ -3,6 +3,33 @@
 RFCs propose governance, normative contracts, compatibility rules, and
 cross-cutting designs. An RFC is not accepted merely because a file exists.
 
+## Trust-plane protocol drafts
+
+RFC-0003 through RFC-0014 are proposed normative contracts. They are
+reviewable, but they are not accepted and must not be treated as production
+authority. Each record separates its normative contract from informative
+rationale and records stable open issues in `index.json`.
+
+| Area | RFC | Version | Status |
+| --- | --- | --- | --- |
+| Raw capture | [RFC-0003](0003-raw-capture.md) | 0.1.0 | proposed |
+| Evidence graph | [RFC-0004](0004-evidence-graph.md) | 0.1.0 | proposed |
+| Artifacts | [RFC-0005](0005-artifacts.md) | 0.1.0 | proposed |
+| Findings | [RFC-0006](0006-findings.md) | 0.1.0 | proposed |
+| Analyzer runs | [RFC-0007](0007-analyzer-runs.md) | 0.1.0 | proposed |
+| Enforcement hooks | [RFC-0008](0008-enforcement-hooks.md) | 0.1.0 | proposed |
+| Policy decisions | [RFC-0009](0009-policy-decisions.md) | 0.1.0 | proposed |
+| Signed receipts | [RFC-0010](0010-signed-receipts.md) | 0.1.0 | proposed |
+| Audit checkpoints | [RFC-0011](0011-audit-checkpoints.md) | 0.1.0 | proposed |
+| Extension namespaces | [RFC-0012](0012-extension-namespaces.md) | 0.1.0 | proposed |
+| Versioning | [RFC-0013](0013-versioning.md) | 0.1.0 | proposed |
+| Conformance profiles | [RFC-0014](0014-conformance-profiles.md) | 0.1.0 | proposed |
+
+The machine-readable index is authoritative for lifecycle status, version,
+open-issue IDs, compatibility impact, digest, research deliverable ID, and
+supersession. Proposed requirements cannot feed certification until the
+applicable RFC and normative fixtures are accepted through governance.
+
 ## Start an RFC
 
 1. Copy `TEMPLATE.md` to the next unused `NNNN-short-name.md`.

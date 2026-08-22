@@ -19,6 +19,7 @@ CRITERIA = ["VAL-READY-006", "VAL-READY-007"]
 TRACE_CRITERION = "VAL-READY-008"
 ABUSE_CRITERION = "VAL-READY-009"
 THREAT_PRIVACY_CRITERION = "VAL-READY-010"
+PROTOCOL_CRITERION = "VAL-READY-011"
 STATES = {"draft", "in-review", "accepted", "blocked", "superseded"}
 SEARCH_CLASSES = {
     "trademark",
@@ -29,6 +30,19 @@ SEARCH_CLASSES = {
     "confusing-similarity",
 }
 PUBLIC_FILES = {
+    "docs/rfcs/0003-raw-capture.md",
+    "docs/rfcs/0004-evidence-graph.md",
+    "docs/rfcs/0005-artifacts.md",
+    "docs/rfcs/0006-findings.md",
+    "docs/rfcs/0007-analyzer-runs.md",
+    "docs/rfcs/0008-enforcement-hooks.md",
+    "docs/rfcs/0009-policy-decisions.md",
+    "docs/rfcs/0010-signed-receipts.md",
+    "docs/rfcs/0011-audit-checkpoints.md",
+    "docs/rfcs/0012-extension-namespaces.md",
+    "docs/rfcs/0013-versioning.md",
+    "docs/rfcs/0014-conformance-profiles.md",
+    "docs/rfcs/index.json",
     "docs/research/privacy/data-inventory.md",
     "docs/research/privacy/no-content-egress.md",
     "docs/research/privacy/retention-deletion.md",
@@ -223,6 +237,28 @@ THREAT_PRIVACY_DELIVERABLES = {
     "RES-STUDY-RETENTION-DELETION-001",
     "RES-STUDY-KEY-CUSTODY-001",
 }
+PROTOCOL_RFCS = {
+    "raw-capture": ("RFC-0003", "RES-RFC-RAW-CAPTURE-001"),
+    "evidence-graph": ("RFC-0004", "RES-RFC-EVIDENCE-GRAPH-001"),
+    "artifacts": ("RFC-0005", "RES-RFC-ARTIFACTS-001"),
+    "findings": ("RFC-0006", "RES-RFC-FINDINGS-001"),
+    "analyzer-runs": ("RFC-0007", "RES-RFC-ANALYZER-RUNS-001"),
+    "enforcement-hooks": ("RFC-0008", "RES-RFC-ENFORCEMENT-HOOKS-001"),
+    "policy-decisions": ("RFC-0009", "RES-RFC-POLICY-DECISIONS-001"),
+    "signed-receipts": ("RFC-0010", "RES-RFC-SIGNED-RECEIPTS-001"),
+    "audit-checkpoints": ("RFC-0011", "RES-RFC-AUDIT-CHECKPOINTS-001"),
+    "extension-namespaces": ("RFC-0012", "RES-RFC-EXTENSION-NAMESPACES-001"),
+    "versioning": ("RFC-0013", "RES-RFC-VERSIONING-001"),
+    "conformance-profiles": ("RFC-0014", "RES-RFC-CONFORMANCE-PROFILES-001"),
+}
+COMPATIBILITY_DIMENSIONS = {
+    "wire",
+    "schema",
+    "behavioral",
+    "operational",
+    "historical",
+}
+PROTOCOL_RFC_MAX_BYTES = 512 * 1024
 REQUIRED_DELIVERABLES = {
     "RES-STUDY-NAMING-001": "study",
     "RES-STUDY-TRACE-LANDSCAPE-001": "study",
@@ -1435,6 +1471,220 @@ def repository_locator_path(locator: str) -> str:
     return locator.split("#", 1)[0]
 
 
+def validate_protocol_rfcs(
+    root: Path,
+    manifest: dict[str, Any],
+    problems: list[dict[str, str]],
+) -> None:
+    relative = "docs/rfcs/index.json"
+    index = load_object(root, relative, problems, PROTOCOL_CRITERION)
+    records = index.get("records")
+    if not isinstance(records, list):
+        records = []
+    by_id = {
+        record["id"]: record
+        for record in records
+        if isinstance(record, dict) and isinstance(record.get("id"), str)
+    }
+    manifest_records = manifest.get("deliverables")
+    if not isinstance(manifest_records, list):
+        manifest_records = []
+    manifest_by_id = {
+        record["id"]: record
+        for record in manifest_records
+        if isinstance(record, dict) and isinstance(record.get("id"), str)
+    }
+    expected_ids = {rfc_id for rfc_id, _ in PROTOCOL_RFCS.values()}
+    protocol_records = {
+        record_id: record
+        for record_id, record in by_id.items()
+        if record.get("protocol_area") is not None
+    }
+    missing_ids = sorted(expected_ids - set(protocol_records))
+    extra_ids = sorted(set(protocol_records) - expected_ids)
+    if missing_ids:
+        problems.append(
+            issue(
+                PROTOCOL_CRITERION,
+                "missing_protocol_rfc",
+                relative,
+                ", ".join(missing_ids),
+                "add every required trust-plane protocol RFC",
+            )
+        )
+    if extra_ids:
+        problems.append(
+            issue(
+                PROTOCOL_CRITERION,
+                "unknown_protocol_rfc",
+                relative,
+                ", ".join(extra_ids),
+                "register protocol scope before adding an indexed protocol RFC",
+            )
+        )
+
+    for area, (rfc_id, research_id) in PROTOCOL_RFCS.items():
+        record = by_id.get(rfc_id)
+        if not isinstance(record, dict):
+            continue
+        status = record.get("status")
+        if (
+            record.get("protocol_area") != area
+            or record.get("research_id") != research_id
+            or record.get("normative") is not True
+            or not isinstance(status, str)
+            or status not in {"proposed", "in-review"}
+            or not SEMVER_PATTERN.fullmatch(str(record.get("version", "")))
+        ):
+            problems.append(
+                issue(
+                    PROTOCOL_CRITERION,
+                    "invalid_protocol_rfc_metadata",
+                    relative,
+                    rfc_id,
+                    "repair protocol area, research ID, normative status, lifecycle status, and version",
+                )
+            )
+        open_issues = record.get("open_issues")
+        if (
+            not isinstance(open_issues, list)
+            or not open_issues
+            or any(
+                not isinstance(item, str)
+                or not re.fullmatch(rf"{rfc_id}-OI-\d{{2}}", item)
+                for item in open_issues
+            )
+        ):
+            problems.append(
+                issue(
+                    PROTOCOL_CRITERION,
+                    "missing_protocol_open_issues",
+                    relative,
+                    rfc_id,
+                    "record at least one stable open-issue ID",
+                )
+            )
+            open_issues = []
+        impact = record.get("compatibility_impact")
+        if (
+            not isinstance(impact, dict)
+            or set(impact) != COMPATIBILITY_DIMENSIONS
+            or any(not isinstance(value, str) or not value.strip() for value in impact.values())
+        ):
+            problems.append(
+                issue(
+                    PROTOCOL_CRITERION,
+                    "incomplete_protocol_compatibility",
+                    relative,
+                    rfc_id,
+                    "state wire, schema, behavioral, operational, and historical implications",
+                )
+            )
+        manifest_record = manifest_by_id.get(research_id)
+        expected_state = "in-review" if status == "in-review" else "draft"
+        manifest_artifact = (
+            manifest_record.get("artifact")
+            if isinstance(manifest_record, dict)
+            else None
+        )
+        expected_path = (
+            manifest_artifact.get("path")
+            if isinstance(manifest_artifact, dict)
+            else None
+        )
+        path_value = record.get("path")
+        if (
+            not isinstance(manifest_record, dict)
+            or expected_path != path_value
+            or manifest_record.get("version") != record.get("version")
+            or manifest_record.get("state") != expected_state
+        ):
+            problems.append(
+                issue(
+                    PROTOCOL_CRITERION,
+                    "protocol_manifest_drift",
+                    "policy/research-manifest.json",
+                    rfc_id,
+                    "reconcile protocol path, version, and lifecycle state with the research manifest",
+                )
+            )
+        if (
+            not isinstance(path_value, str)
+            or Path(path_value).is_absolute()
+            or Path(path_value).parent != Path("docs/rfcs")
+            or ".." in Path(path_value).parts
+            or path_value != expected_path
+        ):
+            problems.append(
+                issue(
+                    PROTOCOL_CRITERION,
+                    "invalid_protocol_rfc_path",
+                    relative,
+                    rfc_id,
+                    "use the bounded RFC path registered by the research manifest",
+                )
+            )
+            continue
+        path = root / path_value
+        if not path.is_file():
+            continue
+        if path.is_symlink():
+            problems.append(
+                issue(
+                    PROTOCOL_CRITERION,
+                    "symlink_protocol_rfc",
+                    path_value,
+                    rfc_id,
+                    "replace the symlink with a regular reviewable RFC file",
+                )
+            )
+            continue
+        if path.stat().st_size > PROTOCOL_RFC_MAX_BYTES:
+            problems.append(
+                issue(
+                    PROTOCOL_CRITERION,
+                    "protocol_rfc_too_large",
+                    path_value,
+                    rfc_id,
+                    "split supporting material from the bounded RFC record",
+                )
+            )
+            continue
+        try:
+            text = path.read_text(encoding="utf-8")
+        except (OSError, UnicodeDecodeError) as error:
+            problems.append(
+                issue(
+                    PROTOCOL_CRITERION,
+                    "unreadable_protocol_rfc",
+                    path_value,
+                    str(error),
+                    "restore a bounded UTF-8 RFC file",
+                )
+            )
+            continue
+        required_text = {
+            "Normative status: Draft",
+            "## Normative contract",
+            "## Informative rationale",
+            "## Open issues",
+            "MUST",
+            "MUST NOT",
+        }
+        missing_text = sorted(value for value in required_text if value not in text)
+        missing_issue_ids = sorted(issue_id for issue_id in open_issues if issue_id not in text)
+        if missing_text or missing_issue_ids:
+            problems.append(
+                issue(
+                    PROTOCOL_CRITERION,
+                    "incomplete_normative_protocol",
+                    path_value,
+                    ", ".join(missing_text + missing_issue_ids),
+                    "complete the separated normative contract, rationale, and indexed open issues",
+                )
+            )
+
+
 def validate_manifest(root: Path, problems: list[dict[str, str]]) -> dict[str, Any]:
     relative = "policy/research-manifest.json"
     manifest = load_object(root, relative, problems, CRITERIA[1])
@@ -1826,10 +2076,11 @@ def validate(root: Path) -> list[dict[str, str]]:
         problems,
     )
     validate_naming(root, problems)
-    validate_manifest(root, problems)
+    manifest = validate_manifest(root, problems)
     validate_trace_landscape(root, problems)
     validate_abuse_research(root, problems)
     validate_threat_privacy_research(root, problems)
+    validate_protocol_rfcs(root, manifest, problems)
     return problems
 
 
@@ -1884,7 +2135,12 @@ def report(root: Path) -> dict[str, Any]:
     return {
         "schema_version": "1.0.0",
         "criteria": CRITERIA
-        + [TRACE_CRITERION, ABUSE_CRITERION, THREAT_PRIVACY_CRITERION],
+        + [
+            TRACE_CRITERION,
+            ABUSE_CRITERION,
+            THREAT_PRIVACY_CRITERION,
+            PROTOCOL_CRITERION,
+        ],
         "status": "pass" if not problems else "fail",
         "schema_report": {
             "draft": "2020-12",
@@ -1901,6 +2157,19 @@ def report(root: Path) -> dict[str, Any]:
             "required": len(REQUIRED_DELIVERABLES),
             "registered": len(records) if isinstance(records, list) else 0,
             "missing": sorted(set(REQUIRED_DELIVERABLES) - {record.get("id") for record in records if isinstance(record, dict)}),
+            "protocol_areas_required": len(PROTOCOL_RFCS),
+            "protocol_areas_indexed": sum(
+                1
+                for record in load_object(
+                    root,
+                    "docs/rfcs/index.json",
+                    [],
+                    PROTOCOL_CRITERION,
+                ).get("records", [])
+                if isinstance(record, dict)
+                and isinstance(record.get("protocol_area"), str)
+                and record.get("protocol_area") in PROTOCOL_RFCS
+            ),
         },
         "resolved_link_report": {
             "repository_references": repository_links,

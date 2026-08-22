@@ -423,6 +423,74 @@ class ResearchRegistryTest(unittest.TestCase):
         path.write_text(json.dumps(research), encoding="utf-8")
         self.assertIn("invalid_provider_kms_wire_contract", self.codes(root))
 
+    def test_protocol_index_requires_every_trust_plane_area(self) -> None:
+        root = self.copy_repository()
+        path = root / "docs/rfcs/index.json"
+        index = json.loads(path.read_text(encoding="utf-8"))
+        index["records"] = [
+            record for record in index["records"] if record["id"] != "RFC-0003"
+        ]
+        path.write_text(json.dumps(index), encoding="utf-8")
+        self.assertIn("missing_protocol_rfc", self.codes(root))
+
+    def test_protocol_index_requires_open_issues_and_compatibility(self) -> None:
+        root = self.copy_repository()
+        path = root / "docs/rfcs/index.json"
+        index = json.loads(path.read_text(encoding="utf-8"))
+        record = next(
+            item for item in index["records"] if item.get("protocol_area") == "raw-capture"
+        )
+        record["open_issues"] = []
+        record["compatibility_impact"].pop("historical")
+        path.write_text(json.dumps(index), encoding="utf-8")
+        codes = self.codes(root)
+        self.assertIn("missing_protocol_open_issues", codes)
+        self.assertIn("incomplete_protocol_compatibility", codes)
+
+    def test_protocol_normative_and_informative_sections_are_separate(self) -> None:
+        root = self.copy_repository()
+        path = root / "docs/rfcs/0003-raw-capture.md"
+        text = path.read_text(encoding="utf-8")
+        path.write_text(
+            text.replace("## Normative contract", "## Contract"),
+            encoding="utf-8",
+        )
+        self.assertIn("incomplete_normative_protocol", self.codes(root))
+
+    def test_protocol_index_and_research_manifest_must_agree(self) -> None:
+        root = self.copy_repository()
+        self.mutate_manifest(
+            root,
+            lambda value: next(
+                item
+                for item in value["deliverables"]
+                if item["id"] == "RES-RFC-RAW-CAPTURE-001"
+            ).update(version="0.2.0"),
+        )
+        self.assertIn("protocol_manifest_drift", self.codes(root))
+
+    def test_protocol_index_path_cannot_escape_rfc_directory(self) -> None:
+        root = self.copy_repository()
+        path = root / "docs/rfcs/index.json"
+        index = json.loads(path.read_text(encoding="utf-8"))
+        record = next(
+            item for item in index["records"] if item.get("protocol_area") == "raw-capture"
+        )
+        record["path"] = "/etc/passwd"
+        path.write_text(json.dumps(index), encoding="utf-8")
+        self.assertIn("invalid_protocol_rfc_path", self.codes(root))
+
+    def test_malformed_protocol_status_reports_failure_without_crashing(self) -> None:
+        root = self.copy_repository()
+        path = root / "docs/rfcs/index.json"
+        index = json.loads(path.read_text(encoding="utf-8"))
+        record = next(
+            item for item in index["records"] if item.get("protocol_area") == "raw-capture"
+        )
+        record["status"] = []
+        path.write_text(json.dumps(index), encoding="utf-8")
+        self.assertIn("invalid_protocol_rfc_metadata", self.codes(root))
+
 
 if __name__ == "__main__":
     unittest.main()
