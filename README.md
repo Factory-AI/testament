@@ -9,8 +9,11 @@ OpenTelemetry, OpenInference, provider events, and framework traces are
 adapters rather than the canonical record.
 
 The project is in its research and standards foundation milestone. Production
-implementation is blocked until the research exit criteria, independent
-reviews, formal readiness report, and external research seal pass.
+implementation remains blocked until the immutable research candidate and
+evidence manifest pass objective research exits, a formal Factory Level 5
+report evaluates that candidate, and ordinary technical/readiness validators
+pass. No research seal exists. Independent human review was not completed
+in-mission and remains a non-blocking post-mission follow-up.
 
 ## Quick start
 
@@ -61,6 +64,7 @@ PostgreSQL is needed. The complete command and recovery map is in
 - [Machine-readable repository contracts](policy/repository-contracts.json)
 - [Generated contract index](generated/contract-index.json)
 - [Pinned environments and services](policy/toolchain.json)
+- [Remote contribution, protection, CI, and maintenance](docs/remote-workflows.md)
 
 ## Verify this foundation
 

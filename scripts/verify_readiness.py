@@ -364,6 +364,7 @@ def validate(root: Path) -> list[dict[str, str]]:
         "schemas",
         "conformance",
         "readiness",
+        "remote-workflows",
     }
     contract_ids = [
         entry.get("id") for entry in entries if isinstance(entry, dict)

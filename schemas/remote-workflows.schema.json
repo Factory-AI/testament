@@ -1,0 +1,40 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://testament.dev/schemas/remote-workflows/1.0.0",
+  "title": "Testament remote workflow contract",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "schema_version",
+    "feature_id",
+    "repository",
+    "owner",
+    "validation_ids",
+    "protected_branch",
+    "required_checks",
+    "protection",
+    "publication_scope",
+    "maintenance_records",
+    "emergency_bypass"
+  ],
+  "properties": {
+    "schema_version": {"const": "1.0.0"},
+    "feature_id": {"const": "remote-workflows-protection-and-maintenance"},
+    "repository": {"const": "Factory-AI/testament"},
+    "protected_branch": {"const": "main"},
+    "validation_ids": {
+      "const": [
+        "VAL-READY-025",
+        "VAL-READY-026",
+        "VAL-READY-027",
+        "VAL-READY-028"
+      ]
+    },
+    "required_checks": {
+      "type": "array",
+      "minItems": 5,
+      "uniqueItems": true,
+      "items": {"type": "string"}
+    }
+  }
+}

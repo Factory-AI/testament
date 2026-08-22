@@ -1,0 +1,118 @@
+{
+  "schema_version": "1.0.0",
+  "feature_id": "remote-workflows-protection-and-maintenance",
+  "repository": "Factory-AI/testament",
+  "owner": "Eno Reyes (@enoreyes)",
+  "validation_ids": [
+    "VAL-READY-025",
+    "VAL-READY-026",
+    "VAL-READY-027",
+    "VAL-READY-028"
+  ],
+  "protected_branch": "main",
+  "history_boundary": "30abb8371ceeb707969346ebe491f60389f3d4a2",
+  "required_checks": [
+    "Metadata / validate",
+    "DCO / signoff",
+    "Quality / gates",
+    "Security / codeql",
+    "Security / dependency-review"
+  ],
+  "issue_fields": [
+    "problem",
+    "scope",
+    "non_goals",
+    "acceptance",
+    "validation",
+    "dependencies",
+    "risk",
+    "rollout",
+    "observability",
+    "documentation",
+    "compatibility",
+    "generated_artifacts",
+    "agent_authorship"
+  ],
+  "pull_request_fields": [
+    "problem",
+    "scope",
+    "non_goals",
+    "acceptance",
+    "validation",
+    "dependencies",
+    "risk",
+    "rollout",
+    "observability",
+    "documentation",
+    "compatibility",
+    "generated_artifacts",
+    "agent_authorship"
+  ],
+  "protection": {
+    "required_pull_request": true,
+    "required_approving_reviews": 1,
+    "require_code_owner_review": true,
+    "dismiss_stale_reviews": true,
+    "require_last_push_approval": true,
+    "require_conversation_resolution": true,
+    "block_force_pushes": true,
+    "block_deletions": true,
+    "required_status_checks_strict": true
+  },
+  "publication_scope": {
+    "root": ".",
+    "entry_point": "make verify-publication",
+    "escape_policy": "reject",
+    "unrelated_repository_policy": "ignore",
+    "testament_findings_policy": "block"
+  },
+  "publication_findings_allowlist": [
+    {
+      "code": "aws_access_key",
+      "path": "tests/test_corpus.py",
+      "line": 171,
+      "match_sha256": "1a5d44a2dca19669d72edf4c4f1c27c4c1ca4b4408fbb17f6ce4ad452d78ddb3",
+      "rationale": "Exact AWS documentation EXAMPLE canary used only to prove the corpus secret scanner rejects a mutated fixture.",
+      "expires_at": "2026-11-21"
+    }
+  ],
+  "maintenance_records": [
+    {
+      "key": "trademark-review",
+      "owner": "enoreyes",
+      "deduplication_marker": "testament-maintenance:trademark-review",
+      "freshness": "weekly"
+    },
+    {
+      "key": "single-maintainer-bootstrap",
+      "owner": "enoreyes",
+      "deduplication_marker": "testament-maintenance:single-maintainer-bootstrap",
+      "expires_at": "2026-09-30",
+      "freshness": "weekly"
+    },
+    {
+      "key": "documentation-freshness",
+      "owner": "enoreyes",
+      "deduplication_marker": "testament-maintenance:documentation-freshness",
+      "freshness": "weekly"
+    },
+    {
+      "key": "runtime-error",
+      "owner": "enoreyes",
+      "deduplication_marker": "testament-maintenance:runtime-error",
+      "closure_policy": "passing protected Quality run"
+    }
+  ],
+  "emergency_bypass": {
+    "standing_bypass": false,
+    "actor": "repository administrator",
+    "scope": "pull request only",
+    "requirements": [
+      "public reason and audit record",
+      "explicit start and expiry",
+      "normal required checks complete",
+      "temporary actor entry removed immediately after use",
+      "never force-push or delete main"
+    ]
+  }
+}

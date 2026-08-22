@@ -18,7 +18,7 @@
       "human_path": "docs/workflows.md#workflow-index",
       "id": "commands",
       "machine_path": "Makefile",
-      "machine_sha256": "30af36c5ce5611a914639980a3097640f6aa76f21213beeb3138084108d78d49",
+      "machine_sha256": "2670010820924988d6c5adc91940d484d29dcfef07eab5fc9dfdcc89460f072b",
       "version": "1.0.0"
     },
     {
@@ -36,10 +36,17 @@
       "version": "1.0.0"
     },
     {
+      "human_path": "docs/remote-workflows.md",
+      "id": "remote-workflows",
+      "machine_path": "policy/remote-workflows.json",
+      "machine_sha256": "8f2bec6dea13b55c15187a8d31ae2241c24ebd6775681232bee905003b7153bc",
+      "version": "1.0.0"
+    },
+    {
       "human_path": "docs/workflows.md#contracts-and-generation",
       "id": "schemas",
       "machine_path": "schemas/repository-contracts.schema.json",
-      "machine_sha256": "bee8ecfcc332ab35703acff842b8f467bcbec7f3907bd72c23facfc7f875cf10",
+      "machine_sha256": "9489b35400ae9440c5d0e63d2849adba4298561b888fcc5076f5c6b3f758986c",
       "version": "2020-12"
     },
     {
@@ -59,5 +66,5 @@
   ],
   "schema_version": "1.0.0",
   "source": "policy/repository-contracts.json",
-  "source_sha256": "d1dcc8ebcbcd6e3bcf79bd4d6920b473a85d4eaacee32e8c0971fef7e5040b67"
+  "source_sha256": "fc446ed22796878673892831366db4a2a31647290d6c866220aa610cdc5ed4d1"
 }

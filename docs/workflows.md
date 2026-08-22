@@ -14,7 +14,7 @@ Machine registry: [`policy/repository-contracts.json`](../policy/repository-cont
 | Contract and fixture generation | `make generate` | Generation is deterministic and atomic |
 | Migration | `make migrate` | Reports not applicable until migration state exists |
 | Build | `make build` | Read-only validation of the research foundation |
-| Release | `make release` | Intentionally blocked until the research seal exists |
+| Release | `make release` | Intentionally blocked until objective research exits, formal Level 5, and ordinary gates pass |
 | Rollback | `make rollback` | Intentionally blocked until a release exists |
 | Doctor and recovery | `make doctor` | Rechecks setup and returns a machine-readable status |
 | Incident response | `make incident` | Reports no runtime incident state in this milestone |
@@ -81,5 +81,6 @@ ad hoc repair. Run the remediation exactly, then rerun the same entry point.
 6. Confirm the unrelated-file digest or status is unchanged.
 
 Release and rollback remain deliberate structured failures in the research
-milestone. Do not bypass them with tags, archives, ad hoc scripts, or remote
-actions.
+milestone. No research seal exists or is required. Do not bypass the objective
+research exits, formal Level 5 result, ordinary gates, or these entry points
+with tags, archives, ad hoc scripts, or remote actions.

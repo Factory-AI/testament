@@ -50,6 +50,12 @@
       "version": "1.0.0",
       "machine_path": "policy/readiness.json",
       "human_path": "docs/agent-guide.md"
+    },
+    {
+      "id": "remote-workflows",
+      "version": "1.0.0",
+      "machine_path": "policy/remote-workflows.json",
+      "human_path": "docs/remote-workflows.md"
     }
   ],
   "commands": [
