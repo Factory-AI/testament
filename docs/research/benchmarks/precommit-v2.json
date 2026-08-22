@@ -1,0 +1,325 @@
+{
+  "schema_version": "1.0.0",
+  "feature_id": "prototype-v2-precommit-and-workload-resource-accounting",
+  "validation_ids": [
+    "VAL-READY-014"
+  ],
+  "version": "2.0.0",
+  "status": "committed-premeasurement",
+  "prepared_at": "2026-08-22",
+  "supersedes": {
+    "path": "docs/research/benchmarks/precommit.json",
+    "version": "1.0.0",
+    "commit": "cfdf43bb49f3802137dc0ae887314ab7a8a01f58",
+    "canonical_sha256": "5e12d9e04c0852c87c7b86a3e832e61f72e5e136af0792b29d4c7c3811432d76",
+    "reason": "Remediate independent-review findings F-001, F-002, and F-003 without rewriting the canonical plan or any version 1 raw result."
+  },
+  "preservation": {
+    "version_1_plan_immutable": true,
+    "version_1_raw_results_immutable": true,
+    "version_1_reproduction_immutable": true,
+    "result_namespace": "version 2 results are written only to an explicit output directory and never to a version 1 result path"
+  },
+  "measurement_gate": {
+    "plan_must_be_committed_before_measurement": true,
+    "plan_commit_must_resolve": true,
+    "tested_implementation_must_descend_from_plan_commit": true,
+    "v2_result_capture_before_plan_commit": "forbidden",
+    "post_result_budget_or_tolerance_widening": "forbidden; a failed sample remains failed"
+  },
+  "environment": {
+    "toolchain_policy": "policy/toolchain.json",
+    "repository_setup": "make setup",
+    "postgres_service": "postgres",
+    "postgres_major": 17,
+    "postgres_port": 5440,
+    "postgres_lifecycle": "each PostgreSQL sample runs the mission services.yaml postgres start, healthcheck, and stop commands",
+    "machine_class": "developer-workstation-12cpu-18gib",
+    "concurrency": 1,
+    "network": "not required; analyzer isolation records that plain subprocesses do not prove network denial"
+  },
+  "measurement_order": [
+    "commit this successor plan before capturing any version 2 benchmark result",
+    "record the successor plan commit without changing any version 1 artifact, numeric budget, or tolerance",
+    "implement and test the F-001 accounting observer",
+    "implement F-002 and F-003 on commits descending from the successor plan commit",
+    "run each local sample in a fresh worker process group under an external descendant observer",
+    "for each PostgreSQL sample, start and healthcheck through services.yaml, observe the postgres container cgroup, and stop through services.yaml",
+    "write version 2 results only to an explicit non-version-1 output directory",
+    "verify and review raw version 2 results; preserve failures without widening budgets or tolerances"
+  ],
+  "remediations": [
+    {
+      "finding_id": "F-001",
+      "method": "Replace coordinator resource.getrusage(RUSAGE_SELF) accounting with an external per-sample observer.",
+      "local_samples": {
+        "isolation": "launch one fresh Python worker with start_new_session=true, making the worker the leader of a new process group",
+        "source": "external ps process-table snapshots",
+        "scope": "aggregate resident bytes for the worker and the recursively discovered descendant closure on every snapshot",
+        "descendants": "include descendants even if they change process group; this includes Go compiler/runtime children and analyzer subprocesses",
+        "coordinator": "exclude the long-lived coordinator because it is neither the worker nor a descendant",
+        "metric": "maximum over time of the sum of resident bytes for all live members of the worker descendant closure",
+        "hard_limit": "terminate only the fresh worker process group if aggregate resident bytes exceed the unchanged case RSS budget"
+      },
+      "postgres_samples": {
+        "isolation": "start, healthcheck, and stop the postgres service for every sample through the supplied services.yaml lifecycle",
+        "source": "Docker container statistics backed by the postgres container cgroup",
+        "scope": "postgres container cgroup memory usage while the sample worker executes",
+        "target": "the exact container ID returned for the services.yaml postgres service",
+        "metric": "maximum observed postgres container cgroup resident-memory usage during the sample",
+        "hard_limit": "mark the sample failed if cgroup usage exceeds the unchanged case RSS budget; always stop through services.yaml"
+      },
+      "required_sample_fields": [
+        "accounting_version",
+        "scope",
+        "metric",
+        "source",
+        "target",
+        "isolation",
+        "descendants_included",
+        "peak_rss_bytes",
+        "budget_bytes",
+        "hard_limit_bytes",
+        "within_budget"
+      ],
+      "recomputation": "within_budget is valid only when it equals peak_rss_bytes <= budget_bytes and budget_bytes equals hard_limit_bytes; parent-rusage, missing-source, non-isolated, or asserted-only accounting is rejected"
+    },
+    {
+      "finding_id": "F-002",
+      "method": "Capture payload ciphertext independently immediately before and after rewrap.",
+      "precommit": {
+        "before_capture": "persist and read payload ciphertext through a distinct pre-rewrap capture",
+        "after_capture": "read payload ciphertext again only after the new wrapped DEK and checkpoint exist",
+        "required_evidence": [
+          "independent capture method and identity",
+          "pre/post payload byte counts and SHA-256 digests",
+          "old/new wrapped-DEK SHA-256 digests",
+          "generations [1,2]",
+          "expected resume checkpoint"
+        ],
+        "acceptance": "recompute equal pre/post payload digests and lengths, unequal wrapped-DEK digests, exact generations, and checkpoint; never trust asserted unchanged booleans"
+      }
+    },
+    {
+      "finding_id": "F-003",
+      "method": "Replace explicit ROLLBACK with an observed PostgreSQL backend disconnect.",
+      "precommit": {
+        "fault": "a unique client session inserts faulted decision and audit rows, emits an in-transaction readiness marker, then blocks without issuing ROLLBACK",
+        "injection": "a separate control connection terminates that exact backend",
+        "verification": "a fresh connection waits for backend disappearance and verifies automatic rollback",
+        "required_evidence": [
+          "backend-termination fault type",
+          "active transaction before injection",
+          "readiness marker",
+          "acknowledged termination",
+          "lost client connection and nonzero client exit",
+          "backend disappearance",
+          "zero faulted or orphan rows"
+        ],
+        "limitations": "demonstrates backend-disconnect rollback only; process death, host crash, storage loss, WAL corruption, and fsync faults remain unproven"
+      }
+    }
+  ],
+  "tolerance_history": [],
+  "cases": [
+    {
+      "id": "giant-stream",
+      "inputs": [
+        "fixtures/research-corpus/giant.json",
+        "65536-byte read blocks"
+      ],
+      "sample_count": 3,
+      "budgets": {
+        "max_elapsed_ms": 10000,
+        "max_process_rss_bytes": 536870912
+      },
+      "tolerances": {
+        "digest_mismatch_count": 0,
+        "unbounded_read_count": 0
+      },
+      "comparison_method": "Compare incremental SHA-256 and byte count with an independent whole-file SHA-256.",
+      "acceptance_rule": "All samples use 65536-byte bounded reads, preserve byte count, match the independent digest, and remain within both unchanged resource budgets.",
+      "limitations": [
+        "The committed 2 MiB synthetic fixture is a bounded proof, not a 1 GiB release-load result."
+      ]
+    },
+    {
+      "id": "exact-byte",
+      "inputs": [
+        "malformed JSON",
+        "malformed JSONL",
+        "provider stream",
+        "empty",
+        "invalid UTF-8 and CRLF",
+        "all byte values"
+      ],
+      "sample_count": 3,
+      "budgets": {
+        "max_elapsed_ms": 10000,
+        "max_process_rss_bytes": 536870912
+      },
+      "tolerances": {
+        "byte_mismatch_count": 0
+      },
+      "comparison_method": "Write each source byte sequence to a new file and compare the exact readback bytes and aggregate SHA-256.",
+      "acceptance_rule": "Every one of at least six byte classes round-trips exactly in every sample within both unchanged resource budgets.",
+      "limitations": [
+        "This prototype tests filesystem custody, not HTTP transfer framing."
+      ]
+    },
+    {
+      "id": "compression-encryption",
+      "inputs": [
+        "fixtures/research-corpus/giant.json",
+        "Go standard-library zlib",
+        "Go crypto/aes AES-256-GCM"
+      ],
+      "sample_count": 3,
+      "budgets": {
+        "max_elapsed_ms": 10000,
+        "max_process_rss_bytes": 536870912
+      },
+      "tolerances": {
+        "integrity_false_accepts": 0,
+        "round_trip_mismatches": 0
+      },
+      "comparison_method": "Instrument compression output before AES-GCM, decrypt then decompress, compare source digest, and mutate the authentication tag.",
+      "acceptance_rule": "Every sample proves compression precedes AEAD, exact readback succeeds, a one-bit ciphertext mutation fails, and both unchanged resource budgets hold.",
+      "limitations": [
+        "The disposable deterministic nonce is safe only for this one-shot prototype and must not be copied into production."
+      ]
+    },
+    {
+      "id": "postgres-storage",
+      "inputs": [
+        "200 synthetic ciphertext rows",
+        "two monthly range partitions",
+        "one partition-prunable query"
+      ],
+      "sample_count": 3,
+      "budgets": {
+        "max_elapsed_ms": 15000,
+        "max_process_rss_bytes": 536870912
+      },
+      "tolerances": {
+        "row_count_delta": 0,
+        "unexpected_plaintext_columns": 0
+      },
+      "comparison_method": "Create disposable PostgreSQL 17 partitions, insert bytea-only synthetic ciphertext, compare row/partition counts and inspect pruning and schema columns.",
+      "acceptance_rule": "All samples observe PostgreSQL 17 on port 5440, 200 rows, two partitions, no content plaintext column, pruning evidence, and both unchanged resource budgets.",
+      "limitations": [
+        "The row count is a research proof, not production sizing guidance."
+      ]
+    },
+    {
+      "id": "blind-index",
+      "inputs": [
+        "one synthetic normalized value",
+        "two organizations",
+        "two fields",
+        "two search-root generations"
+      ],
+      "sample_count": 3,
+      "budgets": {
+        "max_elapsed_ms": 10000,
+        "max_process_rss_bytes": 536870912
+      },
+      "tolerances": {
+        "cross_scope_token_collisions": 0
+      },
+      "comparison_method": "Compare HMAC-SHA-256 equality tokens within and across organization, field, and generation scope.",
+      "acceptance_rule": "Same-scope equality matches; organization, field, and generation changes produce different fixed-length tokens within both unchanged resource budgets.",
+      "limitations": [
+        "Equality and frequency leakage within a scope remains and is explicitly recorded."
+      ]
+    },
+    {
+      "id": "key-rotation",
+      "inputs": [
+        "one synthetic payload DEK",
+        "old and new synthetic wrapping roots",
+        "one immutable payload ciphertext"
+      ],
+      "sample_count": 3,
+      "budgets": {
+        "max_elapsed_ms": 10000,
+        "max_process_rss_bytes": 536870912
+      },
+      "tolerances": {
+        "payload_ciphertext_changes": 0,
+        "source_digest_changes": 0
+      },
+      "comparison_method": "Independently capture payload ciphertext immediately before and after rewrap, then compare payload lengths/digests, old/new wrapped-DEK digests, generations, source identity, and checkpoint.",
+      "acceptance_rule": "Independently captured pre/post payload lengths and digests match, wrapped-DEK digests differ, generations and checkpoint match the precommit, and every sample stays within both unchanged resource budgets.",
+      "limitations": [
+        "No cloud KMS call is made; provider conformance remains later work."
+      ]
+    },
+    {
+      "id": "decision-durability",
+      "inputs": [
+        "one committed decision/audit/receipt transaction",
+        "one blocked in-transaction client terminated by a separate PostgreSQL control connection"
+      ],
+      "sample_count": 3,
+      "budgets": {
+        "max_elapsed_ms": 15000,
+        "max_process_rss_bytes": 536870912
+      },
+      "tolerances": {
+        "orphan_receipts": 0,
+        "faulted_rows": 0
+      },
+      "comparison_method": "Commit one complete triplet, terminate the exact backend of a second blocked in-transaction client without explicit rollback, then verify disappearance and automatic rollback from a fresh connection.",
+      "acceptance_rule": "Every sample has exactly one committed decision, audit, and receipt, acknowledged backend termination, a lost fault client with nonzero exit, backend disappearance, no faulted or orphaned row, PostgreSQL 17 on 5440, and both unchanged resource budgets.",
+      "limitations": [
+        "Only backend-disconnect rollback is demonstrated; process death, host crash, storage loss, WAL corruption, and fsync faults remain unproven."
+      ]
+    },
+    {
+      "id": "analyzer-isolation",
+      "inputs": [
+        "Python child process",
+        "sanitized environment",
+        "temporary working directory",
+        "CPU/address-space/file-descriptor/deadline bounds"
+      ],
+      "sample_count": 3,
+      "budgets": {
+        "max_elapsed_ms": 10000,
+        "max_process_rss_bytes": 536870912
+      },
+      "tolerances": {
+        "ambient_secret_variables": 0,
+        "deadline_overruns": 0
+      },
+      "comparison_method": "Inspect child-visible environment, directory, descriptor limit, output size, and timeout while explicitly testing whether network denial is proven.",
+      "acceptance_rule": "Resource and ambient-state bounds hold, the external observer includes analyzer descendants, and acceptance requires the honest conclusion that a plain subprocess does not prove network denial.",
+      "limitations": [
+        "This negative result rejects plain subprocess isolation as the complete hostile-extension boundary."
+      ]
+    },
+    {
+      "id": "offline-replay",
+      "inputs": [
+        "three ordered synthetic events",
+        "two identical recorded replays",
+        "one late event and superseding replay"
+      ],
+      "sample_count": 3,
+      "budgets": {
+        "max_elapsed_ms": 15000,
+        "max_process_rss_bytes": 536870912
+      },
+      "tolerances": {
+        "recorded_replay_digest_delta": 0,
+        "lost_history_rows": 0
+      },
+      "comparison_method": "Digest ordered immutable snapshots in PostgreSQL, repeat the pinned snapshot, add a late event, and append a superseding run.",
+      "acceptance_rule": "Recorded replay digests match, late replay differs, all three runs remain, PostgreSQL 17 on 5440, and both unchanged resource budgets hold.",
+      "limitations": [
+        "Tenant fairness and crash recovery need larger production-stage fault tests."
+      ]
+    }
+  ]
+}
