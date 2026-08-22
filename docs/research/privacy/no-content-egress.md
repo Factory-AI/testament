@@ -35,12 +35,14 @@ provider-specific limits, and unknown-field handling. Organization roots are
 exactly 32 bytes. AWS uses `Encrypt` or `Decrypt` with
 `SYMMETRIC_DEFAULT` and exact encryption context. GCP uses `rawEncrypt` or
 `rawDecrypt` against one exact CryptoKeyVersion with AAD and CRC checks. Azure
-uses versioned `wrapkey` or `unwrapkey` with `RSA-OAEP-256` and a separately
+`rawDecrypt` against one exact CryptoKeyVersion with AAD and CRC checks. The
+GCP result retains the provider-generated initialization vector and tag length
+and sends them back with the ciphertext for raw decryption. Azure uses
+versioned `wrapkey` or `unwrapkey` with `RSA-OAEP-256` and a separately
 authenticated binding package. Identity responses are capped at 1 MiB and 100
 public keys. Observability events are capped at 64 KiB and prohibit free text
 and content-derived labels. A user export is not "non-content egress"; it is a
 separate governed operation.
-
 An operator client counts as inside the boundary only when the organization
 controls the endpoint, path, proxy, DNS, and storage. Delivery to an
 uncontrolled client is an export outside this contract.
