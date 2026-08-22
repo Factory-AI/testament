@@ -2,7 +2,7 @@
   "bound_artifacts": [
     {
       "path": "policy/analyzer-evaluation.json",
-      "sha256": "7475fac84bb55d60c9ae2684edf090b87408bc6eb0e83e6e755bf7905317328d"
+      "sha256": "423eca2587b402f3bd391777639cae0bcb5621507d2a0faba204dc439ccbb1ee"
     },
     {
       "path": "docs/research/analysis/evaluation-plan.md",
@@ -37,7 +37,7 @@
   "predecessor_candidate_commit": "e5391c64f3e504cab4cda22a2d2155422a82af0d",
   "schema_version": "1.0.0",
   "status": "artifact-commit-bound",
-  "successor_artifact_commit": "294376c3f277ff807c077db9e178e730f6e169b3",
+  "successor_artifact_commit": "74af95717473ec2a019f8ae4dcc753d39c4bf256",
   "successor_plan_version": "2.0.0",
   "version": "1.0.0"
 }
