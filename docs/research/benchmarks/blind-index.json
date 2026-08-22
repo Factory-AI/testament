@@ -1,0 +1,80 @@
+{
+  "acceptance_rule": "Same-scope equality matches; organization, field, and generation changes produce different fixed-length tokens within both resource budgets.",
+  "benchmark_id": "blind-index-benchmark",
+  "budgets": {
+    "max_elapsed_ms": 10000,
+    "max_process_rss_bytes": 536870912
+  },
+  "comparison_method": "Compare HMAC-SHA-256 equality tokens within and across organization, field, and generation scope.",
+  "conclusion": "pass",
+  "environment": {
+    "architecture": "arm64",
+    "cpu_count": 12,
+    "docker": "Docker version 28.5.1, build e180ab8",
+    "go": "go version go1.26.4 darwin/arm64",
+    "machine_class": "developer-workstation-12cpu-18gib",
+    "memory_bytes": 19327352832,
+    "os": "macOS-26.6.1-arm64-arm-64bit-Mach-O",
+    "python": "3.14.7",
+    "tested_commit": "f700faa23e518268a10bae89663a26677e65c61c"
+  },
+  "feature_id": "storage-analysis-prototypes-and-evaluation-plan",
+  "inputs": [
+    "one synthetic normalized value",
+    "two organizations",
+    "two fields",
+    "two search-root generations"
+  ],
+  "limitations": [
+    "Equality and frequency leakage within a scope remains and is explicitly recorded."
+  ],
+  "plan_commit": "cfdf43b1d85024ad5475f5c2afe41978f9fc2a01",
+  "plan_sha256": "5e12d9e04c0852c87c7b86a3e832e61f72e5e136af0792b29d4c7c3811432d76",
+  "prototype_id": "blind-index",
+  "sample_count": 3,
+  "samples": [
+    {
+      "elapsed_ms": 0.092,
+      "observation": {
+        "cross_field_separation": true,
+        "cross_org_separation": true,
+        "documented_leakage": "equality and frequency within one org/field/generation",
+        "rotation_changes_token": true,
+        "same_scope_equality": true,
+        "token_bytes": 32
+      },
+      "process_max_rss_bytes": 28393472
+    },
+    {
+      "elapsed_ms": 0.02,
+      "observation": {
+        "cross_field_separation": true,
+        "cross_org_separation": true,
+        "documented_leakage": "equality and frequency within one org/field/generation",
+        "rotation_changes_token": true,
+        "same_scope_equality": true,
+        "token_bytes": 32
+      },
+      "process_max_rss_bytes": 28393472
+    },
+    {
+      "elapsed_ms": 0.019,
+      "observation": {
+        "cross_field_separation": true,
+        "cross_org_separation": true,
+        "documented_leakage": "equality and frequency within one org/field/generation",
+        "rotation_changes_token": true,
+        "same_scope_equality": true,
+        "token_bytes": 32
+      },
+      "process_max_rss_bytes": 28393472
+    }
+  ],
+  "schema_version": "1.0.0",
+  "tolerance_history": [],
+  "tolerances": {
+    "cross_scope_token_collisions": 0
+  },
+  "validation_id": "VAL-READY-014",
+  "version": "1.0.0"
+}

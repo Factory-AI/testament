@@ -1,0 +1,76 @@
+{
+  "acceptance_rule": "All samples use 65536-byte bounded reads, preserve byte count, match the independent digest, and remain within both resource budgets.",
+  "benchmark_id": "giant-stream-benchmark",
+  "budgets": {
+    "max_elapsed_ms": 10000,
+    "max_process_rss_bytes": 536870912
+  },
+  "comparison_method": "Compare incremental SHA-256 and byte count with an independent whole-file SHA-256.",
+  "conclusion": "pass",
+  "environment": {
+    "architecture": "arm64",
+    "cpu_count": 12,
+    "docker": "Docker version 28.5.1, build e180ab8",
+    "go": "go version go1.26.4 darwin/arm64",
+    "machine_class": "developer-workstation-12cpu-18gib",
+    "memory_bytes": 19327352832,
+    "os": "macOS-26.6.1-arm64-arm-64bit-Mach-O",
+    "python": "3.14.7",
+    "tested_commit": "f700faa23e518268a10bae89663a26677e65c61c"
+  },
+  "feature_id": "storage-analysis-prototypes-and-evaluation-plan",
+  "inputs": [
+    "fixtures/research-corpus/giant.json",
+    "65536-byte read blocks"
+  ],
+  "limitations": [
+    "The committed 2 MiB synthetic fixture is a bounded proof, not a 1 GiB release-load result."
+  ],
+  "plan_commit": "cfdf43b1d85024ad5475f5c2afe41978f9fc2a01",
+  "plan_sha256": "5e12d9e04c0852c87c7b86a3e832e61f72e5e136af0792b29d4c7c3811432d76",
+  "prototype_id": "giant-stream",
+  "sample_count": 3,
+  "samples": [
+    {
+      "elapsed_ms": 4.452,
+      "observation": {
+        "bounded_chunk_bytes": 65536,
+        "bytes": 1100055,
+        "chunks": 17,
+        "exact_digest": true,
+        "sha256": "11b87e08e5f3a9c025819a0230cb8f4543187c58eea9edeae40f95a29282bee2"
+      },
+      "process_max_rss_bytes": 28278784
+    },
+    {
+      "elapsed_ms": 0.867,
+      "observation": {
+        "bounded_chunk_bytes": 65536,
+        "bytes": 1100055,
+        "chunks": 17,
+        "exact_digest": true,
+        "sha256": "11b87e08e5f3a9c025819a0230cb8f4543187c58eea9edeae40f95a29282bee2"
+      },
+      "process_max_rss_bytes": 28278784
+    },
+    {
+      "elapsed_ms": 0.853,
+      "observation": {
+        "bounded_chunk_bytes": 65536,
+        "bytes": 1100055,
+        "chunks": 17,
+        "exact_digest": true,
+        "sha256": "11b87e08e5f3a9c025819a0230cb8f4543187c58eea9edeae40f95a29282bee2"
+      },
+      "process_max_rss_bytes": 28278784
+    }
+  ],
+  "schema_version": "1.0.0",
+  "tolerance_history": [],
+  "tolerances": {
+    "digest_mismatch_count": 0,
+    "unbounded_read_count": 0
+  },
+  "validation_id": "VAL-READY-014",
+  "version": "1.0.0"
+}
