@@ -43,6 +43,35 @@ PLAN_FIELDS = (
 )
 
 
+def clean_clone_evidence(root: Path) -> dict[str, Any]:
+    status = subprocess.run(
+        ["git", "status", "--porcelain"],
+        cwd=root,
+        capture_output=True,
+        text=True,
+        check=True,
+    ).stdout
+    shallow = subprocess.run(
+        ["git", "rev-parse", "--is-shallow-repository"],
+        cwd=root,
+        capture_output=True,
+        text=True,
+        check=True,
+    ).stdout.strip()
+    alternates = root / ".git" / "objects" / "info" / "alternates"
+    evidence = {
+        "worktree_clean_before_measurement": not status,
+        "independent_object_store": not alternates.exists(),
+        "complete_history": shallow == "false",
+    }
+    if not all(evidence.values()):
+        raise RuntimeError(
+            "clean-clone reporting requires a clean worktree, an independent "
+            "object store, and complete Git history"
+        )
+    return evidence
+
+
 def canonical_digest(value: Any) -> str:
     encoded = json.dumps(value, sort_keys=True, separators=(",", ":")).encode()
     return hashlib.sha256(encoded).hexdigest()
@@ -548,6 +577,11 @@ def main() -> int:
     )
     args = parser.parse_args()
     root = args.root.resolve()
+    if args.report and not args.output_dir:
+        parser.error("--report requires --output-dir so reruns cannot overwrite baselines")
+    if args.report and not args.clean_clone:
+        parser.error("--report requires --clean-clone")
+    clone_evidence = clean_clone_evidence(root) if args.clean_clone else None
     plan = json.loads(
         (root / "docs/research/benchmarks/precommit.json").read_text(encoding="utf-8")
     )
@@ -654,6 +688,7 @@ def main() -> int:
                 else "fail"
             ),
             "clean_clone": args.clean_clone,
+            "clean_clone_evidence": clone_evidence,
             "clone_method": "git clone --no-local from the candidate object database into an empty temporary directory",
             "source_commit": source_commit,
             "plan_commit": args.plan_commit,

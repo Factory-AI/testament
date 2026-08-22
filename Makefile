@@ -106,7 +106,7 @@ verify-governance:
 	@$(PYTHON) scripts/verify_governance.py --root .
 
 verify-prototypes:
-	@$(PYTHON) scripts/verify_prototypes.py --root .
+	@$(PYTHON) scripts/verify_prototypes.py --root . --criterion VAL-READY-014
 
 verify-analyzer-evaluation:
 	@$(PYTHON) scripts/verify_prototypes.py --root . --criterion VAL-READY-015

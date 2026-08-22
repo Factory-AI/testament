@@ -143,6 +143,22 @@ class PrototypeEvidenceTest(unittest.TestCase):
         )
         self.assertTrue(all(result["comparison"]["matches"] for result in reproduction["results"]))
 
+    def test_reproduction_recomputes_comparison_from_raw_samples(self) -> None:
+        root = self.copy_evidence()
+        path = root / "docs/research/benchmarks/reproduction.json"
+        reproduction = json.loads(path.read_text(encoding="utf-8"))
+        reproduction["results"][0]["raw_result"]["samples"].pop()
+        path.write_text(json.dumps(reproduction), encoding="utf-8")
+        self.assertIn("clean_clone_result_mismatch", self.codes(root))
+
+    def test_reproduction_requires_independent_clean_clone_evidence(self) -> None:
+        root = self.copy_evidence()
+        path = root / "docs/research/benchmarks/reproduction.json"
+        reproduction = json.loads(path.read_text(encoding="utf-8"))
+        reproduction["clean_clone_evidence"]["independent_object_store"] = False
+        path.write_text(json.dumps(reproduction), encoding="utf-8")
+        self.assertIn("invalid_clean_clone_reproduction", self.codes(root))
+
     def test_research_manifest_marks_complete_pairs_in_review(self) -> None:
         manifest = json.loads(
             (ROOT / "policy/research-manifest.json").read_text(encoding="utf-8")

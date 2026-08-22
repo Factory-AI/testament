@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import argparse
+from functools import lru_cache
 import hashlib
 import json
 import math
@@ -57,6 +58,16 @@ RESULT_PATH_BY_CASE = {
 }
 CLAIMS_PATH = "policy/prototype-claims.json"
 REPRODUCTION_PATH = "docs/research/benchmarks/reproduction.json"
+RESULT_PLAN_FIELDS = (
+    "inputs",
+    "sample_count",
+    "budgets",
+    "tolerances",
+    "comparison_method",
+    "acceptance_rule",
+    "limitations",
+    "tolerance_history",
+)
 POSTGRES_CASES = {"postgres-storage", "decision-durability", "offline-replay"}
 ANALYZER_FAMILIES = {
     "deterministic-rules",
@@ -171,6 +182,7 @@ def digest(value: Any) -> str:
     ).hexdigest()
 
 
+@lru_cache(maxsize=None)
 def git_object_exists(root: Path, object_name: str) -> bool:
     if not (root / ".git").exists():
         return True
@@ -347,12 +359,20 @@ def validate_reproduction(
         if isinstance(row, dict) and isinstance(row.get("prototype_id"), str)
     }
     source_commit = reproduction.get("source_commit")
+    clone_evidence = reproduction.get("clean_clone_evidence")
+    report_statuses: list[bool] = []
     if (
         reproduction.get("schema_version") != "1.0.0"
         or reproduction.get("feature_id") != "reproducible-prototype-completion"
         or reproduction.get("validation_id") != "VAL-READY-014"
         or reproduction.get("status") != "pass"
         or reproduction.get("clean_clone") is not True
+        or clone_evidence
+        != {
+            "complete_history": True,
+            "independent_object_store": True,
+            "worktree_clean_before_measurement": True,
+        }
         or reproduction.get("plan_commit") != CANONICAL_PLAN_COMMIT
         or reproduction.get("plan_sha256") != plan_digest
         or not isinstance(source_commit, str)
@@ -372,6 +392,39 @@ def validate_reproduction(
     for case, row in by_case.items():
         raw = row.get("raw_result")
         comparison = row.get("comparison")
+        baseline = load(
+            root,
+            RESULT_PATH_BY_CASE[case],
+            problems,
+            "VAL-READY-014",
+        )
+        plan_fields_match = (
+            isinstance(raw, dict)
+            and all(raw.get(field) == baseline.get(field) for field in RESULT_PLAN_FIELDS)
+        )
+        sample_count_matches = (
+            isinstance(raw, dict)
+            and raw.get("sample_count") == baseline.get("sample_count")
+            and isinstance(raw.get("samples"), list)
+            and len(raw["samples"]) == raw.get("sample_count")
+        )
+        raw_samples_valid = (
+            isinstance(raw, dict)
+            and valid_reproduction_samples(
+                case,
+                raw.get("samples"),
+                raw.get("budgets"),
+            )
+        )
+        matches = (
+            baseline.get("conclusion") == "pass"
+            and isinstance(raw, dict)
+            and raw.get("conclusion") == "pass"
+            and plan_fields_match
+            and sample_count_matches
+            and raw_samples_valid
+        )
+        report_statuses.append(matches)
         if (
             row.get("baseline_result_path") != RESULT_PATH_BY_CASE[case]
             or not isinstance(raw, dict)
@@ -381,11 +434,12 @@ def validate_reproduction(
             or raw.get("conclusion") != "pass"
             or raw.get("environment", {}).get("tested_commit") != source_commit
             or not isinstance(comparison, dict)
-            or comparison.get("matches") is not True
-            or comparison.get("baseline_conclusion") != "pass"
-            or comparison.get("rerun_conclusion") != "pass"
-            or comparison.get("sample_count_matches") is not True
-            or comparison.get("plan_fields_match") is not True
+            or comparison.get("matches") is not matches
+            or comparison.get("baseline_conclusion") != baseline.get("conclusion")
+            or comparison.get("rerun_conclusion") != raw.get("conclusion")
+            or comparison.get("sample_count_matches") is not sample_count_matches
+            or comparison.get("plan_fields_match") is not plan_fields_match
+            or not matches
         ):
             problems.append(
                 issue(
@@ -395,6 +449,25 @@ def validate_reproduction(
                     f"{case} does not reproduce its precommitted passing conclusion",
                 )
             )
+    expected_sample_count = sum(
+        row.get("raw_result", {}).get("sample_count", 0)
+        for row in rows
+        if isinstance(row, dict)
+    )
+    if (
+        reproduction.get("sample_count") != expected_sample_count
+        or expected_sample_count != 27
+        or reproduction.get("status")
+        != ("pass" if report_statuses and all(report_statuses) else "fail")
+    ):
+        problems.append(
+            issue(
+                "VAL-READY-014",
+                "invalid_reproduction_summary",
+                REPRODUCTION_PATH,
+                "The report summary must be recomputed from exactly 27 valid raw samples",
+            )
+        )
 
 
 def validate_manifest_agreement(
@@ -604,6 +677,63 @@ def valid_postgres_sample(
             and observation.get("history_preserved") is True
         )
     return False
+
+
+def valid_reproduction_samples(
+    case: str,
+    samples: Any,
+    budgets: Any,
+) -> bool:
+    if not isinstance(samples, list) or not samples or not isinstance(budgets, dict):
+        return False
+    if case == "analyzer-isolation":
+        return all(valid_analyzer_sample(sample, budgets) for sample in samples)
+    if case in POSTGRES_CASES:
+        return all(valid_postgres_sample(case, sample, budgets) for sample in samples)
+    checks = {
+        "giant-stream": lambda observation: (
+            observation.get("exact_digest") is True
+            and observation.get("bounded_chunk_bytes") == 65536
+        ),
+        "exact-byte": lambda observation: (
+            observation.get("all_exact") is True
+            and observation.get("classes", 0) >= 6
+        ),
+        "compression-encryption": lambda observation: (
+            observation.get("round_trip_exact") is True
+            and observation.get("tamper_rejected") is True
+            and observation.get("compression_before_aead") is True
+        ),
+        "blind-index": lambda observation: (
+            observation.get("same_scope_equality") is True
+            and observation.get("cross_org_separation") is True
+            and observation.get("cross_field_separation") is True
+            and observation.get("rotation_changes_token") is True
+        ),
+        "key-rotation": lambda observation: (
+            observation.get("rewrap_changed") is True
+            and observation.get("payload_ciphertext_unchanged") is True
+        ),
+    }
+    check = checks.get(case)
+    if check is None:
+        return False
+    for sample in samples:
+        if not isinstance(sample, dict):
+            return False
+        elapsed = sample.get("elapsed_ms")
+        rss = sample.get("process_max_rss_bytes")
+        observation = sample.get("observation")
+        if (
+            not isinstance(elapsed, (int, float))
+            or elapsed > budgets.get("max_elapsed_ms", -1)
+            or not isinstance(rss, int)
+            or rss > budgets.get("max_process_rss_bytes", -1)
+            or not isinstance(observation, dict)
+            or not check(observation)
+        ):
+            return False
+    return True
 
 
 def validate_prototype_evidence(root: Path) -> list[dict[str, str]]:
