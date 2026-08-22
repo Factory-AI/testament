@@ -23,7 +23,7 @@
       "service": "postgres"
     },
     "python": "3.14.7",
-    "tested_commit": "e5391c64f3e504cab4cda22a2d2155422a82af0d"
+    "tested_commit": "259608c8a08960a5cb2a5f87e5e998801bb7c883"
   },
   "feature_id": "storage-analysis-prototypes-and-evaluation-plan",
   "inputs": [
@@ -40,7 +40,7 @@
   "sample_count": 3,
   "samples": [
     {
-      "elapsed_ms": 334.173,
+      "elapsed_ms": 507.732,
       "observation": {
         "ciphertext_nonempty_rows": 200,
         "ciphertext_only_columns": true,
@@ -59,10 +59,10 @@
         "pruned_partition": "chunks_2026_09",
         "rows": 200
       },
-      "process_max_rss_bytes": 27492352
+      "process_max_rss_bytes": 27721728
     },
     {
-      "elapsed_ms": 274.427,
+      "elapsed_ms": 454.844,
       "observation": {
         "ciphertext_nonempty_rows": 200,
         "ciphertext_only_columns": true,
@@ -81,10 +81,10 @@
         "pruned_partition": "chunks_2026_09",
         "rows": 200
       },
-      "process_max_rss_bytes": 27492352
+      "process_max_rss_bytes": 27721728
     },
     {
-      "elapsed_ms": 590.276,
+      "elapsed_ms": 344.076,
       "observation": {
         "ciphertext_nonempty_rows": 200,
         "ciphertext_only_columns": true,
@@ -103,7 +103,7 @@
         "pruned_partition": "chunks_2026_09",
         "rows": 200
       },
-      "process_max_rss_bytes": 27492352
+      "process_max_rss_bytes": 27721728
     }
   ],
   "schema_version": "1.0.0",

@@ -23,7 +23,7 @@
       "service": "postgres"
     },
     "python": "3.14.7",
-    "tested_commit": "e5391c64f3e504cab4cda22a2d2155422a82af0d"
+    "tested_commit": "259608c8a08960a5cb2a5f87e5e998801bb7c883"
   },
   "feature_id": "storage-analysis-prototypes-and-evaluation-plan",
   "inputs": [
@@ -39,7 +39,7 @@
   "sample_count": 3,
   "samples": [
     {
-      "elapsed_ms": 264.904,
+      "elapsed_ms": 288.579,
       "observation": {
         "audits": 1,
         "decisions": 1,
@@ -53,10 +53,10 @@
         "postgres_version": "17.11 (Debian 17.11-1.pgdg12+2)",
         "receipts": 1
       },
-      "process_max_rss_bytes": 27492352
+      "process_max_rss_bytes": 27721728
     },
     {
-      "elapsed_ms": 285.714,
+      "elapsed_ms": 273.499,
       "observation": {
         "audits": 1,
         "decisions": 1,
@@ -70,10 +70,10 @@
         "postgres_version": "17.11 (Debian 17.11-1.pgdg12+2)",
         "receipts": 1
       },
-      "process_max_rss_bytes": 27492352
+      "process_max_rss_bytes": 27721728
     },
     {
-      "elapsed_ms": 297.333,
+      "elapsed_ms": 294.753,
       "observation": {
         "audits": 1,
         "decisions": 1,
@@ -87,7 +87,7 @@
         "postgres_version": "17.11 (Debian 17.11-1.pgdg12+2)",
         "receipts": 1
       },
-      "process_max_rss_bytes": 27492352
+      "process_max_rss_bytes": 27721728
     }
   ],
   "schema_version": "1.0.0",
