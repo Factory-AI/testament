@@ -1,0 +1,180 @@
+{
+  "acceptance_rule": "Recorded replay digests match, late replay differs, all three runs remain, PostgreSQL 17 on 5440, and both resource budgets hold.",
+  "benchmark_id": "offline-replay-benchmark",
+  "budgets": {
+    "max_elapsed_ms": 15000,
+    "max_process_rss_bytes": 536870912
+  },
+  "comparison_method": "Digest ordered immutable snapshots in PostgreSQL, repeat the pinned snapshot, add a late event, and append a superseding run.",
+  "conclusion": "pass",
+  "environment": {
+    "architecture": "arm64",
+    "cpu_count": 12,
+    "docker": "Docker version 28.5.1, build e180ab8",
+    "go": "go version go1.26.4 darwin/arm64",
+    "machine_class": "developer-workstation-12cpu-18gib",
+    "memory_bytes": 19327352832,
+    "os": "macOS-26.6.1-arm64-arm-64bit-Mach-O",
+    "postgres": {
+      "healthcheck": "pg_isready -p 5440",
+      "lifecycle_manifest": "services.yaml",
+      "major": 17,
+      "port": 5440,
+      "service": "postgres"
+    },
+    "python": "3.14.7",
+    "tested_commit": "e5391c64f3e504cab4cda22a2d2155422a82af0d"
+  },
+  "feature_id": "storage-analysis-prototypes-and-evaluation-plan",
+  "inputs": [
+    "three ordered synthetic events",
+    "two identical recorded replays",
+    "one late event and superseding replay"
+  ],
+  "limitations": [
+    "Tenant fairness and crash recovery need larger production-stage fault tests."
+  ],
+  "plan_commit": "cfdf43bb49f3802137dc0ae887314ab7a8a01f58",
+  "plan_sha256": "5e12d9e04c0852c87c7b86a3e832e61f72e5e136af0792b29d4c7c3811432d76",
+  "prototype_id": "offline-replay",
+  "sample_count": 3,
+  "samples": [
+    {
+      "elapsed_ms": 290.062,
+      "observation": {
+        "history_preserved": true,
+        "late_revision": {
+          "digest": "c4d31be3e11e03eebafdebc87ca271ba",
+          "id": 3,
+          "includes_late_event": true,
+          "supersedes": 2,
+          "watermark": 3
+        },
+        "late_revision_changed": true,
+        "pinned_replay_digests": [
+          "2ab3dc3809c96bbbc1a504cd2299b607",
+          "2ab3dc3809c96bbbc1a504cd2299b607"
+        ],
+        "port": 5440,
+        "postgres_version": "17.11 (Debian 17.11-1.pgdg12+2)",
+        "recorded_replay_equal": true,
+        "run_history": [
+          {
+            "digest": "2ab3dc3809c96bbbc1a504cd2299b607",
+            "id": 1,
+            "supersedes": null,
+            "watermark": 3
+          },
+          {
+            "digest": "2ab3dc3809c96bbbc1a504cd2299b607",
+            "id": 2,
+            "supersedes": 1,
+            "watermark": 3
+          },
+          {
+            "digest": "c4d31be3e11e03eebafdebc87ca271ba",
+            "id": 3,
+            "supersedes": 2,
+            "watermark": 3
+          }
+        ],
+        "runs": 3
+      },
+      "process_max_rss_bytes": 27492352
+    },
+    {
+      "elapsed_ms": 281.892,
+      "observation": {
+        "history_preserved": true,
+        "late_revision": {
+          "digest": "c4d31be3e11e03eebafdebc87ca271ba",
+          "id": 3,
+          "includes_late_event": true,
+          "supersedes": 2,
+          "watermark": 3
+        },
+        "late_revision_changed": true,
+        "pinned_replay_digests": [
+          "2ab3dc3809c96bbbc1a504cd2299b607",
+          "2ab3dc3809c96bbbc1a504cd2299b607"
+        ],
+        "port": 5440,
+        "postgres_version": "17.11 (Debian 17.11-1.pgdg12+2)",
+        "recorded_replay_equal": true,
+        "run_history": [
+          {
+            "digest": "2ab3dc3809c96bbbc1a504cd2299b607",
+            "id": 1,
+            "supersedes": null,
+            "watermark": 3
+          },
+          {
+            "digest": "2ab3dc3809c96bbbc1a504cd2299b607",
+            "id": 2,
+            "supersedes": 1,
+            "watermark": 3
+          },
+          {
+            "digest": "c4d31be3e11e03eebafdebc87ca271ba",
+            "id": 3,
+            "supersedes": 2,
+            "watermark": 3
+          }
+        ],
+        "runs": 3
+      },
+      "process_max_rss_bytes": 27492352
+    },
+    {
+      "elapsed_ms": 352.589,
+      "observation": {
+        "history_preserved": true,
+        "late_revision": {
+          "digest": "c4d31be3e11e03eebafdebc87ca271ba",
+          "id": 3,
+          "includes_late_event": true,
+          "supersedes": 2,
+          "watermark": 3
+        },
+        "late_revision_changed": true,
+        "pinned_replay_digests": [
+          "2ab3dc3809c96bbbc1a504cd2299b607",
+          "2ab3dc3809c96bbbc1a504cd2299b607"
+        ],
+        "port": 5440,
+        "postgres_version": "17.11 (Debian 17.11-1.pgdg12+2)",
+        "recorded_replay_equal": true,
+        "run_history": [
+          {
+            "digest": "2ab3dc3809c96bbbc1a504cd2299b607",
+            "id": 1,
+            "supersedes": null,
+            "watermark": 3
+          },
+          {
+            "digest": "2ab3dc3809c96bbbc1a504cd2299b607",
+            "id": 2,
+            "supersedes": 1,
+            "watermark": 3
+          },
+          {
+            "digest": "c4d31be3e11e03eebafdebc87ca271ba",
+            "id": 3,
+            "supersedes": 2,
+            "watermark": 3
+          }
+        ],
+        "runs": 3
+      },
+      "process_max_rss_bytes": 27492352
+    }
+  ],
+  "schema_version": "1.0.0",
+  "tolerance_history": [],
+  "tolerances": {
+    "lost_history_rows": 0,
+    "recorded_replay_digest_delta": 0
+  },
+  "validation_id": "VAL-READY-014",
+  "version": "1.0.0"
+}

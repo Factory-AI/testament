@@ -1,0 +1,117 @@
+{
+  "acceptance_rule": "All samples observe PostgreSQL 17 on port 5440, 200 rows, two partitions, no content plaintext column, pruning evidence, and both resource budgets.",
+  "benchmark_id": "postgres-storage-benchmark",
+  "budgets": {
+    "max_elapsed_ms": 15000,
+    "max_process_rss_bytes": 536870912
+  },
+  "comparison_method": "Create disposable PostgreSQL 17 partitions, insert bytea-only synthetic ciphertext, compare row/partition counts and inspect pruning and schema columns.",
+  "conclusion": "pass",
+  "environment": {
+    "architecture": "arm64",
+    "cpu_count": 12,
+    "docker": "Docker version 28.5.1, build e180ab8",
+    "go": "go version go1.26.4 darwin/arm64",
+    "machine_class": "developer-workstation-12cpu-18gib",
+    "memory_bytes": 19327352832,
+    "os": "macOS-26.6.1-arm64-arm-64bit-Mach-O",
+    "postgres": {
+      "healthcheck": "pg_isready -p 5440",
+      "lifecycle_manifest": "services.yaml",
+      "major": 17,
+      "port": 5440,
+      "service": "postgres"
+    },
+    "python": "3.14.7",
+    "tested_commit": "e5391c64f3e504cab4cda22a2d2155422a82af0d"
+  },
+  "feature_id": "storage-analysis-prototypes-and-evaluation-plan",
+  "inputs": [
+    "200 synthetic ciphertext rows",
+    "two monthly range partitions",
+    "one partition-prunable query"
+  ],
+  "limitations": [
+    "The row count is a research proof, not production sizing guidance."
+  ],
+  "plan_commit": "cfdf43bb49f3802137dc0ae887314ab7a8a01f58",
+  "plan_sha256": "5e12d9e04c0852c87c7b86a3e832e61f72e5e136af0792b29d4c7c3811432d76",
+  "prototype_id": "postgres-storage",
+  "sample_count": 3,
+  "samples": [
+    {
+      "elapsed_ms": 334.173,
+      "observation": {
+        "ciphertext_nonempty_rows": 200,
+        "ciphertext_only_columns": true,
+        "content_column": "ciphertext",
+        "content_column_type": "bytea",
+        "executed_partition": "chunks_2026_08",
+        "explain_lines": [
+          "Seq Scan on chunks_2026_08 chunks",
+          "  Filter: (received_date = '2026-08-21'::date)"
+        ],
+        "forbidden_plaintext_columns": 0,
+        "partition_pruning": true,
+        "partitions": 2,
+        "port": 5440,
+        "postgres_version": "17.11 (Debian 17.11-1.pgdg12+2)",
+        "pruned_partition": "chunks_2026_09",
+        "rows": 200
+      },
+      "process_max_rss_bytes": 27492352
+    },
+    {
+      "elapsed_ms": 274.427,
+      "observation": {
+        "ciphertext_nonempty_rows": 200,
+        "ciphertext_only_columns": true,
+        "content_column": "ciphertext",
+        "content_column_type": "bytea",
+        "executed_partition": "chunks_2026_08",
+        "explain_lines": [
+          "Seq Scan on chunks_2026_08 chunks",
+          "  Filter: (received_date = '2026-08-21'::date)"
+        ],
+        "forbidden_plaintext_columns": 0,
+        "partition_pruning": true,
+        "partitions": 2,
+        "port": 5440,
+        "postgres_version": "17.11 (Debian 17.11-1.pgdg12+2)",
+        "pruned_partition": "chunks_2026_09",
+        "rows": 200
+      },
+      "process_max_rss_bytes": 27492352
+    },
+    {
+      "elapsed_ms": 590.276,
+      "observation": {
+        "ciphertext_nonempty_rows": 200,
+        "ciphertext_only_columns": true,
+        "content_column": "ciphertext",
+        "content_column_type": "bytea",
+        "executed_partition": "chunks_2026_08",
+        "explain_lines": [
+          "Seq Scan on chunks_2026_08 chunks",
+          "  Filter: (received_date = '2026-08-21'::date)"
+        ],
+        "forbidden_plaintext_columns": 0,
+        "partition_pruning": true,
+        "partitions": 2,
+        "port": 5440,
+        "postgres_version": "17.11 (Debian 17.11-1.pgdg12+2)",
+        "pruned_partition": "chunks_2026_09",
+        "rows": 200
+      },
+      "process_max_rss_bytes": 27492352
+    }
+  ],
+  "schema_version": "1.0.0",
+  "tolerance_history": [],
+  "tolerances": {
+    "row_count_delta": 0,
+    "unexpected_plaintext_columns": 0
+  },
+  "validation_id": "VAL-READY-014",
+  "version": "1.0.0"
+}

@@ -290,16 +290,40 @@ CREATE TABLE prototype_storage.chunks_2026_09 PARTITION OF prototype_storage.chu
 INSERT INTO prototype_storage.chunks
 SELECT 'org-synthetic', DATE '2026-08-21', n, 0,
        decode(repeat(md5(n::text), 32), 'hex') FROM generate_series(1,200) n;
+CREATE TEMP TABLE prototype_storage_plan(
+  ordinal bigint GENERATED ALWAYS AS IDENTITY, line text NOT NULL
+);
+DO $body$
+DECLARE plan_line text;
+BEGIN
+  FOR plan_line IN EXECUTE
+    $query$EXPLAIN (COSTS OFF) SELECT * FROM prototype_storage.chunks
+      WHERE received_date=DATE '2026-08-21'$query$
+  LOOP
+    INSERT INTO prototype_storage_plan(line) VALUES (plan_line);
+  END LOOP;
+END
+$body$;
 SELECT json_build_object(
  'rows',(SELECT count(*) FROM prototype_storage.chunks),
  'partitions',(SELECT count(*) FROM pg_inherits WHERE inhparent='prototype_storage.chunks'::regclass),
+ 'ciphertext_nonempty_rows',(SELECT count(*) FROM prototype_storage.chunks WHERE octet_length(ciphertext)>0),
+ 'content_column','ciphertext',
+ 'content_column_type',(SELECT data_type FROM information_schema.columns
+   WHERE table_schema='prototype_storage' AND table_name='chunks' AND column_name='ciphertext'),
+ 'forbidden_plaintext_columns',(SELECT count(*) FROM information_schema.columns
+   WHERE table_schema='prototype_storage' AND table_name='chunks'
+     AND column_name IN ('plaintext','content','source_bytes')),
  'ciphertext_only_columns', NOT EXISTS (
    SELECT 1 FROM information_schema.columns
    WHERE table_schema='prototype_storage' AND table_name='chunks'
      AND column_name IN ('plaintext','content','source_bytes')),
- 'partition_pruning', position('chunks_2026_09' in (
-   EXPLAIN (FORMAT TEXT) SELECT * FROM prototype_storage.chunks
-   WHERE received_date=DATE '2026-08-21')) = 0);
+ 'partition_pruning',
+   EXISTS (SELECT 1 FROM prototype_storage_plan WHERE line LIKE '%chunks_2026_08%')
+   AND NOT EXISTS (SELECT 1 FROM prototype_storage_plan WHERE line LIKE '%chunks_2026_09%'),
+ 'executed_partition','chunks_2026_08',
+ 'pruned_partition','chunks_2026_09',
+ 'explain_lines',(SELECT json_agg(line ORDER BY ordinal) FROM prototype_storage_plan));
 DROP SCHEMA prototype_storage CASCADE;
 """,
         "decision-durability": r"""
@@ -321,7 +345,17 @@ SELECT json_build_object(
  'decisions',(SELECT count(*) FROM prototype_decision.decisions),
  'audits',(SELECT count(*) FROM prototype_decision.audits),
  'receipts',(SELECT count(*) FROM prototype_decision.receipts),
- 'faulted_rows',(SELECT count(*) FROM prototype_decision.decisions WHERE id='faulted'));
+ 'faulted_decisions',(SELECT count(*) FROM prototype_decision.decisions WHERE id='faulted'),
+ 'faulted_audits',(SELECT count(*) FROM prototype_decision.audits WHERE id='faulted'),
+ 'faulted_receipts',(SELECT count(*) FROM prototype_decision.receipts WHERE id='faulted'),
+ 'faulted_rows',(
+   (SELECT count(*) FROM prototype_decision.decisions WHERE id='faulted') +
+   (SELECT count(*) FROM prototype_decision.audits WHERE id='faulted') +
+   (SELECT count(*) FROM prototype_decision.receipts WHERE id='faulted')),
+ 'orphan_audits',(SELECT count(*) FROM prototype_decision.audits a
+   LEFT JOIN prototype_decision.decisions d USING(id) WHERE d.id IS NULL),
+ 'orphan_receipts',(SELECT count(*) FROM prototype_decision.receipts r
+   LEFT JOIN prototype_decision.decisions d USING(id) WHERE d.id IS NULL));
 DROP SCHEMA prototype_decision CASCADE;
 """,
         "offline-replay": r"""
@@ -344,9 +378,24 @@ SELECT json_build_object(
  'runs',(SELECT count(*) FROM prototype_replay.runs),
  'recorded_replay_equal',(SELECT digest FROM prototype_replay.runs WHERE id=1)=
                          (SELECT digest FROM prototype_replay.runs WHERE id=2),
+ 'pinned_replay_digests',json_build_array(
+   (SELECT digest FROM prototype_replay.runs WHERE id=1),
+   (SELECT digest FROM prototype_replay.runs WHERE id=2)),
  'late_revision_changed',(SELECT digest FROM prototype_replay.runs WHERE id=2)<>
                          (SELECT digest FROM prototype_replay.runs WHERE id=3),
- 'history_preserved',(SELECT count(DISTINCT digest) FROM prototype_replay.runs)=2);
+ 'late_revision',(SELECT json_build_object(
+   'id',id,'watermark',watermark,'digest',digest,'supersedes',supersedes,
+   'includes_late_event',EXISTS(
+     SELECT 1 FROM prototype_replay.events WHERE id=4 AND watermark<=r.watermark))
+   FROM prototype_replay.runs r WHERE id=3),
+ 'run_history',(SELECT json_agg(json_build_object(
+   'id',id,'watermark',watermark,'digest',digest,'supersedes',supersedes)
+   ORDER BY id) FROM prototype_replay.runs),
+ 'history_preserved',(
+   (SELECT count(*) FROM prototype_replay.runs)=3
+   AND (SELECT count(DISTINCT digest) FROM prototype_replay.runs)=2
+   AND EXISTS(SELECT 1 FROM prototype_replay.runs WHERE id=1)
+   AND EXISTS(SELECT 1 FROM prototype_replay.runs WHERE id=2)));
 DROP SCHEMA prototype_replay CASCADE;
 """,
     }
@@ -434,12 +483,34 @@ def accepted(case: str, samples: list[dict[str, Any]], budgets: dict[str, Any]) 
         "giant-stream": lambda o: o["exact_digest"] and o["bounded_chunk_bytes"] == 65536,
         "exact-byte": lambda o: o["all_exact"] and o["classes"] >= 6,
         "compression-encryption": lambda o: o["round_trip_exact"] and o["tamper_rejected"] and o["compression_before_aead"],
-        "postgres-storage": lambda o: o["rows"] == 200 and o["partitions"] == 2 and o["ciphertext_only_columns"],
+        "postgres-storage": lambda o: (
+            o["rows"] == 200
+            and o["partitions"] == 2
+            and o["ciphertext_nonempty_rows"] == 200
+            and o["content_column_type"] == "bytea"
+            and o["forbidden_plaintext_columns"] == 0
+            and o["ciphertext_only_columns"]
+            and o["partition_pruning"]
+        ),
         "blind-index": lambda o: o["same_scope_equality"] and o["cross_org_separation"] and o["cross_field_separation"] and o["rotation_changes_token"],
         "key-rotation": lambda o: o["rewrap_changed"] and o["payload_ciphertext_unchanged"],
-        "decision-durability": lambda o: o["decisions"] == o["audits"] == o["receipts"] == 1 and o["faulted_rows"] == 0,
+        "decision-durability": lambda o: (
+            o["decisions"] == o["audits"] == o["receipts"] == 1
+            and o["faulted_rows"] == 0
+            and o["orphan_audits"] == 0
+            and o["orphan_receipts"] == 0
+        ),
         "analyzer-isolation": analyzer_isolation_accepted,
-        "offline-replay": lambda o: o["runs"] == 3 and o["recorded_replay_equal"] and o["late_revision_changed"] and o["history_preserved"],
+        "offline-replay": lambda o: (
+            o["runs"] == 3
+            and o["recorded_replay_equal"]
+            and len(set(o["pinned_replay_digests"])) == 1
+            and o["late_revision_changed"]
+            and o["late_revision"]["supersedes"] == 2
+            and o["late_revision"]["includes_late_event"]
+            and len(o["run_history"]) == 3
+            and o["history_preserved"]
+        ),
     }
     return within and all(checks[case](item["observation"]) for item in samples)
 
@@ -494,10 +565,7 @@ def main() -> int:
                 "major": 17,
                 "port": 5440,
                 "service": "postgres",
-                "lifecycle_manifest": (
-                    "/Users/enoreyes/.factory/missions/"
-                    "81566df0-610b-4ff7-b16d-2a10ad666e64/services.yaml"
-                ),
+                "lifecycle_manifest": "services.yaml",
                 "healthcheck": "pg_isready -p 5440",
             }
         path = root / RESULT_PATHS[case]

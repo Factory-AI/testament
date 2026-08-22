@@ -212,6 +212,78 @@ def valid_analyzer_sample(
     )
 
 
+def valid_postgres_sample(
+    case: str,
+    sample: Any,
+    budgets: dict[str, Any],
+) -> bool:
+    if not isinstance(sample, dict):
+        return False
+    elapsed = sample.get("elapsed_ms")
+    rss = sample.get("process_max_rss_bytes")
+    observation = sample.get("observation")
+    if (
+        not isinstance(elapsed, (int, float))
+        or elapsed > budgets.get("max_elapsed_ms", -1)
+        or not isinstance(rss, int)
+        or rss > budgets.get("max_process_rss_bytes", -1)
+        or not isinstance(observation, dict)
+        or not str(observation.get("postgres_version", "")).startswith("17.")
+        or observation.get("port") != 5440
+    ):
+        return False
+    if case == "postgres-storage":
+        explain_lines = observation.get("explain_lines")
+        return (
+            observation.get("rows") == 200
+            and observation.get("partitions") == 2
+            and observation.get("ciphertext_nonempty_rows") == 200
+            and observation.get("content_column") == "ciphertext"
+            and observation.get("content_column_type") == "bytea"
+            and observation.get("forbidden_plaintext_columns") == 0
+            and observation.get("ciphertext_only_columns") is True
+            and observation.get("partition_pruning") is True
+            and observation.get("executed_partition") == "chunks_2026_08"
+            and observation.get("pruned_partition") == "chunks_2026_09"
+            and isinstance(explain_lines, list)
+            and any("chunks_2026_08" in line for line in explain_lines)
+            and not any("chunks_2026_09" in line for line in explain_lines)
+        )
+    if case == "decision-durability":
+        return (
+            observation.get("decisions") == 1
+            and observation.get("audits") == 1
+            and observation.get("receipts") == 1
+            and observation.get("faulted_decisions") == 0
+            and observation.get("faulted_audits") == 0
+            and observation.get("faulted_receipts") == 0
+            and observation.get("faulted_rows") == 0
+            and observation.get("orphan_audits") == 0
+            and observation.get("orphan_receipts") == 0
+        )
+    if case == "offline-replay":
+        pinned = observation.get("pinned_replay_digests")
+        late = observation.get("late_revision")
+        history = observation.get("run_history")
+        return (
+            observation.get("runs") == 3
+            and observation.get("recorded_replay_equal") is True
+            and isinstance(pinned, list)
+            and len(pinned) == 2
+            and len(set(pinned)) == 1
+            and observation.get("late_revision_changed") is True
+            and isinstance(late, dict)
+            and late.get("id") == 3
+            and late.get("supersedes") == 2
+            and late.get("includes_late_event") is True
+            and isinstance(history, list)
+            and [row.get("id") for row in history] == [1, 2, 3]
+            and [row.get("supersedes") for row in history] == [None, 1, 2]
+            and observation.get("history_preserved") is True
+        )
+    return False
+
+
 def validate_prototype_evidence(root: Path) -> list[dict[str, str]]:
     problems: list[dict[str, str]] = []
     plan_path = "docs/research/benchmarks/precommit.json"
@@ -329,10 +401,27 @@ def validate_prototype_evidence(root: Path) -> list[dict[str, str]]:
                 or postgres.get("port") != 5440
                 or postgres.get("service") != "postgres"
                 or postgres.get("healthcheck") != "pg_isready -p 5440"
-                or not str(postgres.get("lifecycle_manifest", "")).endswith("/services.yaml")
+                or postgres.get("lifecycle_manifest") != "services.yaml"
             ):
                 problems.append(
                     issue("VAL-READY-014", "invalid_postgres_environment", relative, "PostgreSQL evidence must bind version 17, port 5440, and declared lifecycle")
+                )
+            samples = result.get("samples")
+            if (
+                not isinstance(samples, list)
+                or not samples
+                or not all(
+                    valid_postgres_sample(case, sample, row.get("budgets", {}))
+                    for sample in samples
+                )
+            ):
+                problems.append(
+                    issue(
+                        "VAL-READY-014",
+                        "invalid_postgres_observation",
+                        relative,
+                        "Every PostgreSQL sample must preserve its version, port, budget, and case-specific durability evidence",
+                    )
                 )
     return problems
 

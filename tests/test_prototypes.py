@@ -163,6 +163,30 @@ class PrototypeEvidenceTest(unittest.TestCase):
         path.write_text(json.dumps(result), encoding="utf-8")
         self.assertIn("invalid_postgres_environment", self.codes(root))
 
+    def test_postgres_storage_requires_partition_pruning_evidence(self) -> None:
+        root = self.copy_evidence()
+        path = root / "docs/research/benchmarks/postgres-storage.json"
+        result = json.loads(path.read_text(encoding="utf-8"))
+        result["samples"][0]["observation"]["partition_pruning"] = False
+        path.write_text(json.dumps(result), encoding="utf-8")
+        self.assertIn("invalid_postgres_observation", self.codes(root))
+
+    def test_decision_durability_rejects_orphan_state(self) -> None:
+        root = self.copy_evidence()
+        path = root / "docs/research/benchmarks/decision-durability.json"
+        result = json.loads(path.read_text(encoding="utf-8"))
+        result["samples"][0]["observation"]["orphan_receipts"] = 1
+        path.write_text(json.dumps(result), encoding="utf-8")
+        self.assertIn("invalid_postgres_observation", self.codes(root))
+
+    def test_offline_replay_requires_explicit_supersession(self) -> None:
+        root = self.copy_evidence()
+        path = root / "docs/research/benchmarks/offline-replay.json"
+        result = json.loads(path.read_text(encoding="utf-8"))
+        result["samples"][0]["observation"]["late_revision"]["supersedes"] = None
+        path.write_text(json.dumps(result), encoding="utf-8")
+        self.assertIn("invalid_postgres_observation", self.codes(root))
+
     def test_analyzer_isolation_enforces_finite_resource_bounds(self) -> None:
         result = RUN.analyzer_isolation(ROOT)
         self.assertTrue(result["sanitized_environment"])
