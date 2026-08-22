@@ -7,7 +7,7 @@
   "states": ["draft", "in-review", "accepted", "blocked", "superseded"],
   "deliverables": [
     {
-      "id": "RES-STUDY-NAMING-001", "type": "study", "title": "Testament naming clearance", "summary": "Dated trademark, package, repository, domain, standards, and similarity searches with residual risk.", "state": "accepted", "version": "1.0.0", "commit": "d3e4b604efc27a85a1ec11b583bfc12f246607aa",
+      "id": "RES-STUDY-NAMING-001", "type": "study", "title": "Testament naming clearance", "summary": "Dated trademark, package, repository, domain, standards, and similarity searches with residual risk.", "state": "accepted", "version": "1.0.0", "commit": "534d1ae65e45dc2ab9ca3a00574109dcdc6bb022",
       "owner": {"role": "lead maintainer", "identity": "Eno Reyes (@enoreyes)"}, "dependencies": [], "acceptance_criteria": ["Every required search class has an attributable public source, access date, observation, inference, and residual risk.", "Review and conditional approval identify their accountable actors and limits."], "artifact": {"path": "docs/research/naming-clearance.md", "media_type": "text/markdown"},
       "evidence": [{"id": "EVID-NAMING-RECORD-001", "kind": "repository", "visibility": "public", "locator": "policy/naming-clearance.json", "claim_supported": "The machine record contains dated searches, review, approval, and residual risk."}], "review": {"reviewer": "factory-droid[bot]", "role": "research worker; not trademark counsel", "status": "completed", "reviewed_at": "2026-08-21"}, "decision": {"status": "approved", "authority": "Eno Reyes (@enoreyes), lead maintainer", "decided_at": "2026-08-21", "rationale": "Limited continued use is supported by the public foundation decision and explicit conditions."}, "lineage": {"supersedes": null, "superseded_by": null}
     },
@@ -164,7 +164,7 @@
     },
 
     {
-      "id": "RES-DECISION-NAMING-001", "type": "decision", "title": "Naming use decision", "summary": "Accountable conditional decision for use of Testament in the public research repository.", "state": "accepted", "version": "1.0.0", "commit": "d3e4b604efc27a85a1ec11b583bfc12f246607aa",
+      "id": "RES-DECISION-NAMING-001", "type": "decision", "title": "Naming use decision", "summary": "Accountable conditional decision for use of Testament in the public research repository.", "state": "accepted", "version": "1.0.0", "commit": "534d1ae65e45dc2ab9ca3a00574109dcdc6bb022",
       "owner": {"role": "lead maintainer", "identity": "Eno Reyes (@enoreyes)"}, "dependencies": ["RES-STUDY-NAMING-001"], "acceptance_criteria": ["Decision identifies authority, basis, scope, conditions, legal limitation, review date, and reopen triggers."], "artifact": {"path": "policy/naming-clearance.json", "media_type": "application/json"}, "evidence": [{"id": "EVID-NAMING-HUMAN-001", "kind": "repository", "visibility": "public", "locator": "docs/research/naming-clearance.md#review-and-decision", "claim_supported": "The public naming record explains review, authority, conditions, and residual risk."}], "review": {"reviewer": "factory-droid[bot]", "role": "research worker; not trademark counsel", "status": "completed", "reviewed_at": "2026-08-21"}, "decision": {"status": "approved", "authority": "Eno Reyes (@enoreyes), lead maintainer", "decided_at": "2026-08-21", "rationale": "Conditional use preserves the existing public identity without overstating legal clearance."}, "lineage": {"supersedes": null, "superseded_by": null}
     },
     {

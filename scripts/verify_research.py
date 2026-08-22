@@ -8,6 +8,7 @@ from collections import Counter
 from datetime import date
 import json
 import re
+import subprocess
 import sys
 from pathlib import Path
 from typing import Any
@@ -439,6 +440,25 @@ def validate_manifest(root: Path, problems: list[dict[str, str]]) -> dict[str, A
                 problems.append(
                     issue(CRITERIA[1], "missing_research_artifact", artifact_path, record_id, "restore the accepted artifact")
                 )
+            if state in {"accepted", "superseded"} and (root / ".git").exists():
+                commit = record.get("commit")
+                result = subprocess.run(
+                    ["git", "cat-file", "-e", f"{commit}:{artifact_path}"],
+                    cwd=root,
+                    capture_output=True,
+                    check=False,
+                    text=True,
+                )
+                if result.returncode != 0:
+                    problems.append(
+                        issue(
+                            CRITERIA[1],
+                            "unbound_artifact_commit",
+                            artifact_path,
+                            f"{record_id} artifact is absent from commit {commit}",
+                            "bind the reviewed artifact to an immutable commit",
+                        )
+                    )
         evidence = record.get("evidence")
         if not isinstance(evidence, list) or not evidence:
             evidence = []
