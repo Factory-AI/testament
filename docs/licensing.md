@@ -10,6 +10,17 @@ and [NOTICE](../NOTICE) contains project and required attribution notices.
 Source files should use `SPDX-License-Identifier: Apache-2.0` where the file
 format supports comments without changing data semantics.
 
+## Primary source
+
+- Publisher: Apache Software Foundation
+- Title: Apache License, Version 2.0
+- Version date: January 2004
+- Source: <https://www.apache.org/licenses/LICENSE-2.0.txt>
+- Accessed: 2026-08-21
+- Claim supported: the root license text and its redistribution and notice
+  obligations are the Apache License, Version 2.0 terms published by the
+  Apache Software Foundation.
+
 ## Artifact inventory
 
 The authoritative [artifact licensing
