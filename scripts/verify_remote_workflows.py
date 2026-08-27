@@ -10,6 +10,7 @@ import os
 import re
 import subprocess
 import sys
+from datetime import date, datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -65,7 +66,7 @@ REQUIRED_PATHS = [
     "scripts/run_ci_gates.py",
     "scripts/verify_remote_workflows.py",
 ]
-ACTION = re.compile(r"(?m)^\s*uses:\s+[^#\s]+@([^\s#]+)")
+ACTION = re.compile(r"(?m)^\s*uses:\s+([^#\s]+)@([^\s#]+)")
 PIN = re.compile(r"^[0-9a-f]{40}$")
 EMPTY = {"", "_none_", "none", "n/a", "not applicable", "tbd"}
 
@@ -79,6 +80,13 @@ def issue(code: str, path: str, message: str, command: str, criterion: str) -> d
         "message": message,
         "remediation_command": command,
     }
+
+
+def allowlist_entry_is_active(entry: dict[str, Any], as_of: date) -> bool:
+    try:
+        return date.fromisoformat(str(entry["expires_at"])) >= as_of
+    except (KeyError, TypeError, ValueError):
+        return False
 
 
 def sections(body: str, level: int) -> dict[str, str]:
@@ -103,8 +111,14 @@ def metadata_problems(kind: str, body: str) -> list[str]:
     ]
 
 
-def scan_publication_paths(root: Path, paths: list[Path]) -> list[dict[str, str]]:
+def scan_publication_paths(
+    root: Path,
+    paths: list[Path],
+    *,
+    as_of: date | None = None,
+) -> list[dict[str, str]]:
     root = root.resolve()
+    as_of = as_of or datetime.now(timezone.utc).date()
     try:
         contract = json.loads(
             (root / "policy/remote-workflows.json").read_text(encoding="utf-8")
@@ -120,6 +134,7 @@ def scan_publication_paths(root: Path, paths: list[Path]) -> list[dict[str, str]
         )
         for entry in contract.get("publication_findings_allowlist", [])
         if isinstance(entry, dict)
+        and allowlist_entry_is_active(entry, as_of)
     }
     patterns = [
         ("github_token", re.compile(("gh" + "[psuor]_" + r"[A-Za-z0-9]{36,}").encode())),
@@ -167,6 +182,35 @@ def unsigned_commits(commits: list[dict[str, Any]]) -> list[str]:
     ]
 
 
+def reviewed_action_pins(root: Path) -> dict[str, dict[str, Any]]:
+    try:
+        contract = json.loads(
+            (root / "policy/remote-workflows.json").read_text(encoding="utf-8")
+        )
+    except (OSError, json.JSONDecodeError):
+        return {}
+    pins = contract.get("action_pins")
+    return pins if isinstance(pins, dict) else {}
+
+
+def action_review_is_current(review: dict[str, Any]) -> bool:
+    try:
+        reviewed_at = date.fromisoformat(str(review["reviewed_at"]))
+        published_at = datetime.fromisoformat(
+            str(review["published_at"]).replace("Z", "+00:00")
+        ).astimezone(timezone.utc)
+        minimum_age_days = int(review["minimum_age_days"])
+    except (KeyError, TypeError, ValueError):
+        return False
+    age_days = (reviewed_at - published_at.date()).days
+    return (
+        review.get("runtime") == "node24"
+        and review.get("commit_signature_verified") is True
+        and minimum_age_days >= 7
+        and age_days >= minimum_age_days
+    )
+
+
 def validate(root: Path) -> list[dict[str, str]]:
     problems: list[dict[str, str]] = []
     for relative in REQUIRED_PATHS:
@@ -209,12 +253,13 @@ def validate(root: Path) -> list[dict[str, str]]:
             )
         )
 
+    action_pins = reviewed_action_pins(root)
     for relative, triggers in WORKFLOWS.items():
         try:
             text = (root / relative).read_text(encoding="utf-8")
         except OSError:
             continue
-        for reference in ACTION.findall(text):
+        for locator, reference in ACTION.findall(text):
             if not PIN.fullmatch(reference):
                 problems.append(
                     issue(
@@ -225,6 +270,30 @@ def validate(root: Path) -> list[dict[str, str]]:
                         "VAL-READY-027",
                     )
                 )
+                continue
+            components = locator.split("/")
+            action = "/".join(components[:2])
+            review = action_pins.get(action, {})
+            if review.get("commit") != reference:
+                problems.append(
+                    issue(
+                        "unreviewed_action_pin",
+                        relative,
+                        f"Action revision is not the reviewed pin for {action}: {reference}",
+                        f"restore the reviewed {action} pin in {relative}",
+                        "VAL-READY-027",
+                    )
+                )
+            if not action_review_is_current(review):
+                problems.append(
+                    issue(
+                        "unsupported_action_runtime",
+                        "policy/remote-workflows.json",
+                        f"Action review does not attest the current Node.js runtime and verified commit for {action}",
+                        f"review a signed Node.js 24 release of {action} and update its immutable pin",
+                        "VAL-READY-027",
+                    )
+                )
         if "permissions: write-all" in text or "pull_request_target:" in text:
             problems.append(
                 issue(
@@ -232,6 +301,68 @@ def validate(root: Path) -> list[dict[str, str]]:
                     relative,
                     "Workflow uses write-all or pull_request_target",
                     f"restore least-privilege permissions in {relative}",
+                    "VAL-READY-027",
+                )
+            )
+        if "permissions:\n  contents: read" not in text or re.search(
+            r"(?m)^\s+(?:actions|checks|contents|deployments|id-token|packages|pull-requests): write\s*$",
+            text,
+        ):
+            problems.append(
+                issue(
+                    "excessive_workflow_permissions",
+                    relative,
+                    "Workflow lacks the read-only default or grants a privileged capability",
+                    f"restore the least-privilege permission map in {relative}",
+                    "VAL-READY-027",
+                )
+            )
+        if "issues: write" in text and relative not in {
+            ".github/workflows/error-to-issue.yml",
+            ".github/workflows/maintenance.yml",
+        }:
+            problems.append(
+                issue(
+                    "excessive_workflow_permissions",
+                    relative,
+                    "Issue-write permission is outside the trusted reporting workflows",
+                    f"remove issue-write permission from {relative}",
+                    "VAL-READY-027",
+                )
+            )
+        if "security-events: write" in text and relative != ".github/workflows/security.yml":
+            problems.append(
+                issue(
+                    "excessive_workflow_permissions",
+                    relative,
+                    "Security-event write permission is outside the CodeQL workflow",
+                    f"remove security-event write permission from {relative}",
+                    "VAL-READY-027",
+                )
+            )
+        if "pull_request:" in text and "secrets." in text:
+            problems.append(
+                issue(
+                    "privileged_secret_in_pull_request",
+                    relative,
+                    "Pull-request workflow references a privileged Actions secret",
+                    f"remove privileged secret access from {relative}",
+                    "VAL-READY-027",
+                )
+            )
+        retention_days = [
+            int(value)
+            for value in re.findall(r"(?m)^\s+retention-days:\s+(\d+)\s*$", text)
+        ]
+        if "actions/upload-artifact" in text and (
+            not retention_days or any(days > 14 for days in retention_days)
+        ):
+            problems.append(
+                issue(
+                    "unbounded_artifact_retention",
+                    relative,
+                    "Uploaded workflow artifacts must declare retention of at most 14 days",
+                    f"set retention-days to 14 or less in {relative}",
                     "VAL-READY-027",
                 )
             )
@@ -333,14 +464,34 @@ def event_metadata(event_name: str, event_path: Path) -> int:
     return 1
 
 
-def publication_paths(root: Path, revision_range: str) -> list[Path]:
+def resolve_repository_root(start: Path) -> Path:
     output = subprocess.run(
-        ["git", "-C", str(root), "diff", "--name-only", "--diff-filter=ACMR", revision_range],
+        ["git", "-C", str(start.resolve()), "rev-parse", "--show-toplevel"],
         check=True,
         capture_output=True,
         text=True,
+    ).stdout.strip()
+    if not output:
+        raise ValueError(f"cannot resolve Git repository root from {start}")
+    return Path(output).resolve()
+
+
+def publication_paths(root: Path, revision_range: str) -> list[Path]:
+    output = subprocess.run(
+        [
+            "git",
+            "-C",
+            str(root),
+            "diff",
+            "--name-only",
+            "--diff-filter=ACMR",
+            "-z",
+            revision_range,
+        ],
+        check=True,
+        capture_output=True,
     ).stdout
-    return [root / line for line in output.splitlines() if line]
+    return [root / os.fsdecode(line) for line in output.split(b"\0") if line]
 
 
 def main() -> int:
@@ -351,6 +502,24 @@ def main() -> int:
     parser.add_argument("--publication-range")
     arguments = parser.parse_args()
     root = arguments.root.resolve()
+    if arguments.publication_range:
+        try:
+            root = resolve_repository_root(root)
+        except (OSError, ValueError, subprocess.SubprocessError) as error:
+            print(
+                json.dumps(
+                    issue(
+                        "publication_scope_failed",
+                        ".",
+                        str(error),
+                        "run make verify-publication from within the Testament Git repository",
+                        "VAL-READY-027",
+                    ),
+                    sort_keys=True,
+                ),
+                file=sys.stderr,
+            )
+            return 1
     if arguments.event:
         if not arguments.event_path:
             parser.error("--event-path is required with --event")

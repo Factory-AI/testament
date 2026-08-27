@@ -1,6 +1,7 @@
 .PHONY: setup dev dev-stop lint typecheck test test-gate build agent-ready conformance generate generate-analyzer-evaluation generate-analyzer-metrics generate-corpus migrate release rollback doctor incident verify-analyzer-evaluation verify-analyzer-candidate verify-analyzer-metrics verify-claims verify-corpus verify-foundation verify-governance verify-prototypes verify-readiness verify-remote-workflows verify-publication verify-research _python-check
 
 PYTHON ?= python3
+TESTAMENT_ROOT := $(abspath $(dir $(lastword $(MAKEFILE_LIST))))
 
 setup:
 	@$(PYTHON) scripts/workflow.py setup --root .
@@ -154,7 +155,10 @@ verify-remote-workflows:
 	@$(PYTHON) scripts/verify_remote_workflows.py --root .
 
 verify-publication:
-	@$(PYTHON) scripts/verify_remote_workflows.py --root . --publication-range origin/main..HEAD
+	@root="$$(git -C "$(TESTAMENT_ROOT)" rev-parse --show-toplevel)" && \
+		$(PYTHON) "$$root/scripts/verify_remote_workflows.py" \
+			--root "$$root" \
+			--publication-range origin/main..HEAD
 
 verify-research:
 	@$(PYTHON) scripts/verify_research.py --root .

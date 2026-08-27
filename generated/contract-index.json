@@ -18,7 +18,7 @@
       "human_path": "docs/workflows.md#workflow-index",
       "id": "commands",
       "machine_path": "Makefile",
-      "machine_sha256": "2670010820924988d6c5adc91940d484d29dcfef07eab5fc9dfdcc89460f072b",
+      "machine_sha256": "7633afe06454785b05489a6dde5ea2af745b164e97456b4b1c32380cdc6464c6",
       "version": "1.0.0"
     },
     {
@@ -39,7 +39,7 @@
       "human_path": "docs/remote-workflows.md",
       "id": "remote-workflows",
       "machine_path": "policy/remote-workflows.json",
-      "machine_sha256": "8f2bec6dea13b55c15187a8d31ae2241c24ebd6775681232bee905003b7153bc",
+      "machine_sha256": "9e247846005eb49977d7d016dd693f9d6d272a71b761bf09bcde9d9d685d2fd9",
       "version": "1.0.0"
     },
     {

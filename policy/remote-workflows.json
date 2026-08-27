@@ -76,6 +76,48 @@
       "expires_at": "2026-11-21"
     }
   ],
+  "action_pins": {
+    "actions/checkout": {
+      "commit": "3d3c42e5aac5ba805825da76410c181273ba90b1",
+      "release": "v7.0.1",
+      "runtime": "node24",
+      "commit_signature_verified": true,
+      "published_at": "2026-07-20T15:10:05Z",
+      "minimum_age_days": 7,
+      "reviewed_at": "2026-08-26",
+      "review_source": "https://github.com/actions/checkout/releases/tag/v7.0.1"
+    },
+    "actions/setup-python": {
+      "commit": "5fda3b95a4ea91299a34e894583c3862153e4b97",
+      "release": "v7.0.0",
+      "runtime": "node24",
+      "commit_signature_verified": true,
+      "published_at": "2026-07-20T03:15:01Z",
+      "minimum_age_days": 7,
+      "reviewed_at": "2026-08-26",
+      "review_source": "https://github.com/actions/setup-python/releases/tag/v7.0.0"
+    },
+    "actions/upload-artifact": {
+      "commit": "043fb46d1a93c77aae656e7c1c64a875d1fc6a0a",
+      "release": "v7.0.1",
+      "runtime": "node24",
+      "commit_signature_verified": true,
+      "published_at": "2026-04-10T17:31:14Z",
+      "minimum_age_days": 7,
+      "reviewed_at": "2026-08-26",
+      "review_source": "https://github.com/actions/upload-artifact/releases/tag/v7.0.1"
+    },
+    "github/codeql-action": {
+      "commit": "ff2f1c621b7f889edc0d3c761ac2e6a3f8cdb0dd",
+      "release": "v4.37.7",
+      "runtime": "node24",
+      "commit_signature_verified": true,
+      "published_at": "2026-08-13T13:30:27Z",
+      "minimum_age_days": 7,
+      "reviewed_at": "2026-08-26",
+      "review_source": "https://github.com/github/codeql-action/releases/tag/v4.37.7"
+    }
+  },
   "maintenance_records": [
     {
       "key": "trademark-review",
