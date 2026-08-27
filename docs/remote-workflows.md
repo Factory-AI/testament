@@ -36,11 +36,14 @@ granting access, appointing a maintainer, or weakening a Testament check.
 
 Quality runs the declared local gates on pull requests, protected pushes,
 weekly schedules, manual requests, and published releases. Security runs
-CodeQL and dependency review with pinned actions. Workflows declare minimal
-permissions, do not use `pull_request_target`, and retain machine-readable
-quality artifacts for 14 days. Secret scanning, push protection, dependency
-alerts, security updates, code scanning, and private vulnerability reporting
-are repository controls.
+CodeQL and dependency review with immutable, signature-verified action
+commits. The action review registry records the exact release and runtime for
+each allowed pin. Every selected release was public for at least seven days
+before review. GitHub-authored JavaScript actions use Node.js 24.
+Workflows declare minimal permissions, do not use `pull_request_target`, and
+retain machine-readable quality artifacts for 14 days. Secret scanning, push
+protection, dependency alerts, security updates, code scanning, and private
+vulnerability reporting are repository controls.
 
 Run `make verify-remote-workflows` for static workflow, pin, permission,
 trigger, template, ownership, and maintenance checks. Run

@@ -14,6 +14,7 @@
     "required_checks",
     "protection",
     "publication_scope",
+    "action_pins",
     "maintenance_records",
     "emergency_bypass"
   ],
@@ -35,6 +36,48 @@
       "minItems": 5,
       "uniqueItems": true,
       "items": {"type": "string"}
+    },
+    "action_pins": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "actions/checkout",
+        "actions/setup-python",
+        "actions/upload-artifact",
+        "github/codeql-action"
+      ],
+      "properties": {
+        "actions/checkout": {"$ref": "#/$defs/actionPin"},
+        "actions/setup-python": {"$ref": "#/$defs/actionPin"},
+        "actions/upload-artifact": {"$ref": "#/$defs/actionPin"},
+        "github/codeql-action": {"$ref": "#/$defs/actionPin"}
+      }
+    }
+  },
+  "$defs": {
+    "actionPin": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "commit",
+        "release",
+        "runtime",
+        "commit_signature_verified",
+        "published_at",
+        "minimum_age_days",
+        "reviewed_at",
+        "review_source"
+      ],
+      "properties": {
+        "commit": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+        "release": {"type": "string", "pattern": "^v[0-9]+\\.[0-9]+\\.[0-9]+$"},
+        "runtime": {"const": "node24"},
+        "commit_signature_verified": {"const": true},
+        "published_at": {"type": "string", "format": "date-time"},
+        "minimum_age_days": {"type": "integer", "minimum": 7},
+        "reviewed_at": {"type": "string", "format": "date"},
+        "review_source": {"type": "string", "format": "uri", "pattern": "^https://github\\.com/"}
+      }
     }
   }
 }

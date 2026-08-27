@@ -2,8 +2,10 @@ from __future__ import annotations
 
 import importlib.util
 import json
+import subprocess
 import tempfile
 import unittest
+from datetime import date
 from pathlib import Path
 
 
@@ -45,14 +47,69 @@ class RemoteWorkflowContractTest(unittest.TestCase):
         root = self.copy_contract()
         workflow = root / ".github/workflows/quality.yml"
         text = workflow.read_text(encoding="utf-8")
+        reviewed = VERIFY.reviewed_action_pins(root)["actions/checkout"]["commit"]
         text = text.replace(
-            "actions/checkout@11d5960a326750d5838078e36cf38b85af677262",
-            "actions/checkout@v4",
+            f"actions/checkout@{reviewed}",
+            "actions/checkout@v7",
         ).replace("permissions:\n  contents: read", "permissions: write-all")
         workflow.write_text(text, encoding="utf-8")
         codes = self.codes(root)
         self.assertIn("unpinned_action", codes)
         self.assertIn("excessive_workflow_permissions", codes)
+
+    def test_unreviewed_action_pin_and_unsupported_runtime_fail(self) -> None:
+        root = self.copy_contract()
+        workflow = root / ".github/workflows/quality.yml"
+        text = workflow.read_text(encoding="utf-8")
+        reviewed = VERIFY.reviewed_action_pins(root)["actions/checkout"]["commit"]
+        workflow.write_text(
+            text.replace(reviewed, "f" * 40),
+            encoding="utf-8",
+        )
+        self.assertIn("unreviewed_action_pin", self.codes(root))
+
+        workflow.write_text(text, encoding="utf-8")
+        contract_path = root / "policy/remote-workflows.json"
+        contract = json.loads(contract_path.read_text(encoding="utf-8"))
+        contract["action_pins"]["actions/checkout"]["runtime"] = "node20"
+        contract_path.write_text(json.dumps(contract), encoding="utf-8")
+        self.assertIn("unsupported_action_runtime", self.codes(root))
+
+    def test_too_new_action_and_pull_request_secret_fail(self) -> None:
+        root = self.copy_contract()
+        contract_path = root / "policy/remote-workflows.json"
+        contract = json.loads(contract_path.read_text(encoding="utf-8"))
+        contract["action_pins"]["actions/checkout"]["published_at"] = (
+            "2026-08-25T00:00:00Z"
+        )
+        contract_path.write_text(json.dumps(contract), encoding="utf-8")
+        self.assertIn("unsupported_action_runtime", self.codes(root))
+
+        contract_path.write_bytes(
+            (ROOT / "policy/remote-workflows.json").read_bytes()
+        )
+        workflow = root / ".github/workflows/quality.yml"
+        workflow.write_text(
+            workflow.read_text(encoding="utf-8")
+            + "\nenv:\n  PRIVILEGED: ${{ secrets.DEPLOY_TOKEN }}\n",
+            encoding="utf-8",
+        )
+        self.assertIn("privileged_secret_in_pull_request", self.codes(root))
+
+    def test_privileged_permission_and_long_retention_fail(self) -> None:
+        root = self.copy_contract()
+        workflow = root / ".github/workflows/quality.yml"
+        text = workflow.read_text(encoding="utf-8")
+        workflow.write_text(
+            text.replace("contents: read", "contents: write", 1).replace(
+                "retention-days: 14",
+                "retention-days: 90",
+            ),
+            encoding="utf-8",
+        )
+        codes = self.codes(root)
+        self.assertIn("excessive_workflow_permissions", codes)
+        self.assertIn("unbounded_artifact_retention", codes)
 
     def test_required_trigger_mutation_fails(self) -> None:
         root = self.copy_contract()
@@ -124,6 +181,51 @@ class RemoteWorkflowContractTest(unittest.TestCase):
         self.assertEqual("github_token", findings[0]["code"])
         self.assertEqual("safe.txt", findings[0]["path"])
 
+    def test_publication_resolves_git_root_and_ignores_sibling_repository(self) -> None:
+        temporary = tempfile.TemporaryDirectory()
+        self.addCleanup(temporary.cleanup)
+        workspace = Path(temporary.name)
+        root = workspace / "testament"
+        nested = root / "nested"
+        nested.mkdir(parents=True)
+        subprocess.run(["git", "init", "-q", root], check=True)
+        subprocess.run(
+            ["git", "-C", str(root), "config", "user.email", "test@example.com"],
+            check=True,
+        )
+        subprocess.run(
+            ["git", "-C", str(root), "config", "user.name", "Test"],
+            check=True,
+        )
+        tracked = root / "tracked.txt"
+        tracked.write_text("initial\n", encoding="utf-8")
+        subprocess.run(["git", "-C", str(root), "add", "tracked.txt"], check=True)
+        subprocess.run(
+            ["git", "-C", str(root), "commit", "-qm", "initial"],
+            check=True,
+        )
+        tracked.write_text("changed\n", encoding="utf-8")
+        subprocess.run(["git", "-C", str(root), "add", "tracked.txt"], check=True)
+        subprocess.run(
+            ["git", "-C", str(root), "commit", "-qm", "change"],
+            check=True,
+        )
+        sibling = workspace / "home-repository"
+        sibling.mkdir()
+        token = "gh" + "p_" + ("a" * 36)
+        (sibling / "unrelated.txt").write_text(token, encoding="utf-8")
+
+        self.assertEqual(root.resolve(), VERIFY.resolve_repository_root(nested))
+        paths = VERIFY.publication_paths(
+            VERIFY.resolve_repository_root(nested),
+            "HEAD^..HEAD",
+        )
+        self.assertEqual([tracked.resolve()], [path.resolve() for path in paths])
+        self.assertEqual([], VERIFY.scan_publication_paths(root, paths))
+        makefile = (ROOT / "Makefile").read_text(encoding="utf-8")
+        self.assertIn("TESTAMENT_ROOT :=", makefile)
+        self.assertIn('git -C "$(TESTAMENT_ROOT)" rev-parse --show-toplevel', makefile)
+
     def test_publication_allowlist_is_exact_and_digest_bound(self) -> None:
         temporary = tempfile.TemporaryDirectory()
         self.addCleanup(temporary.cleanup)
@@ -141,6 +243,17 @@ class RemoteWorkflowContractTest(unittest.TestCase):
             encoding="utf-8",
         )
         self.assertEqual([], VERIFY.scan_publication_paths(root, [path]))
+        self.assertEqual(
+            ["aws_access_key"],
+            [
+                finding["code"]
+                for finding in VERIFY.scan_publication_paths(
+                    root,
+                    [path],
+                    as_of=date(2026, 11, 22),
+                )
+            ],
+        )
         changed_canary = "AK" + "IAIOSFODNN7EXAMPLF"
         path.write_text("\n" * 170 + changed_canary + "\n", encoding="utf-8")
         self.assertEqual(
